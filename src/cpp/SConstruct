@@ -3,7 +3,7 @@ import sys
 import subprocess
 
 # =========================================================================
-# PRE-BUILD STEP: Generate Version Info & Offsets (CMake CONFIGURE_FILE Equivalent)
+# PRE-BUILD STEP: Generate Version Info & Offsets
 # =========================================================================
 print("[*] SCons: Executing pre-build steps...")
 gen_script = os.path.join('mk', 'gen_offsets.py')
@@ -49,8 +49,25 @@ sources = [
     'lib/minhook/src/hde/hde64.c'
 ]
 
-# Output DLL (lib) to `build/version`
-dll = env.SharedLibrary(target='build/version', source=sources)
+# =========================================================================
+# OUT-OF-SOURCE BUILD (Object Isolation)
+# =========================================================================
+obj_dir = os.path.join('build', 'obj')
+obj_files = []
 
-# Auto clean
+for src in sources:
+    base_name = os.path.basename(src)
+    obj_name = os.path.splitext(base_name)[0]
+    target_path = os.path.join(obj_dir, obj_name)
+    
+    # Compile directly into the build/obj directory
+    obj = env.SharedObject(target=target_path, source=src)
+    obj_files.append(obj)
+
+# =========================================================================
+# LINKING
+# =========================================================================
+dll = env.SharedLibrary(target='build/version', source=obj_files)
+
+# Register clean targets
 env.Clean(dll, 'build')

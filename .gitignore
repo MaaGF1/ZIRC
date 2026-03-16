@@ -4,11 +4,8 @@ poc/*.json
 # IL2CPP data
 src/common/include/script.json
 
-# CPP Compile OBJ
-*.obj
-*.exp
-*.dll
-*.lib
+# Outputs
+src/build
 
 # Scons
 .sconsign.dblite

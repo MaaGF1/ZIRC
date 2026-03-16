@@ -46,6 +46,11 @@ if ($Cpp) {
                 Push-Location (Join-Path $SrcDir "cpp")
                 $cmd = "`"$vcvars`" && scons mode=$Mode"
                 cmd.exe /c $cmd
+                if ($LASTEXITCODE -ne 0) {
+                    Pop-Location
+                    Write-Error "[-] SCons build failed with exit code $LASTEXITCODE"
+                    exit $LASTEXITCODE
+                }
                 Pop-Location
             } else { Write-Warning "[-] vcvars64.bat not found." }
         }

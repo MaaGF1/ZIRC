@@ -2,19 +2,20 @@ import os
 import sys
 import subprocess
 
-# =========================================================================
-# PRE-BUILD STEP: Generate Version Info & Offsets
-# =========================================================================
-print("[*] SCons: Executing pre-build steps...")
-gen_script = os.path.join('mk', 'gen_offsets.py')
-if os.path.exists(gen_script):
-    try:
-        subprocess.check_call([sys.executable, gen_script])
-    except subprocess.CalledProcessError as e:
-        print(f"[-] Pre-build script failed with code {e.returncode}")
-        Exit(1)
-else:
-    print(f"[-] Pre-build script {gen_script} not found! Skipping generation.")
+print("[*] SCons: Executing pre-build steps (Template Injection)...")
+
+# Construct path to common template applier
+common_dir = os.path.abspath(os.path.join('..', 'common'))
+apply_script = os.path.join(common_dir, 'apply_template.py')
+
+in_file = os.path.join('src', 'offsets.h.in')
+out_file = os.path.join('src', 'offsets.h')
+
+try:
+    subprocess.check_call([sys.executable, apply_script, in_file, out_file])
+except subprocess.CalledProcessError as e:
+    print(f"[-] Pre-build script failed with code {e.returncode}")
+    Exit(1)
 
 print("-" * 50)
 
@@ -49,10 +50,7 @@ sources = [
     'lib/minhook/src/hde/hde64.c'
 ]
 
-# =========================================================================
-# OUT-OF-SOURCE BUILD (Object Isolation)
-# =========================================================================
-obj_dir = os.path.join('build', 'obj')
+obj_dir = os.path.join('..', 'build', 'cpp', 'obj')
 obj_files = []
 
 for src in sources:
@@ -64,10 +62,7 @@ for src in sources:
     obj = env.SharedObject(target=target_path, source=src)
     obj_files.append(obj)
 
-# =========================================================================
-# LINKING
-# =========================================================================
-dll = env.SharedLibrary(target='build/version', source=obj_files)
+dll_target = os.path.join('..', 'build', 'cpp', 'version')
+dll = env.SharedLibrary(target=dll_target, source=obj_files)
 
-# Register clean targets
-env.Clean(dll, 'build')
+env.Clean(dll, os.path.join('..', 'build', 'cpp'))

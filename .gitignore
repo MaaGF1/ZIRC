@@ -1,5 +1,8 @@
 # Exclude Monitor's output log
-*.json
+poc/*.json
+
+# IL2CPP data
+src/common/include/script.json
 
 # CPP Compile OBJ
 *.obj

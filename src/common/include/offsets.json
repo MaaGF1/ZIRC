@@ -1,54 +1,15 @@
 {
-    "OFFSET_get_gameObject": {
-        "sig": "UnityEngine_GameObject_o* UnityEngine_Component__get_gameObject (UnityEngine_Component_o* __this, const MethodInfo* method);",
-        "val": 16465776
-    },
-    "OFFSET_SetActive": {
-        "sig": "void UnityEngine_GameObject__SetActive (UnityEngine_GameObject_o* __this, bool value, const MethodInfo* method);",
-        "val": 16488416
-    },
-    "OFFSET_Destroy": {
-        "sig": "void UnityEngine_Object__Destroy (UnityEngine_Object_o* obj, const MethodInfo* method);",
-        "val": 16599120
-    },
-    "OFFSET_InitGunInfo": {
-        "sig": "void CommonGetNewGunController__InitGunInfo (CommonGetNewGunController_o* __this, GF_Battle_Gun_o* gun, System_Action_o* action, const MethodInfo* method);",
-        "val": 5437312
-    },
-    "OFFSET_Spot_Show": {
-        "sig": "void DeploymentSpotController__ShowTurnEndAnima (DeploymentSpotController_o* __this, const MethodInfo* method);",
-        "val": 30831600
-    },
-    "OFFSET_Spot_Finish1": {
-        "sig": "void DeploymentSpotController__OnFinishAnimation (DeploymentSpotController_o* __this, const MethodInfo* method);",
-        "val": 30819680
-    },
-    "OFFSET_Spot_Finish2": {
-        "sig": "void DeploymentSpotController__OnFinishAnimationEvent (DeploymentSpotController_o* __this, const MethodInfo* method);",
-        "val": 30819312
-    },
-    "OFFSET_Turn_PlayEnd": {
-        "sig": "void DeploymentTurnAnimationController__PlayChangeTurnEndAnime (DeploymentTurnAnimationController_o* __this, const MethodInfo* method);",
-        "val": 25400800
-    },
-    "OFFSET_Turn_ToGK": {
-        "sig": "void DeploymentTurnAnimationController__ToGKTurn (DeploymentTurnAnimationController_o* __this, const MethodInfo* method);",
-        "val": 25401328
-    },
-    "OFFSET_Turn_ToSF": {
-        "sig": "void DeploymentTurnAnimationController__ToSFTurn (DeploymentTurnAnimationController_o* __this, const MethodInfo* method);",
-        "val": 25402080
-    },
-    "OFFSET_Turn_Disact": {
-        "sig": "void DeploymentTurnAnimationController__DisactiveMain (DeploymentTurnAnimationController_o* __this, const MethodInfo* method);",
-        "val": 25400320
-    },
-    "OFFSET_Turn_IsPlay": {
-        "sig": "bool DeploymentTurnAnimationController__IsPlaying (DeploymentTurnAnimationController_o* __this, const MethodInfo* method);",
-        "val": 25400544
-    },
-    "OFFSET_MoveCamera": {
-        "sig": "void DeploymentController__TriggerMoveCameraEvent (UnityEngine_Vector2_o target, bool move, float duration, float delay, bool recordPos, bool changescale, float setscale, System_Action_o* handle, const MethodInfo* method);",
-        "val": 24073760
-    }
+    "OFFSET_get_gameObject": 18775600,
+    "OFFSET_SetActive": 18798240,
+    "OFFSET_Destroy": 18909536,
+    "OFFSET_InitGunInfo": 44477472,
+    "OFFSET_Spot_Show": 38756848,
+    "OFFSET_Spot_Finish1": 38744928,
+    "OFFSET_Spot_Finish2": 38744560,
+    "OFFSET_Turn_PlayEnd": 33002944,
+    "OFFSET_Turn_ToGK": 33003472,
+    "OFFSET_Turn_ToSF": 33004224,
+    "OFFSET_Turn_Disact": 33002464,
+    "OFFSET_Turn_IsPlay": 33002688,
+    "OFFSET_MoveCamera": 31360880
 }

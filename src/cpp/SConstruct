@@ -66,3 +66,6 @@ dll_target = os.path.join('..', 'build', 'cpp', 'version')
 dll = env.SharedLibrary(target=dll_target, source=obj_files)
 
 env.Clean(dll, os.path.join('..', 'build', 'cpp'))
+
+# Default Compile DLL
+Default(dll)

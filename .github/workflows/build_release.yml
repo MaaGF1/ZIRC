@@ -47,11 +47,39 @@ jobs:
           # SCons will be available, MSVC is configured, CI runs Fallback offset generation.
           .\build.ps1 -Cpp -Mode release
           
-      - name: Upload Artifact
+      - name: Package Output (ZIP)
+        shell: pwsh
+        run: |
+          $DllPath = "src\build\cpp\version.dll"
+          
+          # 1. Verification: Fail fast if DLL is missing to prevent silent failures
+          if (-not (Test-Path $DllPath)) {
+              Write-Error "[-] Build failed silently: $DllPath was not generated!"
+              exit 1
+          }
+          Write-Host "[+] Found generated DLL: $DllPath"
+          
+          # 2. Dynamic naming based on trigger event
+          if ("${{ github.ref_type }}" -eq "tag") {
+              $ZipName = "ZIRC-Hook-Release-${{ github.ref_name }}.zip"
+          } else {
+              $ShortSha = "${{ github.sha }}".Substring(0, 7)
+              $ZipName = "ZIRC-Hook-Build-$ShortSha.zip"
+          }
+          
+          # 3. Compress directly to ZIP
+          Compress-Archive -Path $DllPath -DestinationPath $ZipName
+          Write-Host "[+] Created archive: $ZipName"
+          
+          # 4. Pass the ZIP name to the next step via environment variable
+          echo "ZIP_NAME=$ZipName" >> $env:GITHUB_ENV
+          
+      - name: Upload Artifact to Action Summary
         uses: actions/upload-artifact@v4
         with:
-          name: ZIRC-Native-Build
-          path: src/build/cpp/version.dll
+          name: ZIRC-Artifacts
+          path: ${{ env.ZIP_NAME }}
+          if-no-files-found: error # 强制要求文件必须存在，否则任务变红失败
           
   release:
     name: Create GitHub Release
@@ -64,17 +92,13 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ZIRC-Native-Build
+          name: ZIRC-Artifacts
           path: release_assets
-          
-      - name: Create Zip Archive
-        run: |
-          cd release_assets
-          zip -r ZIRC-Hook-Release-${{ github.ref_name }}.zip version.dll
           
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
+          # Directly upload the pre-packaged zip from build job
           files: release_assets/*.zip
           generate_release_notes: true
           draft: false

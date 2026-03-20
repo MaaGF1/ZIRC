@@ -8,17 +8,26 @@ import time
 # --- Configuration ---
 OUTPUT_DIR = "traffic_dumps"
 SCORE_FILE = os.path.join("res", "table.json")
-EFFICIENCY_COEFFICIENT = 0.1  # Added coefficient
+INTEREST_FILE = os.path.join("res", "interest.json")
+EFFICIENCY_COEFFICIENT = 0.1
+
+# --- ANSI Color Codes (Strictly ASCII) ---
+COLOR_YELLOW = "\033[93m"
+COLOR_RED = "\033[91m"
+COLOR_RESET = "\033[0m"
 
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
 packet_counter = 1
 id_score_map = {}
+interest_map = {}
 
-# --- Load Score Reference ---
-def load_score_config():
-    global id_score_map
+# --- Load Configs ---
+def load_configs():
+    global id_score_map, interest_map
+    
+    # Load Table (Scores)
     if os.path.exists(SCORE_FILE):
         try:
             with open(SCORE_FILE, "r", encoding="utf-8") as f:
@@ -29,10 +38,18 @@ def load_score_config():
     else:
         print(f"[!] Score file not found at: {SCORE_FILE}")
 
+    # Load Interest List
+    if os.path.exists(INTEREST_FILE):
+        try:
+            with open(INTEREST_FILE, "r", encoding="utf-8") as f:
+                interest_map = json.load(f)
+            print(f"[*] Loaded interest database: {len(interest_map)} categories.")
+        except Exception as e:
+            print(f"[!] Failed to load interest file: {e}")
+    else:
+        print(f"[!] Interest file not found at: {INTEREST_FILE}")
+
 def process_s2c_logic(raw_data):
-    """
-    Decompress, Parse JSON, Calculate efficiency & predicted scores, and check for unknown IDs.
-    """
     try:
         # 1. Decompress
         decompressed_data = gzip.decompress(raw_data)
@@ -48,37 +65,51 @@ def process_s2c_logic(raw_data):
             except ValueError:
                 current_score = 0
             
-            # --- Calculate Enemy Efficiency & Track Unknown IDs ---
+            # --- Initialize Trackers ---
             total_efficiency = 0
-            unknown_team_ids = set()  # Use a set to prevent duplicate printing
+            unknown_team_ids = set()
             
+            # Pre-fill interest counters with 0 based on JSON keys
+            interest_counts = {key: 0 for key in interest_map.keys()}
+            
+            # --- Iterate Enemy Info ---
             enemy_info = json_obj.get("enemy_instance_info", {})
             for eid, info in enemy_info.items():
                 team_id = str(info.get("enemy_team_id", ""))
                 
-                # Check if the team_id exists in our loaded map
+                # 1. Calculate Score & Track Unknowns
                 if team_id in id_score_map:
                     total_efficiency += id_score_map[team_id]
                 else:
-                    # Exclude empty IDs if any, otherwise add to unknown set
                     if team_id:
                         unknown_team_ids.add(team_id)
+                        
+                # 2. Track Interests
+                if team_id:
+                    for interest_name, id_list in interest_map.items():
+                        if team_id in id_list:
+                            interest_counts[interest_name] += 1
                 
             # --- Calculate Predicted Score ---
             predicted_score = int(current_score + (total_efficiency * EFFICIENCY_COEFFICIENT))
             
-            # --- Console Output (ASCII ONLY) ---
+            # --- Console Output ---
             print("-" * 55)
             print("[*] Map Data Received!")
             print(f"    Current Score          : {current_score:,}")
             print(f"    Total Enemy Efficiency : {total_efficiency:,}")
             print(f"    Predicted Score        : {predicted_score:,}")
             
-            # Print unknown IDs if we found any
+            # Print Interest List (Highlighted in Yellow)
+            print(f"{COLOR_YELLOW}[*] Interest List:{COLOR_RESET}")
+            for i_name, count in interest_counts.items():
+                print(f"{COLOR_YELLOW}    \"{i_name}\": {count}{COLOR_RESET}")
+            
+            # Print Unknown IDs (Highlighted in Red)
             if unknown_team_ids:
-                print("    [!] WARNING: Unknown Enemy Team IDs found:")
+                print(f"{COLOR_RED}[*] unknown ID:{COLOR_RESET}")
                 for uid in sorted(unknown_team_ids):
-                    print(f"        - {uid}")
+                    print(f"{COLOR_RED}    {uid}{COLOR_RESET}")
                     
             print("-" * 55)
 
@@ -112,11 +143,11 @@ def on_message(message, data):
         if msg_id == 'S2C':
             process_s2c_logic(data)
         elif msg_id == 'C2S':
-            pass # Silent C2S to avoid console spam
+            pass
 
 def main():
     process_name = "GrilsFrontLine.exe" 
-    load_score_config()
+    load_configs()
     
     print(f"[*] Attaching to process: {process_name} ...")
     try:

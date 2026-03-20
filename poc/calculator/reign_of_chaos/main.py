@@ -7,7 +7,9 @@ import time
 
 # --- Configuration ---
 OUTPUT_DIR = "traffic_dumps"
-SCORE_FILE = os.path.join("table", "ep11.5.reign_of_chaos.json")
+SCORE_FILE = os.path.join("res", "table.json")
+EFFICIENCY_COEFFICIENT = 0.1  # Added coefficient
+
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
@@ -29,7 +31,7 @@ def load_score_config():
 
 def process_s2c_logic(raw_data):
     """
-    Decompress, Modify JSON for visibility, Calculate scores, Re-compress
+    Decompress, Parse JSON, Calculate efficiency & predicted scores, and check for unknown IDs.
     """
     try:
         # 1. Decompress
@@ -38,20 +40,49 @@ def process_s2c_logic(raw_data):
         
         # Check if this is a map/battle packet
         if "night_spots" in json_obj:
-            print("-" * 55)
+
+            # --- Extract Current Score ---
+            current_score_str = json_obj.get("type5_score", "0")
+            try:
+                current_score = int(current_score_str)
+            except ValueError:
+                current_score = 0
             
-            # --- Calculate Enemy Efficiency (Score) ---
-            total_score = 0
+            # --- Calculate Enemy Efficiency & Track Unknown IDs ---
+            total_efficiency = 0
+            unknown_team_ids = set()  # Use a set to prevent duplicate printing
+            
             enemy_info = json_obj.get("enemy_instance_info", {})
             for eid, info in enemy_info.items():
                 team_id = str(info.get("enemy_team_id", ""))
-                total_score += id_score_map.get(team_id, 0)
+                
+                # Check if the team_id exists in our loaded map
+                if team_id in id_score_map:
+                    total_efficiency += id_score_map[team_id]
+                else:
+                    # Exclude empty IDs if any, otherwise add to unknown set
+                    if team_id:
+                        unknown_team_ids.add(team_id)
+                
+            # --- Calculate Predicted Score ---
+            predicted_score = int(current_score + (total_efficiency * EFFICIENCY_COEFFICIENT))
             
-            # Print with comma separator (e.g., 790,908)
-            print(f"\033[92m[>>>] 地图数据到达! 当前敌方总能效 (Score): {total_score:,}\033[0m")
+            # --- Console Output (ASCII ONLY) ---
+            print("-" * 55)
+            print("[*] Map Data Received!")
+            print(f"    Current Score          : {current_score:,}")
+            print(f"    Total Enemy Efficiency : {total_efficiency:,}")
+            print(f"    Predicted Score        : {predicted_score:,}")
+            
+            # Print unknown IDs if we found any
+            if unknown_team_ids:
+                print("    [!] WARNING: Unknown Enemy Team IDs found:")
+                for uid in sorted(unknown_team_ids):
+                    print(f"        - {uid}")
+                    
             print("-" * 55)
 
-        # Save unmodified packet for analysis
+        # Optional: Save unmodified packet for analysis
         # save_json(json_obj, "S2C")
 
     except Exception as e:

@@ -1,4 +1,7 @@
-# ZIRC's IL2CPP Reverse Collapse
+<p align="center">
+  <img src="docs/pic/zirc.jpg" width="160" height="160" alt="LOGO">
+</p>
+<h1 align="center">ZIRC's IL2CPP Reverse Collapse</h1>
 
 This repo show IL2CPP's reverse engineering of game "Girls' Frontline".
 

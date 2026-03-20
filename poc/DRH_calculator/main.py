@@ -52,7 +52,7 @@ def process_s2c_logic(raw_data):
             print("-" * 55)
 
         # Save unmodified packet for analysis
-        save_json(json_obj, "S2C")
+        # save_json(json_obj, "S2C")
 
     except Exception as e:
         print(f"[!] S2C Process Error: {e}")

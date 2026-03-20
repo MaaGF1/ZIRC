@@ -1,0 +1,4367 @@
+{
+    "night_spots": [
+        {
+            "spot_id": "95234",
+            "belong": "1",
+            "seed": 5411
+        },
+        {
+            "spot_id": "95235",
+            "belong": "1",
+            "seed": 4456
+        },
+        {
+            "spot_id": "95236",
+            "belong": "1",
+            "seed": 9305
+        },
+        {
+            "spot_id": "95237",
+            "belong": "1",
+            "seed": 8424
+        },
+        {
+            "spot_id": "95238",
+            "belong": "1",
+            "seed": 411
+        },
+        {
+            "spot_id": "95239",
+            "belong": "1",
+            "seed": 144
+        },
+        {
+            "spot_id": "95240",
+            "belong": "1",
+            "seed": 4507
+        },
+        {
+            "spot_id": "95241",
+            "belong": "3",
+            "seed": 4376
+        },
+        {
+            "spot_id": "95242",
+            "belong": "3",
+            "seed": 9790
+        },
+        {
+            "spot_id": "95243",
+            "belong": "2",
+            "seed": 5508
+        },
+        {
+            "spot_id": "95244",
+            "belong": "3",
+            "seed": 1169
+        },
+        {
+            "spot_id": "95245",
+            "belong": "3",
+            "seed": 9876
+        },
+        {
+            "spot_id": "95246",
+            "belong": "2",
+            "seed": 8750
+        },
+        {
+            "spot_id": "95247",
+            "belong": "3",
+            "seed": 9368
+        },
+        {
+            "spot_id": "95248",
+            "belong": "3",
+            "seed": 7918
+        },
+        {
+            "spot_id": "95249",
+            "belong": "2",
+            "seed": 948
+        },
+        {
+            "spot_id": "95250",
+            "belong": "2",
+            "seed": 6032
+        },
+        {
+            "spot_id": "95251",
+            "belong": "2",
+            "seed": 7482
+        },
+        {
+            "spot_id": "95252",
+            "belong": "1",
+            "seed": 7888
+        },
+        {
+            "spot_id": "95253",
+            "belong": "2",
+            "seed": 92
+        },
+        {
+            "spot_id": "95254",
+            "belong": "2",
+            "seed": 2740
+        },
+        {
+            "spot_id": "95255",
+            "belong": "2",
+            "seed": 7395
+        },
+        {
+            "spot_id": "95256",
+            "belong": "1",
+            "seed": 4142
+        },
+        {
+            "spot_id": "95257",
+            "belong": "2",
+            "seed": 5827
+        },
+        {
+            "spot_id": "95258",
+            "belong": "2",
+            "seed": 5551
+        },
+        {
+            "spot_id": "95259",
+            "belong": "2",
+            "seed": 8192
+        },
+        {
+            "spot_id": "95260",
+            "belong": "2",
+            "seed": 7016
+        },
+        {
+            "spot_id": "95261",
+            "belong": "2",
+            "seed": 1349
+        },
+        {
+            "spot_id": "95262",
+            "belong": "2",
+            "seed": 3898
+        },
+        {
+            "spot_id": "95263",
+            "belong": "1",
+            "seed": 5456
+        },
+        {
+            "spot_id": "95264",
+            "belong": "2",
+            "seed": 4539
+        },
+        {
+            "spot_id": "95265",
+            "belong": "1",
+            "seed": 9308
+        },
+        {
+            "spot_id": "95266",
+            "belong": "1",
+            "seed": 9912
+        },
+        {
+            "spot_id": "95267",
+            "belong": "1",
+            "seed": 3843
+        },
+        {
+            "spot_id": "95268",
+            "belong": "2",
+            "seed": 7732
+        },
+        {
+            "spot_id": "95269",
+            "belong": "2",
+            "seed": 323
+        },
+        {
+            "spot_id": "95270",
+            "belong": "2",
+            "seed": 3987
+        },
+        {
+            "spot_id": "95271",
+            "belong": "2",
+            "seed": 2239
+        },
+        {
+            "spot_id": "95272",
+            "belong": "2",
+            "seed": 4699
+        },
+        {
+            "spot_id": "95273",
+            "belong": "2",
+            "seed": 3776
+        },
+        {
+            "spot_id": "95274",
+            "belong": "3",
+            "seed": 7746
+        },
+        {
+            "spot_id": "95275",
+            "belong": "0",
+            "seed": 5867
+        },
+        {
+            "spot_id": "95276",
+            "belong": "2",
+            "seed": 3652
+        },
+        {
+            "spot_id": "95277",
+            "belong": "2",
+            "seed": 6495
+        },
+        {
+            "spot_id": "95278",
+            "belong": "2",
+            "seed": 5235
+        },
+        {
+            "spot_id": "95279",
+            "belong": "2",
+            "seed": 1570
+        },
+        {
+            "spot_id": "95280",
+            "belong": "2",
+            "seed": 7443
+        },
+        {
+            "spot_id": "95281",
+            "belong": "2",
+            "seed": 1266
+        },
+        {
+            "spot_id": "95282",
+            "belong": "2",
+            "seed": 9051
+        },
+        {
+            "spot_id": "95283",
+            "belong": "2",
+            "seed": 5331
+        },
+        {
+            "spot_id": "95284",
+            "belong": "2",
+            "seed": 1358
+        },
+        {
+            "spot_id": "95285",
+            "belong": "2",
+            "seed": 1791
+        },
+        {
+            "spot_id": "95286",
+            "belong": "2",
+            "seed": 2725
+        },
+        {
+            "spot_id": "95287",
+            "belong": "2",
+            "seed": 5500
+        },
+        {
+            "spot_id": "95288",
+            "belong": "2",
+            "seed": 7617
+        },
+        {
+            "spot_id": "95289",
+            "belong": "2",
+            "seed": 8276
+        },
+        {
+            "spot_id": "95290",
+            "belong": "2",
+            "seed": 3692
+        },
+        {
+            "spot_id": "95291",
+            "belong": "2",
+            "seed": 4632
+        },
+        {
+            "spot_id": "95292",
+            "belong": "2",
+            "seed": 9624
+        },
+        {
+            "spot_id": "95293",
+            "belong": "0",
+            "seed": 7589
+        },
+        {
+            "spot_id": "95294",
+            "belong": "3",
+            "seed": 87
+        },
+        {
+            "spot_id": "95295",
+            "belong": "2",
+            "seed": 4162
+        },
+        {
+            "spot_id": "95296",
+            "belong": "2",
+            "seed": 6896
+        },
+        {
+            "spot_id": "95297",
+            "belong": "2",
+            "seed": 9999
+        },
+        {
+            "spot_id": "95298",
+            "belong": "2",
+            "seed": 8004
+        },
+        {
+            "spot_id": "95299",
+            "belong": "2",
+            "seed": 4628
+        },
+        {
+            "spot_id": "95300",
+            "belong": "0",
+            "seed": 321
+        },
+        {
+            "spot_id": "95301",
+            "belong": "0",
+            "seed": 1990
+        },
+        {
+            "spot_id": "95302",
+            "belong": "2",
+            "seed": 6866
+        },
+        {
+            "spot_id": "95303",
+            "belong": "2",
+            "seed": 5019
+        },
+        {
+            "spot_id": "95304",
+            "belong": "2",
+            "seed": 5766
+        },
+        {
+            "spot_id": "95305",
+            "belong": "2",
+            "seed": 4611
+        },
+        {
+            "spot_id": "95306",
+            "belong": "2",
+            "seed": 886
+        },
+        {
+            "spot_id": "95307",
+            "belong": "2",
+            "seed": 9418
+        },
+        {
+            "spot_id": "95308",
+            "belong": "2",
+            "seed": 1106
+        },
+        {
+            "spot_id": "95309",
+            "belong": "2",
+            "seed": 6121
+        },
+        {
+            "spot_id": "95310",
+            "belong": "2",
+            "seed": 987
+        },
+        {
+            "spot_id": "95312",
+            "belong": "3",
+            "seed": 8549
+        },
+        {
+            "spot_id": "95313",
+            "belong": "0",
+            "seed": 7387
+        },
+        {
+            "spot_id": "95314",
+            "belong": "0",
+            "seed": 38
+        },
+        {
+            "spot_id": "95315",
+            "belong": "0",
+            "seed": 3879
+        },
+        {
+            "spot_id": "95316",
+            "belong": "3",
+            "seed": 8744
+        },
+        {
+            "spot_id": "95317",
+            "belong": "0",
+            "seed": 1828
+        },
+        {
+            "spot_id": "95318",
+            "belong": "0",
+            "seed": 6603
+        },
+        {
+            "spot_id": "95319",
+            "belong": "3",
+            "seed": 4244
+        },
+        {
+            "spot_id": "95320",
+            "belong": "0",
+            "seed": 9444
+        },
+        {
+            "spot_id": "95321",
+            "belong": "0",
+            "seed": 4878
+        },
+        {
+            "spot_id": "95322",
+            "belong": "0",
+            "seed": 7935
+        },
+        {
+            "spot_id": "95323",
+            "belong": "0",
+            "seed": 4075
+        },
+        {
+            "spot_id": "95324",
+            "belong": "0",
+            "seed": 4501
+        },
+        {
+            "spot_id": "95325",
+            "belong": "0",
+            "seed": 5523
+        },
+        {
+            "spot_id": "95326",
+            "belong": "0",
+            "seed": 4162
+        },
+        {
+            "spot_id": "95327",
+            "belong": "0",
+            "seed": 8663
+        },
+        {
+            "spot_id": "95328",
+            "belong": "0",
+            "seed": 2419
+        },
+        {
+            "spot_id": "95329",
+            "belong": "2",
+            "seed": 4161
+        },
+        {
+            "spot_id": "95330",
+            "belong": "2",
+            "seed": 6667
+        },
+        {
+            "spot_id": "95331",
+            "belong": "2",
+            "seed": 7046
+        },
+        {
+            "spot_id": "95332",
+            "belong": "0",
+            "seed": 4481
+        }
+    ],
+    "night_enemy": [],
+    "night_ally": [
+        {
+            "ally_instance_id": 1,
+            "ally_team_id": "94040967",
+            "from_spot_id": "95252",
+            "to_spot_id": "95252",
+            "hostage_id": "0",
+            "hostage_hp": "0"
+        },
+        {
+            "ally_instance_id": 2,
+            "ally_team_id": "94040969",
+            "from_spot_id": "95256",
+            "to_spot_id": "95256",
+            "hostage_id": "0",
+            "hostage_hp": "0"
+        },
+        {
+            "ally_instance_id": 3,
+            "ally_team_id": "94040968",
+            "from_spot_id": "95263",
+            "to_spot_id": "95263",
+            "hostage_id": "0",
+            "hostage_hp": "0"
+        }
+    ],
+    "enemy_instance_info": {
+        "1": {
+            "enemy_team_id": "94040901",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "2": {
+            "enemy_team_id": "94040901",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "3": {
+            "enemy_team_id": "94040901",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "4": {
+            "enemy_team_id": "94040902",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "5": {
+            "enemy_team_id": "94040902",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "6": {
+            "enemy_team_id": "94040902",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "7": {
+            "enemy_team_id": "94040903",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "8": {
+            "enemy_team_id": "94040904",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "9": {
+            "enemy_team_id": "94040903",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "10": {
+            "enemy_team_id": "94040904",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "11": {
+            "enemy_team_id": "94040905",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "101",
+            "enemy_ai_para": "@95280,95281,95298,95299,95292,95291,95280:1"
+        },
+        "12": {
+            "enemy_team_id": "94040907",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "101",
+            "enemy_ai_para": "@95296,95297,95283,95284,95303,95302,95296:1"
+        },
+        "13": {
+            "enemy_team_id": "94040903",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "14": {
+            "enemy_team_id": "94040904",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "15": {
+            "enemy_team_id": "94040905",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "101",
+            "enemy_ai_para": "@95280,95281,95298,95299,95292,95291,95280:1"
+        },
+        "16": {
+            "enemy_team_id": "94040911",
+            "boss_hp": "245000",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "101",
+            "enemy_ai_para": "@95287,95293,95300,95301,95295,95288,95287:1"
+        },
+        "17": {
+            "enemy_team_id": "94040907",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "101",
+            "enemy_ai_para": "@95296,95297,95283,95284,95303,95302,95296:1"
+        },
+        "18": {
+            "enemy_team_id": "94040906",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "101",
+            "enemy_ai_para": "@95280,95281,95298,95299,95292,95291,95280:1"
+        },
+        "19": {
+            "enemy_team_id": "94040908",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "101",
+            "enemy_ai_para": "@95296,95297,95283,95284,95303,95302,95296:1"
+        },
+        "20": {
+            "enemy_team_id": "94040909",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        },
+        "21": {
+            "enemy_team_id": "94040910",
+            "boss_hp": "0",
+            "enemy_hp_percent": 1,
+            "enemy_birth_turn": 1,
+            "enemy_ai": "103",
+            "enemy_ai_para": ""
+        }
+    },
+    "ally_instance_info": {
+        "1": {
+            "ally_instance_id": 1,
+            "ally_team_id": "94040967",
+            "ally_sangvis": [],
+            "ally_sangvis_team_info": [],
+            "ally_guns": {
+                "746": {
+                    "gun_id": "143",
+                    "gun_level": "100",
+                    "pow": "32",
+                    "hit": "24",
+                    "dodge": "122",
+                    "rate": "58",
+                    "skill1": "10",
+                    "skill2": "0",
+                    "number": "5",
+                    "skin": "0",
+                    "if_modification": "0",
+                    "equip1": "3040",
+                    "equip2": "3072",
+                    "equip3": "3016",
+                    "life": "970",
+                    "rec": "25",
+                    "id": "746",
+                    "edit_type": 2,
+                    "location": 1,
+                    "position": "13"
+                },
+                "747": {
+                    "gun_id": "20056",
+                    "gun_level": "120",
+                    "pow": "104",
+                    "hit": "102",
+                    "dodge": "92",
+                    "rate": "158",
+                    "skill1": "10",
+                    "skill2": "10",
+                    "number": "5",
+                    "skin": "0",
+                    "if_modification": "3",
+                    "equip1": "3016",
+                    "equip2": "3004",
+                    "equip3": "3032",
+                    "life": "565",
+                    "rec": "9",
+                    "id": "747",
+                    "edit_type": 2,
+                    "location": 2,
+                    "position": "8"
+                }
+            },
+            "ally_fairy": [],
+            "ally_equips": {
+                "3040": {
+                    "id": "3040",
+                    "edit_type": 2,
+                    "equip_id": "40",
+                    "equip_level": "10",
+                    "pow": "10000",
+                    "hit": "0",
+                    "dodge": "10000",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "0",
+                    "armor_piercing": "0",
+                    "armor": "0",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "0",
+                    "bullet_number_up": "0"
+                },
+                "3072": {
+                    "id": "3072",
+                    "edit_type": 2,
+                    "equip_id": "72",
+                    "equip_level": "10",
+                    "pow": "10000",
+                    "hit": "0",
+                    "dodge": "0",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "0",
+                    "armor_piercing": "10000",
+                    "armor": "0",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "0",
+                    "bullet_number_up": "0"
+                },
+                "3016": {
+                    "id": "3016",
+                    "edit_type": 2,
+                    "equip_id": "16",
+                    "equip_level": "0",
+                    "pow": "0",
+                    "hit": "0",
+                    "dodge": "0",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "0",
+                    "armor_piercing": "0",
+                    "armor": "0",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "10000",
+                    "bullet_number_up": "0"
+                },
+                "3004": {
+                    "id": "3004",
+                    "edit_type": 2,
+                    "equip_id": "4",
+                    "equip_level": "10",
+                    "pow": "0",
+                    "hit": "0",
+                    "dodge": "0",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "10000",
+                    "armor_piercing": "0",
+                    "armor": "0",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "0",
+                    "bullet_number_up": "0"
+                },
+                "3032": {
+                    "id": "3032",
+                    "edit_type": 2,
+                    "equip_id": "32",
+                    "equip_level": "10",
+                    "pow": "10000",
+                    "hit": "0",
+                    "dodge": "0",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "0",
+                    "armor_piercing": "0",
+                    "armor": "0",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "0",
+                    "bullet_number_up": "0"
+                }
+            },
+            "ally_vehicle": [],
+            "ally_vehicle_info": [],
+            "ally_vehicle_component": [],
+            "ally_vehicle_common_component": [],
+            "ally_vehicle_crew": [],
+            "ally_squad": [],
+            "ally_enemy": "317948",
+            "ally_type": "1",
+            "target_type": 3,
+            "duration_end_turn": 0,
+            "no_battle_damage": "-1",
+            "ai": "1",
+            "ai_para": "",
+            "ally_boss_hp": 0,
+            "ally_enemy_hp_percent": 1,
+            "team_resource": [],
+            "supply_resource": {
+                "ammo": 0,
+                "mre": 0
+            },
+            "if_withdraw": 0,
+            "if_fix": 0,
+            "if_supply": 0,
+            "if_reinforceAgain": 0,
+            "move_turn": 0,
+            "transform_condition": "",
+            "betray_condition": "",
+            "battleskill_switch": 1
+        },
+        "2": {
+            "ally_instance_id": 2,
+            "ally_team_id": "94040969",
+            "ally_sangvis": [],
+            "ally_sangvis_team_info": [],
+            "ally_guns": {
+                "750": {
+                    "gun_id": "205",
+                    "gun_level": "100",
+                    "pow": "110",
+                    "hit": "134",
+                    "dodge": "96",
+                    "rate": "152",
+                    "skill1": "10",
+                    "skill2": "0",
+                    "number": "5",
+                    "skin": "0",
+                    "if_modification": "0",
+                    "equip1": "3004",
+                    "equip2": "3032",
+                    "equip3": "3058",
+                    "life": "580",
+                    "rec": "10",
+                    "id": "750",
+                    "edit_type": 2,
+                    "location": 1,
+                    "position": "7"
+                },
+                "751": {
+                    "gun_id": "20057",
+                    "gun_level": "120",
+                    "pow": "100",
+                    "hit": "100",
+                    "dodge": "104",
+                    "rate": "156",
+                    "skill1": "10",
+                    "skill2": "10",
+                    "number": "5",
+                    "skin": "0",
+                    "if_modification": "3",
+                    "equip1": "3016",
+                    "equip2": "3004",
+                    "equip3": "3032",
+                    "life": "540",
+                    "rec": "9",
+                    "id": "751",
+                    "edit_type": 2,
+                    "location": 2,
+                    "position": "9"
+                }
+            },
+            "ally_fairy": [],
+            "ally_equips": {
+                "3004": {
+                    "id": "3004",
+                    "edit_type": 2,
+                    "equip_id": "4",
+                    "equip_level": "10",
+                    "pow": "0",
+                    "hit": "0",
+                    "dodge": "0",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "10000",
+                    "armor_piercing": "0",
+                    "armor": "0",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "0",
+                    "bullet_number_up": "0"
+                },
+                "3032": {
+                    "id": "3032",
+                    "edit_type": 2,
+                    "equip_id": "32",
+                    "equip_level": "10",
+                    "pow": "10000",
+                    "hit": "0",
+                    "dodge": "0",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "0",
+                    "armor_piercing": "0",
+                    "armor": "0",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "0",
+                    "bullet_number_up": "0"
+                },
+                "3058": {
+                    "id": "3058",
+                    "edit_type": 2,
+                    "equip_id": "58",
+                    "equip_level": "10",
+                    "pow": "0",
+                    "hit": "0",
+                    "dodge": "10000",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "0",
+                    "armor_piercing": "0",
+                    "armor": "0",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "0",
+                    "bullet_number_up": "0"
+                },
+                "3016": {
+                    "id": "3016",
+                    "edit_type": 2,
+                    "equip_id": "16",
+                    "equip_level": "0",
+                    "pow": "0",
+                    "hit": "0",
+                    "dodge": "0",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "0",
+                    "armor_piercing": "0",
+                    "armor": "0",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "10000",
+                    "bullet_number_up": "0"
+                }
+            },
+            "ally_vehicle": [],
+            "ally_vehicle_info": [],
+            "ally_vehicle_component": [],
+            "ally_vehicle_common_component": [],
+            "ally_vehicle_crew": [],
+            "ally_squad": [],
+            "ally_enemy": "317948",
+            "ally_type": "1",
+            "target_type": 3,
+            "duration_end_turn": 0,
+            "no_battle_damage": "-1",
+            "ai": "1",
+            "ai_para": "",
+            "ally_boss_hp": 0,
+            "ally_enemy_hp_percent": 1,
+            "team_resource": [],
+            "supply_resource": {
+                "ammo": 0,
+                "mre": 0
+            },
+            "if_withdraw": 0,
+            "if_fix": 0,
+            "if_supply": 0,
+            "if_reinforceAgain": 0,
+            "move_turn": 0,
+            "transform_condition": "",
+            "betray_condition": "",
+            "battleskill_switch": 1
+        },
+        "3": {
+            "ally_instance_id": 3,
+            "ally_team_id": "94040968",
+            "ally_sangvis": [],
+            "ally_sangvis_team_info": [],
+            "ally_guns": {
+                "748": {
+                    "gun_id": "20055",
+                    "gun_level": "120",
+                    "pow": "100",
+                    "hit": "100",
+                    "dodge": "100",
+                    "rate": "160",
+                    "skill1": "10",
+                    "skill2": "10",
+                    "number": "5",
+                    "skin": "0",
+                    "if_modification": "3",
+                    "equip1": "3004",
+                    "equip2": "3032",
+                    "equip3": "3099",
+                    "life": "565",
+                    "rec": "9",
+                    "id": "748",
+                    "edit_type": 2,
+                    "location": 1,
+                    "position": "7"
+                },
+                "749": {
+                    "gun_id": "206",
+                    "gun_level": "100",
+                    "pow": "112",
+                    "hit": "124",
+                    "dodge": "104",
+                    "rate": "156",
+                    "skill1": "10",
+                    "skill2": "0",
+                    "number": "5",
+                    "skin": "0",
+                    "if_modification": "0",
+                    "equip1": "3004",
+                    "equip2": "3032",
+                    "equip3": "3058",
+                    "life": "550",
+                    "rec": "9",
+                    "id": "749",
+                    "edit_type": 2,
+                    "location": 2,
+                    "position": "9"
+                }
+            },
+            "ally_fairy": [],
+            "ally_equips": {
+                "3004": {
+                    "id": "3004",
+                    "edit_type": 2,
+                    "equip_id": "4",
+                    "equip_level": "10",
+                    "pow": "0",
+                    "hit": "0",
+                    "dodge": "0",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "10000",
+                    "armor_piercing": "0",
+                    "armor": "0",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "0",
+                    "bullet_number_up": "0"
+                },
+                "3032": {
+                    "id": "3032",
+                    "edit_type": 2,
+                    "equip_id": "32",
+                    "equip_level": "10",
+                    "pow": "10000",
+                    "hit": "0",
+                    "dodge": "0",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "0",
+                    "armor_piercing": "0",
+                    "armor": "0",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "0",
+                    "bullet_number_up": "0"
+                },
+                "3099": {
+                    "id": "3099",
+                    "edit_type": 2,
+                    "equip_id": "99",
+                    "equip_level": "10",
+                    "pow": "10000",
+                    "hit": "0",
+                    "dodge": "0",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "0",
+                    "armor_piercing": "0",
+                    "armor": "10000",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "0",
+                    "bullet_number_up": "0"
+                },
+                "3058": {
+                    "id": "3058",
+                    "edit_type": 2,
+                    "equip_id": "58",
+                    "equip_level": "10",
+                    "pow": "0",
+                    "hit": "0",
+                    "dodge": "10000",
+                    "speed": "0",
+                    "rate": "0",
+                    "critical_harm_rate": "0",
+                    "critical_percent": "0",
+                    "armor_piercing": "0",
+                    "armor": "0",
+                    "shield": "0",
+                    "damage_amplify": "0",
+                    "damage_reduction": "0",
+                    "night_view_percent": "0",
+                    "bullet_number_up": "0"
+                }
+            },
+            "ally_vehicle": [],
+            "ally_vehicle_info": [],
+            "ally_vehicle_component": [],
+            "ally_vehicle_common_component": [],
+            "ally_vehicle_crew": [],
+            "ally_squad": [],
+            "ally_enemy": "317948",
+            "ally_type": "1",
+            "target_type": 3,
+            "duration_end_turn": 0,
+            "no_battle_damage": "-1",
+            "ai": "1",
+            "ai_para": "",
+            "ally_boss_hp": 0,
+            "ally_enemy_hp_percent": 1,
+            "team_resource": [],
+            "supply_resource": {
+                "ammo": 0,
+                "mre": 0
+            },
+            "if_withdraw": 0,
+            "if_fix": 0,
+            "if_supply": 0,
+            "if_reinforceAgain": 0,
+            "move_turn": 0,
+            "transform_condition": "",
+            "betray_condition": "",
+            "battleskill_switch": 1
+        },
+        "4": {
+            "ally_instance_id": 4,
+            "ally_team_id": "94040912",
+            "ally_sangvis": [],
+            "ally_sangvis_team_info": [],
+            "ally_guns": [],
+            "ally_fairy": [],
+            "ally_equips": [],
+            "ally_vehicle": [],
+            "ally_vehicle_info": [],
+            "ally_vehicle_component": [],
+            "ally_vehicle_common_component": [],
+            "ally_vehicle_crew": [],
+            "ally_squad": [],
+            "ally_enemy": "94040912",
+            "ally_type": "0",
+            "target_type": 6,
+            "duration_end_turn": 0,
+            "no_battle_damage": "-1",
+            "ai": "102",
+            "ai_para": "@95275,1",
+            "ally_boss_hp": "0",
+            "ally_enemy_hp_percent": 1,
+            "team_resource": [],
+            "supply_resource": {
+                "ammo": 0,
+                "mre": 0
+            },
+            "if_withdraw": 0,
+            "if_fix": 0,
+            "if_supply": 0,
+            "if_reinforceAgain": 0,
+            "move_turn": 0,
+            "transform_condition": "",
+            "betray_condition": "",
+            "battleskill_switch": 1
+        },
+        "5": {
+            "ally_instance_id": 5,
+            "ally_team_id": "94040915",
+            "ally_sangvis": [],
+            "ally_sangvis_team_info": [],
+            "ally_guns": [],
+            "ally_fairy": [],
+            "ally_equips": [],
+            "ally_vehicle": [],
+            "ally_vehicle_info": [],
+            "ally_vehicle_component": [],
+            "ally_vehicle_common_component": [],
+            "ally_vehicle_crew": [],
+            "ally_squad": [],
+            "ally_enemy": "94040915",
+            "ally_type": "0",
+            "target_type": 6,
+            "duration_end_turn": 0,
+            "no_battle_damage": "-1",
+            "ai": "103",
+            "ai_para": "",
+            "ally_boss_hp": "0",
+            "ally_enemy_hp_percent": 1,
+            "team_resource": [],
+            "supply_resource": {
+                "ammo": 0,
+                "mre": 0
+            },
+            "if_withdraw": 0,
+            "if_fix": 0,
+            "if_supply": 0,
+            "if_reinforceAgain": 0,
+            "move_turn": 0,
+            "transform_condition": "",
+            "betray_condition": "",
+            "battleskill_switch": 1
+        },
+        "6": {
+            "ally_instance_id": 6,
+            "ally_team_id": "94040913",
+            "ally_sangvis": [],
+            "ally_sangvis_team_info": [],
+            "ally_guns": [],
+            "ally_fairy": [],
+            "ally_equips": [],
+            "ally_vehicle": [],
+            "ally_vehicle_info": [],
+            "ally_vehicle_component": [],
+            "ally_vehicle_common_component": [],
+            "ally_vehicle_crew": [],
+            "ally_squad": [],
+            "ally_enemy": "94040913",
+            "ally_type": "0",
+            "target_type": 6,
+            "duration_end_turn": 0,
+            "no_battle_damage": "-1",
+            "ai": "101",
+            "ai_para": "@95314,95318,95315,95327:1",
+            "ally_boss_hp": "0",
+            "ally_enemy_hp_percent": 1,
+            "team_resource": [],
+            "supply_resource": {
+                "ammo": 0,
+                "mre": 0
+            },
+            "if_withdraw": 0,
+            "if_fix": 0,
+            "if_supply": 0,
+            "if_reinforceAgain": 0,
+            "move_turn": 0,
+            "transform_condition": "",
+            "betray_condition": "",
+            "battleskill_switch": 1
+        },
+        "7": {
+            "ally_instance_id": 7,
+            "ally_team_id": "94040915",
+            "ally_sangvis": [],
+            "ally_sangvis_team_info": [],
+            "ally_guns": [],
+            "ally_fairy": [],
+            "ally_equips": [],
+            "ally_vehicle": [],
+            "ally_vehicle_info": [],
+            "ally_vehicle_component": [],
+            "ally_vehicle_common_component": [],
+            "ally_vehicle_crew": [],
+            "ally_squad": [],
+            "ally_enemy": "94040915",
+            "ally_type": "0",
+            "target_type": 6,
+            "duration_end_turn": 0,
+            "no_battle_damage": "-1",
+            "ai": "103",
+            "ai_para": "",
+            "ally_boss_hp": "0",
+            "ally_enemy_hp_percent": 1,
+            "team_resource": [],
+            "supply_resource": {
+                "ammo": 0,
+                "mre": 0
+            },
+            "if_withdraw": 0,
+            "if_fix": 0,
+            "if_supply": 0,
+            "if_reinforceAgain": 0,
+            "move_turn": 0,
+            "transform_condition": "",
+            "betray_condition": "",
+            "battleskill_switch": 1
+        },
+        "8": {
+            "ally_instance_id": 8,
+            "ally_team_id": "94040914",
+            "ally_sangvis": [],
+            "ally_sangvis_team_info": [],
+            "ally_guns": [],
+            "ally_fairy": [],
+            "ally_equips": [],
+            "ally_vehicle": [],
+            "ally_vehicle_info": [],
+            "ally_vehicle_component": [],
+            "ally_vehicle_common_component": [],
+            "ally_vehicle_crew": [],
+            "ally_squad": [],
+            "ally_enemy": "94040914",
+            "ally_type": "0",
+            "target_type": 6,
+            "duration_end_turn": 0,
+            "no_battle_damage": "-1",
+            "ai": "101",
+            "ai_para": "@95322,95324,95326,95328:1",
+            "ally_boss_hp": "0",
+            "ally_enemy_hp_percent": 1,
+            "team_resource": [],
+            "supply_resource": {
+                "ammo": 0,
+                "mre": 0
+            },
+            "if_withdraw": 0,
+            "if_fix": 0,
+            "if_supply": 0,
+            "if_reinforceAgain": 0,
+            "move_turn": 0,
+            "transform_condition": "",
+            "betray_condition": "",
+            "battleskill_switch": 1
+        },
+        "9": {
+            "ally_instance_id": 9,
+            "ally_team_id": "94040916",
+            "ally_sangvis": [],
+            "ally_sangvis_team_info": [],
+            "ally_guns": [],
+            "ally_fairy": [],
+            "ally_equips": [],
+            "ally_vehicle": [],
+            "ally_vehicle_info": [],
+            "ally_vehicle_component": [],
+            "ally_vehicle_common_component": [],
+            "ally_vehicle_crew": [],
+            "ally_squad": [],
+            "ally_enemy": "94040916",
+            "ally_type": "0",
+            "target_type": 6,
+            "duration_end_turn": 0,
+            "no_battle_damage": "-1",
+            "ai": "103",
+            "ai_para": "",
+            "ally_boss_hp": "0",
+            "ally_enemy_hp_percent": 1,
+            "team_resource": [],
+            "supply_resource": {
+                "ammo": 0,
+                "mre": 0
+            },
+            "if_withdraw": 0,
+            "if_fix": 0,
+            "if_supply": 0,
+            "if_reinforceAgain": 0,
+            "move_turn": 0,
+            "transform_condition": "",
+            "betray_condition": "",
+            "battleskill_switch": 1
+        },
+        "10": {
+            "ally_instance_id": 10,
+            "ally_team_id": "94040916",
+            "ally_sangvis": [],
+            "ally_sangvis_team_info": [],
+            "ally_guns": [],
+            "ally_fairy": [],
+            "ally_equips": [],
+            "ally_vehicle": [],
+            "ally_vehicle_info": [],
+            "ally_vehicle_component": [],
+            "ally_vehicle_common_component": [],
+            "ally_vehicle_crew": [],
+            "ally_squad": [],
+            "ally_enemy": "94040916",
+            "ally_type": "0",
+            "target_type": 6,
+            "duration_end_turn": 0,
+            "no_battle_damage": "-1",
+            "ai": "103",
+            "ai_para": "",
+            "ally_boss_hp": "0",
+            "ally_enemy_hp_percent": 1,
+            "team_resource": [],
+            "supply_resource": {
+                "ammo": 0,
+                "mre": 0
+            },
+            "if_withdraw": 0,
+            "if_fix": 0,
+            "if_supply": 0,
+            "if_reinforceAgain": 0,
+            "move_turn": 0,
+            "transform_condition": "",
+            "betray_condition": "",
+            "battleskill_switch": 1
+        }
+    },
+    "ally_battle": [],
+    "nobattle_ally_life_change": [],
+    "can_see_spots": [
+        "95235",
+        "95234",
+        "95238",
+        "95239",
+        "95241",
+        "95244",
+        "95265",
+        "95331",
+        "95252",
+        "95256",
+        "95263"
+    ],
+    "died_this_section": {
+        "enemy": [],
+        "ally": []
+    },
+    "fight_environment_group": "",
+    "range_atk_rec": [],
+    "range_atk_turn": {
+        "10": [],
+        "304": [],
+        "305": [],
+        "4": [],
+        "5": [],
+        "6": []
+    },
+    "mission_trigger_engine": [],
+    "type5_score": "0",
+    "target_moved_step": [],
+    "ally1_add": {
+        "94040967": 1,
+        "94040969": 1,
+        "94040968": 1
+    },
+    "fairy_skill_return": {
+        "fairy_effect": {
+            "1": {
+                "origin_key": 0,
+                "origin_spot": "95236",
+                "origin_type": 4,
+                "origin_stc_id": "1010200",
+                "aim_spot": "95236",
+                "aim_type": 1,
+                "aim_stc_id": 1010200
+            },
+            "2": {
+                "origin_key": 0,
+                "origin_spot": "95238",
+                "origin_type": 4,
+                "origin_stc_id": "1010300",
+                "aim_spot": "95238",
+                "aim_type": 1,
+                "aim_stc_id": 1010300
+            },
+            "3": {
+                "origin_key": 0,
+                "origin_spot": "95239",
+                "origin_type": 4,
+                "origin_stc_id": "1010100",
+                "aim_spot": "95239",
+                "aim_type": 1,
+                "aim_stc_id": 1010100
+            },
+            "4": {
+                "origin_key": 0,
+                "origin_spot": "95244",
+                "origin_type": 4,
+                "origin_stc_id": "1020700",
+                "aim_spot": "95244",
+                "aim_type": 1,
+                "aim_stc_id": 1020700
+            },
+            "5": {
+                "origin_key": 0,
+                "origin_spot": "95245",
+                "origin_type": 4,
+                "origin_stc_id": "1020100",
+                "aim_spot": "95245",
+                "aim_type": 1,
+                "aim_stc_id": 1020100
+            },
+            "6": {
+                "origin_key": 0,
+                "origin_spot": "95248",
+                "origin_type": 4,
+                "origin_stc_id": "1020400",
+                "aim_spot": "95248",
+                "aim_type": 1,
+                "aim_stc_id": 1020400
+            },
+            "7": {
+                "origin_key": 0,
+                "origin_spot": "95265",
+                "origin_type": 4,
+                "origin_stc_id": "1020900",
+                "aim_spot": "95265",
+                "aim_type": 1,
+                "aim_stc_id": 1020900
+            },
+            "8": {
+                "origin_key": 0,
+                "origin_spot": "95266",
+                "origin_type": 4,
+                "origin_stc_id": "1020300",
+                "aim_spot": "95266",
+                "aim_type": 1,
+                "aim_stc_id": 1020300
+            },
+            "9": {
+                "origin_key": 0,
+                "origin_spot": "95267",
+                "origin_type": 4,
+                "origin_stc_id": "1020600",
+                "aim_spot": "95267",
+                "aim_type": 1,
+                "aim_stc_id": 1020600
+            },
+            "10": {
+                "origin_key": 0,
+                "origin_spot": "95272",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95272",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "11": {
+                "origin_key": 0,
+                "origin_spot": "95272",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95272",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "12": {
+                "origin_key": 0,
+                "origin_spot": "95272",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95298",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "13": {
+                "origin_key": 0,
+                "origin_spot": "95272",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95298",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "14": {
+                "origin_key": 0,
+                "origin_spot": "95272",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95304",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "15": {
+                "origin_key": 0,
+                "origin_spot": "95272",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95304",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "16": {
+                "origin_key": 0,
+                "origin_spot": "95272",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95281",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "17": {
+                "origin_key": 0,
+                "origin_spot": "95272",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95281",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "18": {
+                "origin_key": 0,
+                "origin_spot": "95272",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95291",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "19": {
+                "origin_key": 0,
+                "origin_spot": "95272",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95291",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "20": {
+                "origin_key": 0,
+                "origin_spot": "95272",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95299",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "21": {
+                "origin_key": 0,
+                "origin_spot": "95272",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95299",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "24": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95273",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "25": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95273",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "26": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95303",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "27": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95303",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "28": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95306",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "29": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95306",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "30": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95284",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "31": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95284",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "32": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95297",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "33": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95297",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "34": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95302",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "35": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95302",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "36": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95305",
+                "aim_type": 1,
+                "aim_stc_id": 1000028
+            },
+            "37": {
+                "origin_key": 0,
+                "origin_spot": "95273",
+                "origin_type": 4,
+                "origin_stc_id": "1080102",
+                "aim_spot": "95305",
+                "aim_type": 1,
+                "aim_stc_id": 1000048
+            },
+            "38": {
+                "origin_key": 0,
+                "origin_spot": "95274",
+                "origin_type": 4,
+                "origin_stc_id": "1040100",
+                "aim_spot": "95274",
+                "aim_type": 1,
+                "aim_stc_id": 1040100
+            },
+            "39": {
+                "origin_key": 0,
+                "origin_spot": "95274",
+                "origin_type": 4,
+                "origin_stc_id": "1040101",
+                "aim_spot": "95274",
+                "aim_type": 1,
+                "aim_stc_id": 1040101
+            },
+            "40": {
+                "origin_key": 0,
+                "origin_spot": "95274",
+                "origin_type": 4,
+                "origin_stc_id": "1040101",
+                "aim_spot": "95257",
+                "aim_type": 1,
+                "aim_stc_id": 1040101
+            },
+            "41": {
+                "origin_key": 0,
+                "origin_spot": "95274",
+                "origin_type": 4,
+                "origin_stc_id": "1040101",
+                "aim_spot": "95275",
+                "aim_type": 1,
+                "aim_stc_id": 1040101
+            },
+            "42": {
+                "origin_key": 0,
+                "origin_spot": "95274",
+                "origin_type": 4,
+                "origin_stc_id": "1000001",
+                "aim_spot": "95274",
+                "aim_type": 1,
+                "aim_stc_id": 1000001
+            },
+            "43": {
+                "origin_key": 0,
+                "origin_spot": "95285",
+                "origin_type": 4,
+                "origin_stc_id": "1010400",
+                "aim_spot": "95285",
+                "aim_type": 1,
+                "aim_stc_id": 1010400
+            },
+            "44": {
+                "origin_key": 0,
+                "origin_spot": "95290",
+                "origin_type": 4,
+                "origin_stc_id": "1010400",
+                "aim_spot": "95290",
+                "aim_type": 1,
+                "aim_stc_id": 1010400
+            },
+            "45": {
+                "origin_key": 0,
+                "origin_spot": "95291",
+                "origin_type": 4,
+                "origin_stc_id": "1070100",
+                "aim_spot": "95291",
+                "aim_type": 1,
+                "aim_stc_id": 1070100
+            },
+            "46": {
+                "origin_key": 0,
+                "origin_spot": "95297",
+                "origin_type": 4,
+                "origin_stc_id": "1070100",
+                "aim_spot": "95297",
+                "aim_type": 1,
+                "aim_stc_id": 1070100
+            },
+            "47": {
+                "origin_key": 0,
+                "origin_spot": "95307",
+                "origin_type": 4,
+                "origin_stc_id": "1030100",
+                "aim_spot": "95307",
+                "aim_type": 1,
+                "aim_stc_id": 1030100
+            },
+            "48": {
+                "origin_key": 0,
+                "origin_spot": "95307",
+                "origin_type": 4,
+                "origin_stc_id": "1000027",
+                "aim_spot": "95307",
+                "aim_type": 1,
+                "aim_stc_id": 1000009
+            },
+            "49": {
+                "origin_key": 0,
+                "origin_spot": "95308",
+                "origin_type": 4,
+                "origin_stc_id": "1030100",
+                "aim_spot": "95308",
+                "aim_type": 1,
+                "aim_stc_id": 1030100
+            },
+            "50": {
+                "origin_key": 0,
+                "origin_spot": "95308",
+                "origin_type": 4,
+                "origin_stc_id": "1000027",
+                "aim_spot": "95308",
+                "aim_type": 1,
+                "aim_stc_id": 1000009
+            },
+            "51": {
+                "origin_key": 0,
+                "origin_spot": "95309",
+                "origin_type": 4,
+                "origin_stc_id": "1030100",
+                "aim_spot": "95309",
+                "aim_type": 1,
+                "aim_stc_id": 1030100
+            },
+            "52": {
+                "origin_key": 0,
+                "origin_spot": "95309",
+                "origin_type": 4,
+                "origin_stc_id": "1000027",
+                "aim_spot": "95309",
+                "aim_type": 1,
+                "aim_stc_id": 1000009
+            },
+            "53": {
+                "origin_key": 0,
+                "origin_spot": "95310",
+                "origin_type": 4,
+                "origin_stc_id": "1030100",
+                "aim_spot": "95310",
+                "aim_type": 1,
+                "aim_stc_id": 1030100
+            },
+            "54": {
+                "origin_key": 0,
+                "origin_spot": "95310",
+                "origin_type": 4,
+                "origin_stc_id": "1000027",
+                "aim_spot": "95310",
+                "aim_type": 1,
+                "aim_stc_id": 1000009
+            },
+            "55": {
+                "origin_key": 0,
+                "origin_spot": "95312",
+                "origin_type": 4,
+                "origin_stc_id": "1050100",
+                "aim_spot": "95312",
+                "aim_type": 1,
+                "aim_stc_id": 1050100
+            },
+            "56": {
+                "origin_key": 0,
+                "origin_spot": "95312",
+                "origin_type": 4,
+                "origin_stc_id": "1050101",
+                "aim_spot": "95312",
+                "aim_type": 1,
+                "aim_stc_id": 1050101
+            },
+            "57": {
+                "origin_key": 0,
+                "origin_spot": "95314",
+                "origin_type": 4,
+                "origin_stc_id": "94040969",
+                "aim_spot": "95317",
+                "aim_type": 1,
+                "aim_stc_id": 94040969
+            },
+            "58": {
+                "origin_key": 0,
+                "origin_spot": "95314",
+                "origin_type": 4,
+                "origin_stc_id": "94040969",
+                "aim_spot": "95323",
+                "aim_type": 1,
+                "aim_stc_id": 94040969
+            },
+            "59": {
+                "origin_key": 0,
+                "origin_spot": "95314",
+                "origin_type": 4,
+                "origin_stc_id": "94040969",
+                "aim_spot": "95313",
+                "aim_type": 1,
+                "aim_stc_id": 94040969
+            },
+            "60": {
+                "origin_key": 0,
+                "origin_spot": "95314",
+                "origin_type": 4,
+                "origin_stc_id": "94040969",
+                "aim_spot": "95325",
+                "aim_type": 1,
+                "aim_stc_id": 94040969
+            },
+            "61": {
+                "origin_key": 0,
+                "origin_spot": "95316",
+                "origin_type": 4,
+                "origin_stc_id": "1050100",
+                "aim_spot": "95316",
+                "aim_type": 1,
+                "aim_stc_id": 1050100
+            },
+            "62": {
+                "origin_key": 0,
+                "origin_spot": "95316",
+                "origin_type": 4,
+                "origin_stc_id": "1050101",
+                "aim_spot": "95316",
+                "aim_type": 1,
+                "aim_stc_id": 1050101
+            },
+            "63": {
+                "origin_key": 0,
+                "origin_spot": "95319",
+                "origin_type": 4,
+                "origin_stc_id": "1050100",
+                "aim_spot": "95319",
+                "aim_type": 1,
+                "aim_stc_id": 1050100
+            },
+            "64": {
+                "origin_key": 0,
+                "origin_spot": "95319",
+                "origin_type": 4,
+                "origin_stc_id": "1050101",
+                "aim_spot": "95319",
+                "aim_type": 1,
+                "aim_stc_id": 1050101
+            },
+            "65": {
+                "origin_key": 0,
+                "origin_spot": "95322",
+                "origin_type": 4,
+                "origin_stc_id": "900002",
+                "aim_spot": "95313",
+                "aim_type": 1,
+                "aim_stc_id": 900002
+            },
+            "66": {
+                "origin_key": 0,
+                "origin_spot": "95322",
+                "origin_type": 4,
+                "origin_stc_id": "900002",
+                "aim_spot": "95325",
+                "aim_type": 1,
+                "aim_stc_id": 900002
+            },
+            "67": {
+                "origin_key": 0,
+                "origin_spot": "95322",
+                "origin_type": 4,
+                "origin_stc_id": "900002",
+                "aim_spot": "95317",
+                "aim_type": 1,
+                "aim_stc_id": 900002
+            },
+            "68": {
+                "origin_key": 0,
+                "origin_spot": "95322",
+                "origin_type": 4,
+                "origin_stc_id": "900002",
+                "aim_spot": "95323",
+                "aim_type": 1,
+                "aim_stc_id": 900002
+            },
+            "69": {
+                "origin_key": 0,
+                "origin_spot": "95329",
+                "origin_type": 4,
+                "origin_stc_id": "1020200",
+                "aim_spot": "95329",
+                "aim_type": 1,
+                "aim_stc_id": 1020200
+            },
+            "70": {
+                "origin_key": 0,
+                "origin_spot": "95330",
+                "origin_type": 4,
+                "origin_stc_id": "1020500",
+                "aim_spot": "95330",
+                "aim_type": 1,
+                "aim_stc_id": 1020500
+            },
+            "71": {
+                "origin_key": 0,
+                "origin_spot": "95331",
+                "origin_type": 4,
+                "origin_stc_id": "1020800",
+                "aim_spot": "95331",
+                "aim_type": 1,
+                "aim_stc_id": 1020800
+            }
+        }
+    },
+    "fairy_skill_perform": [
+        {
+            "source_type": 99910,
+            "source_value": "95236",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1010200",
+            "perform_spot_id": "95236"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95236",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "2000005",
+            "perform_spot_id": "95236"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95238",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1010300",
+            "perform_spot_id": "95238"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95238",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "2000005",
+            "perform_spot_id": "95238"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95239",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1010100",
+            "perform_spot_id": "95239"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95239",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "2000005",
+            "perform_spot_id": "95239"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95244",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1020700",
+            "perform_spot_id": "95244"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95245",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1020100",
+            "perform_spot_id": "95245"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95248",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1020400",
+            "perform_spot_id": "95248"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95265",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1020900",
+            "perform_spot_id": "95265"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95266",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1020300",
+            "perform_spot_id": "95266"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95267",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1020600",
+            "perform_spot_id": "95267"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95272",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1080102",
+            "perform_spot_id": "95272"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95273",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1080102",
+            "perform_spot_id": "95273"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95274",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1040100",
+            "perform_spot_id": "95274"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95274",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1000001",
+            "perform_spot_id": "95274"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95274",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1040101",
+            "perform_spot_id": "95274"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95274",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "2000008",
+            "perform_spot_id": "95274"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95285",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1010400",
+            "perform_spot_id": "95285"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95290",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1010400",
+            "perform_spot_id": "95290"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95291",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1070100",
+            "perform_spot_id": "95291"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95297",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1070100",
+            "perform_spot_id": "95297"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95307",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1030100",
+            "perform_spot_id": "95307"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95307",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1000009",
+            "perform_spot_id": "95307"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95307",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1000027",
+            "perform_spot_id": "95307"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95307",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "2000007",
+            "perform_spot_id": "95307"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95308",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1030100",
+            "perform_spot_id": "95308"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95308",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1000009",
+            "perform_spot_id": "95308"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95308",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1000027",
+            "perform_spot_id": "95308"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95308",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "2000007",
+            "perform_spot_id": "95308"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95309",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1030100",
+            "perform_spot_id": "95309"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95309",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1000009",
+            "perform_spot_id": "95309"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95309",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1000027",
+            "perform_spot_id": "95309"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95309",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "2000007",
+            "perform_spot_id": "95309"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95310",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1030100",
+            "perform_spot_id": "95310"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95310",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1000009",
+            "perform_spot_id": "95310"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95310",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1000027",
+            "perform_spot_id": "95310"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95310",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "2000007",
+            "perform_spot_id": "95310"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95312",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1050100",
+            "perform_spot_id": "95312"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95312",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1050101",
+            "perform_spot_id": "95312"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95312",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "2000009",
+            "perform_spot_id": "95312"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95314",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "94040969",
+            "perform_spot_id": "95314"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95316",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1050100",
+            "perform_spot_id": "95316"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95316",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1050101",
+            "perform_spot_id": "95316"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95316",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "2000009",
+            "perform_spot_id": "95316"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95319",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1050100",
+            "perform_spot_id": "95319"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95319",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1050101",
+            "perform_spot_id": "95319"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95319",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "2000009",
+            "perform_spot_id": "95319"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95322",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "900002",
+            "perform_spot_id": "95322"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95329",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1020200",
+            "perform_spot_id": "95329"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95330",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1020500",
+            "perform_spot_id": "95330"
+        },
+        {
+            "source_type": 99910,
+            "source_value": "95331",
+            "next_skill_cd_turn": 1,
+            "mission_skill_config_id": "1020800",
+            "perform_spot_id": "95331"
+        }
+    ],
+    "fairy_skill_on_spot": {
+        "95236": {
+            "1": {
+                "source_type": 99910,
+                "source_value": "95236",
+                "engine_spot_id": "95236",
+                "special_spot_config_id": 1010200,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95236"
+                ],
+                "effect_spots": [
+                    "95236"
+                ],
+                "conflict_type": "1010200",
+                "priority": "1010200",
+                "mission_skill_config_id": "1010200"
+            }
+        },
+        "95238": {
+            "2": {
+                "source_type": 99910,
+                "source_value": "95238",
+                "engine_spot_id": "95238",
+                "special_spot_config_id": 1010300,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95238"
+                ],
+                "effect_spots": [
+                    "95238"
+                ],
+                "conflict_type": "1010300",
+                "priority": "1010300",
+                "mission_skill_config_id": "1010300"
+            }
+        },
+        "95239": {
+            "3": {
+                "source_type": 99910,
+                "source_value": "95239",
+                "engine_spot_id": "95239",
+                "special_spot_config_id": 1010100,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95239"
+                ],
+                "effect_spots": [
+                    "95239"
+                ],
+                "conflict_type": "1010100",
+                "priority": "1010100",
+                "mission_skill_config_id": "1010100"
+            }
+        },
+        "95244": {
+            "4": {
+                "source_type": 99910,
+                "source_value": "95244",
+                "engine_spot_id": "95244",
+                "special_spot_config_id": 1020700,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95244"
+                ],
+                "effect_spots": [
+                    "95244"
+                ],
+                "conflict_type": "1020700",
+                "priority": "1020700",
+                "mission_skill_config_id": "1020700"
+            }
+        },
+        "95245": {
+            "5": {
+                "source_type": 99910,
+                "source_value": "95245",
+                "engine_spot_id": "95245",
+                "special_spot_config_id": 1020100,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95245"
+                ],
+                "effect_spots": [
+                    "95245"
+                ],
+                "conflict_type": "1020100",
+                "priority": "1020100",
+                "mission_skill_config_id": "1020100"
+            }
+        },
+        "95248": {
+            "6": {
+                "source_type": 99910,
+                "source_value": "95248",
+                "engine_spot_id": "95248",
+                "special_spot_config_id": 1020400,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95248"
+                ],
+                "effect_spots": [
+                    "95248"
+                ],
+                "conflict_type": "1020400",
+                "priority": "1020400",
+                "mission_skill_config_id": "1020400"
+            }
+        },
+        "95265": {
+            "7": {
+                "source_type": 99910,
+                "source_value": "95265",
+                "engine_spot_id": "95265",
+                "special_spot_config_id": 1020900,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95265"
+                ],
+                "effect_spots": [
+                    "95265"
+                ],
+                "conflict_type": "1020900",
+                "priority": "1020900",
+                "mission_skill_config_id": "1020900"
+            }
+        },
+        "95266": {
+            "8": {
+                "source_type": 99910,
+                "source_value": "95266",
+                "engine_spot_id": "95266",
+                "special_spot_config_id": 1020300,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95266"
+                ],
+                "effect_spots": [
+                    "95266"
+                ],
+                "conflict_type": "1020300",
+                "priority": "1020300",
+                "mission_skill_config_id": "1020300"
+            }
+        },
+        "95267": {
+            "9": {
+                "source_type": 99910,
+                "source_value": "95267",
+                "engine_spot_id": "95267",
+                "special_spot_config_id": 1020600,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95267"
+                ],
+                "effect_spots": [
+                    "95267"
+                ],
+                "conflict_type": "1020600",
+                "priority": "1020600",
+                "mission_skill_config_id": "1020600"
+            }
+        },
+        "95272": {
+            "10": {
+                "source_type": 99910,
+                "source_value": "95272",
+                "engine_spot_id": "95272",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95272"
+                ],
+                "effect_spots": [
+                    "95272"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "11": {
+                "source_type": 99910,
+                "source_value": "95272",
+                "engine_spot_id": "95272",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95272"
+                ],
+                "effect_spots": [
+                    "95272"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            }
+        },
+        "95298": {
+            "12": {
+                "source_type": 99910,
+                "source_value": "95272",
+                "engine_spot_id": "95298",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95298"
+                ],
+                "effect_spots": [
+                    "95298"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "13": {
+                "source_type": 99910,
+                "source_value": "95272",
+                "engine_spot_id": "95298",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95298"
+                ],
+                "effect_spots": [
+                    "95298"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            }
+        },
+        "95304": {
+            "14": {
+                "source_type": 99910,
+                "source_value": "95272",
+                "engine_spot_id": "95304",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95304"
+                ],
+                "effect_spots": [
+                    "95304"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "15": {
+                "source_type": 99910,
+                "source_value": "95272",
+                "engine_spot_id": "95304",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95304"
+                ],
+                "effect_spots": [
+                    "95304"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            }
+        },
+        "95281": {
+            "16": {
+                "source_type": 99910,
+                "source_value": "95272",
+                "engine_spot_id": "95281",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95281"
+                ],
+                "effect_spots": [
+                    "95281"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "17": {
+                "source_type": 99910,
+                "source_value": "95272",
+                "engine_spot_id": "95281",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95281"
+                ],
+                "effect_spots": [
+                    "95281"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            }
+        },
+        "95291": {
+            "18": {
+                "source_type": 99910,
+                "source_value": "95272",
+                "engine_spot_id": "95291",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95291"
+                ],
+                "effect_spots": [
+                    "95291"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "19": {
+                "source_type": 99910,
+                "source_value": "95272",
+                "engine_spot_id": "95291",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95291"
+                ],
+                "effect_spots": [
+                    "95291"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            },
+            "45": {
+                "source_type": 99910,
+                "source_value": "95291",
+                "engine_spot_id": "95291",
+                "special_spot_config_id": 1070100,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95291"
+                ],
+                "effect_spots": [
+                    "95291"
+                ],
+                "conflict_type": "1070100",
+                "priority": "1070100",
+                "mission_skill_config_id": "1070100"
+            }
+        },
+        "95299": {
+            "20": {
+                "source_type": 99910,
+                "source_value": "95272",
+                "engine_spot_id": "95299",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95299"
+                ],
+                "effect_spots": [
+                    "95299"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "21": {
+                "source_type": 99910,
+                "source_value": "95272",
+                "engine_spot_id": "95299",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95299"
+                ],
+                "effect_spots": [
+                    "95299"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            }
+        },
+        "95305": {
+            "36": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95305",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95305"
+                ],
+                "effect_spots": [
+                    "95305"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "37": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95305",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95305"
+                ],
+                "effect_spots": [
+                    "95305"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            }
+        },
+        "95273": {
+            "24": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95273",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95273"
+                ],
+                "effect_spots": [
+                    "95273"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "25": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95273",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95273"
+                ],
+                "effect_spots": [
+                    "95273"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            }
+        },
+        "95303": {
+            "26": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95303",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95303"
+                ],
+                "effect_spots": [
+                    "95303"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "27": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95303",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95303"
+                ],
+                "effect_spots": [
+                    "95303"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            }
+        },
+        "95306": {
+            "28": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95306",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95306"
+                ],
+                "effect_spots": [
+                    "95306"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "29": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95306",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95306"
+                ],
+                "effect_spots": [
+                    "95306"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            }
+        },
+        "95284": {
+            "30": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95284",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95284"
+                ],
+                "effect_spots": [
+                    "95284"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "31": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95284",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95284"
+                ],
+                "effect_spots": [
+                    "95284"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            }
+        },
+        "95297": {
+            "32": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95297",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95297"
+                ],
+                "effect_spots": [
+                    "95297"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "33": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95297",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95297"
+                ],
+                "effect_spots": [
+                    "95297"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            },
+            "46": {
+                "source_type": 99910,
+                "source_value": "95297",
+                "engine_spot_id": "95297",
+                "special_spot_config_id": 1070100,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95297"
+                ],
+                "effect_spots": [
+                    "95297"
+                ],
+                "conflict_type": "1070100",
+                "priority": "1070100",
+                "mission_skill_config_id": "1070100"
+            }
+        },
+        "95302": {
+            "34": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95302",
+                "special_spot_config_id": 1000028,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95302"
+                ],
+                "effect_spots": [
+                    "95302"
+                ],
+                "conflict_type": "1000028",
+                "priority": "1000028",
+                "mission_skill_config_id": "1080102"
+            },
+            "35": {
+                "source_type": 99910,
+                "source_value": "95273",
+                "engine_spot_id": "95302",
+                "special_spot_config_id": 1000048,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95302"
+                ],
+                "effect_spots": [
+                    "95302"
+                ],
+                "conflict_type": "1000048",
+                "priority": "1000048",
+                "mission_skill_config_id": "1080102"
+            }
+        },
+        "95274": {
+            "38": {
+                "source_type": 99910,
+                "source_value": "95274",
+                "engine_spot_id": "95274",
+                "special_spot_config_id": 1040100,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95274"
+                ],
+                "effect_spots": [
+                    "95274"
+                ],
+                "conflict_type": "1040100",
+                "priority": "1040100",
+                "mission_skill_config_id": "1040100"
+            },
+            "39": {
+                "source_type": 99910,
+                "source_value": "95274",
+                "engine_spot_id": "95274",
+                "special_spot_config_id": 1040101,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95274"
+                ],
+                "effect_spots": [
+                    "95274"
+                ],
+                "conflict_type": "1040101",
+                "priority": "1040101",
+                "mission_skill_config_id": "1040101"
+            },
+            "42": {
+                "source_type": 99910,
+                "source_value": "95274",
+                "engine_spot_id": "95274",
+                "special_spot_config_id": 1000001,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95274"
+                ],
+                "effect_spots": [
+                    "95274"
+                ],
+                "conflict_type": "1000001",
+                "priority": "1000001",
+                "mission_skill_config_id": "1000001"
+            }
+        },
+        "95257": {
+            "40": {
+                "source_type": 99910,
+                "source_value": "95274",
+                "engine_spot_id": "95257",
+                "special_spot_config_id": 1040101,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95257"
+                ],
+                "effect_spots": [
+                    "95257"
+                ],
+                "conflict_type": "1040101",
+                "priority": "1040101",
+                "mission_skill_config_id": "1040101"
+            }
+        },
+        "95275": {
+            "41": {
+                "source_type": 99910,
+                "source_value": "95274",
+                "engine_spot_id": "95275",
+                "special_spot_config_id": 1040101,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95275"
+                ],
+                "effect_spots": [
+                    "95275"
+                ],
+                "conflict_type": "1040101",
+                "priority": "1040101",
+                "mission_skill_config_id": "1040101"
+            }
+        },
+        "95285": {
+            "43": {
+                "source_type": 99910,
+                "source_value": "95285",
+                "engine_spot_id": "95285",
+                "special_spot_config_id": 1010400,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95285"
+                ],
+                "effect_spots": [
+                    "95285"
+                ],
+                "conflict_type": "1010400",
+                "priority": "1010400",
+                "mission_skill_config_id": "1010400"
+            }
+        },
+        "95290": {
+            "44": {
+                "source_type": 99910,
+                "source_value": "95290",
+                "engine_spot_id": "95290",
+                "special_spot_config_id": 1010400,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95290"
+                ],
+                "effect_spots": [
+                    "95290"
+                ],
+                "conflict_type": "1010400",
+                "priority": "1010400",
+                "mission_skill_config_id": "1010400"
+            }
+        },
+        "95307": {
+            "47": {
+                "source_type": 99910,
+                "source_value": "95307",
+                "engine_spot_id": "95307",
+                "special_spot_config_id": 1030100,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95307"
+                ],
+                "effect_spots": [
+                    "95307"
+                ],
+                "conflict_type": "1030100",
+                "priority": "1030100",
+                "mission_skill_config_id": "1030100"
+            },
+            "48": {
+                "source_type": 99910,
+                "source_value": "95307",
+                "engine_spot_id": "95307",
+                "special_spot_config_id": 1000009,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95307"
+                ],
+                "effect_spots": [
+                    "95307"
+                ],
+                "conflict_type": "1000009",
+                "priority": "1000009",
+                "mission_skill_config_id": "1000027"
+            }
+        },
+        "95308": {
+            "49": {
+                "source_type": 99910,
+                "source_value": "95308",
+                "engine_spot_id": "95308",
+                "special_spot_config_id": 1030100,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95308"
+                ],
+                "effect_spots": [
+                    "95308"
+                ],
+                "conflict_type": "1030100",
+                "priority": "1030100",
+                "mission_skill_config_id": "1030100"
+            },
+            "50": {
+                "source_type": 99910,
+                "source_value": "95308",
+                "engine_spot_id": "95308",
+                "special_spot_config_id": 1000009,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95308"
+                ],
+                "effect_spots": [
+                    "95308"
+                ],
+                "conflict_type": "1000009",
+                "priority": "1000009",
+                "mission_skill_config_id": "1000027"
+            }
+        },
+        "95309": {
+            "51": {
+                "source_type": 99910,
+                "source_value": "95309",
+                "engine_spot_id": "95309",
+                "special_spot_config_id": 1030100,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95309"
+                ],
+                "effect_spots": [
+                    "95309"
+                ],
+                "conflict_type": "1030100",
+                "priority": "1030100",
+                "mission_skill_config_id": "1030100"
+            },
+            "52": {
+                "source_type": 99910,
+                "source_value": "95309",
+                "engine_spot_id": "95309",
+                "special_spot_config_id": 1000009,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95309"
+                ],
+                "effect_spots": [
+                    "95309"
+                ],
+                "conflict_type": "1000009",
+                "priority": "1000009",
+                "mission_skill_config_id": "1000027"
+            }
+        },
+        "95310": {
+            "53": {
+                "source_type": 99910,
+                "source_value": "95310",
+                "engine_spot_id": "95310",
+                "special_spot_config_id": 1030100,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95310"
+                ],
+                "effect_spots": [
+                    "95310"
+                ],
+                "conflict_type": "1030100",
+                "priority": "1030100",
+                "mission_skill_config_id": "1030100"
+            },
+            "54": {
+                "source_type": 99910,
+                "source_value": "95310",
+                "engine_spot_id": "95310",
+                "special_spot_config_id": 1000009,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95310"
+                ],
+                "effect_spots": [
+                    "95310"
+                ],
+                "conflict_type": "1000009",
+                "priority": "1000009",
+                "mission_skill_config_id": "1000027"
+            }
+        },
+        "95312": {
+            "55": {
+                "source_type": 99910,
+                "source_value": "95312",
+                "engine_spot_id": "95312",
+                "special_spot_config_id": 1050100,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95312"
+                ],
+                "effect_spots": [
+                    "95312"
+                ],
+                "conflict_type": "1050100",
+                "priority": "1050100",
+                "mission_skill_config_id": "1050100"
+            },
+            "56": {
+                "source_type": 99910,
+                "source_value": "95312",
+                "engine_spot_id": "95312",
+                "special_spot_config_id": 1050101,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95312"
+                ],
+                "effect_spots": [
+                    "95312"
+                ],
+                "conflict_type": "1000001",
+                "priority": "1000001",
+                "mission_skill_config_id": "1050101"
+            }
+        },
+        "95317": {
+            "57": {
+                "source_type": 99910,
+                "source_value": "95314",
+                "engine_spot_id": "95317",
+                "special_spot_config_id": 94040969,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95317"
+                ],
+                "effect_spots": [
+                    "95317"
+                ],
+                "conflict_type": "94040969",
+                "priority": "94040969",
+                "mission_skill_config_id": "94040969"
+            },
+            "67": {
+                "source_type": 99910,
+                "source_value": "95322",
+                "engine_spot_id": "95317",
+                "special_spot_config_id": 900002,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95317"
+                ],
+                "effect_spots": [
+                    "95317"
+                ],
+                "conflict_type": "900002",
+                "priority": "900002",
+                "mission_skill_config_id": "900002"
+            }
+        },
+        "95323": {
+            "58": {
+                "source_type": 99910,
+                "source_value": "95314",
+                "engine_spot_id": "95323",
+                "special_spot_config_id": 94040969,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95323"
+                ],
+                "effect_spots": [
+                    "95323"
+                ],
+                "conflict_type": "94040969",
+                "priority": "94040969",
+                "mission_skill_config_id": "94040969"
+            },
+            "68": {
+                "source_type": 99910,
+                "source_value": "95322",
+                "engine_spot_id": "95323",
+                "special_spot_config_id": 900002,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95323"
+                ],
+                "effect_spots": [
+                    "95323"
+                ],
+                "conflict_type": "900002",
+                "priority": "900002",
+                "mission_skill_config_id": "900002"
+            }
+        },
+        "95313": {
+            "59": {
+                "source_type": 99910,
+                "source_value": "95314",
+                "engine_spot_id": "95313",
+                "special_spot_config_id": 94040969,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95313"
+                ],
+                "effect_spots": [
+                    "95313"
+                ],
+                "conflict_type": "94040969",
+                "priority": "94040969",
+                "mission_skill_config_id": "94040969"
+            },
+            "65": {
+                "source_type": 99910,
+                "source_value": "95322",
+                "engine_spot_id": "95313",
+                "special_spot_config_id": 900002,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95313"
+                ],
+                "effect_spots": [
+                    "95313"
+                ],
+                "conflict_type": "900002",
+                "priority": "900002",
+                "mission_skill_config_id": "900002"
+            }
+        },
+        "95325": {
+            "60": {
+                "source_type": 99910,
+                "source_value": "95314",
+                "engine_spot_id": "95325",
+                "special_spot_config_id": 94040969,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95325"
+                ],
+                "effect_spots": [
+                    "95325"
+                ],
+                "conflict_type": "94040969",
+                "priority": "94040969",
+                "mission_skill_config_id": "94040969"
+            },
+            "66": {
+                "source_type": 99910,
+                "source_value": "95322",
+                "engine_spot_id": "95325",
+                "special_spot_config_id": 900002,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95325"
+                ],
+                "effect_spots": [
+                    "95325"
+                ],
+                "conflict_type": "900002",
+                "priority": "900002",
+                "mission_skill_config_id": "900002"
+            }
+        },
+        "95316": {
+            "61": {
+                "source_type": 99910,
+                "source_value": "95316",
+                "engine_spot_id": "95316",
+                "special_spot_config_id": 1050100,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95316"
+                ],
+                "effect_spots": [
+                    "95316"
+                ],
+                "conflict_type": "1050100",
+                "priority": "1050100",
+                "mission_skill_config_id": "1050100"
+            },
+            "62": {
+                "source_type": 99910,
+                "source_value": "95316",
+                "engine_spot_id": "95316",
+                "special_spot_config_id": 1050101,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95316"
+                ],
+                "effect_spots": [
+                    "95316"
+                ],
+                "conflict_type": "1000001",
+                "priority": "1000001",
+                "mission_skill_config_id": "1050101"
+            }
+        },
+        "95319": {
+            "63": {
+                "source_type": 99910,
+                "source_value": "95319",
+                "engine_spot_id": "95319",
+                "special_spot_config_id": 1050100,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95319"
+                ],
+                "effect_spots": [
+                    "95319"
+                ],
+                "conflict_type": "1050100",
+                "priority": "1050100",
+                "mission_skill_config_id": "1050100"
+            },
+            "64": {
+                "source_type": 99910,
+                "source_value": "95319",
+                "engine_spot_id": "95319",
+                "special_spot_config_id": 1050101,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95319"
+                ],
+                "effect_spots": [
+                    "95319"
+                ],
+                "conflict_type": "1000001",
+                "priority": "1000001",
+                "mission_skill_config_id": "1050101"
+            }
+        },
+        "95329": {
+            "69": {
+                "source_type": 99910,
+                "source_value": "95329",
+                "engine_spot_id": "95329",
+                "special_spot_config_id": 1020200,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95329"
+                ],
+                "effect_spots": [
+                    "95329"
+                ],
+                "conflict_type": "1020200",
+                "priority": "1020200",
+                "mission_skill_config_id": "1020200"
+            }
+        },
+        "95330": {
+            "70": {
+                "source_type": 99910,
+                "source_value": "95330",
+                "engine_spot_id": "95330",
+                "special_spot_config_id": 1020500,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95330"
+                ],
+                "effect_spots": [
+                    "95330"
+                ],
+                "conflict_type": "1020500",
+                "priority": "1020500",
+                "mission_skill_config_id": "1020500"
+            }
+        },
+        "95331": {
+            "71": {
+                "source_type": 99910,
+                "source_value": "95331",
+                "engine_spot_id": "95331",
+                "special_spot_config_id": 1020800,
+                "start_turn": "1",
+                "battle_count": 0,
+                "move_count": 0,
+                "detect_spots": [
+                    "95331"
+                ],
+                "effect_spots": [
+                    "95331"
+                ],
+                "conflict_type": "1020800",
+                "priority": "1020800",
+                "mission_skill_config_id": "1020800"
+            }
+        }
+    },
+    "fairy_skill_on_team": [],
+    "fairy_skill_on_enemy": [],
+    "fairy_skill_on_squad": [],
+    "fairy_skill_on_ally": [],
+    "fairy_skill_on_sangvis": [],
+    "fairy_skill_on_vehicle": [],
+    "fairy_skill_on_friend_team": [],
+    "fairy_skill_on_friend_sangvis": [],
+    "spot_act_info": [
+        {
+            "spot_id": "95234",
+            "belong": "1",
+            "if_random": "0",
+            "seed": 5411,
+            "team_id": "0",
+            "enemy_team_id": "0",
+            "sangvis_team_id": "0",
+            "vehicle_with_user_id": "0",
+            "boss_hp": "0",
+            "enemy_hp_percent": "1",
+            "enemy_instance_id": "0",
+            "enemy_ai": 0,
+            "enemy_ai_para": "",
+            "ally_instance_ids": [],
+            "squad_instance_ids": [],
+            "hostage_id": "0",
+            "hostage_hp": "0",
+            "hostage_max_hp": "0",
+            "enemy_birth_turn": "999",
+            "reinforce_count": "0",
+            "supply_count": "0",
+            "fix_count": "0"
+        },
+        {
+            "spot_id": "95235",
+            "belong": "1",
+            "if_random": "0",
+            "seed": 4456,
+            "team_id": 2,
+            "enemy_team_id": "0",
+            "sangvis_team_id": "0",
+            "vehicle_with_user_id": "0",
+            "boss_hp": "0",
+            "enemy_hp_percent": "1",
+            "enemy_instance_id": "0",
+            "enemy_ai": 0,
+            "enemy_ai_para": "",
+            "ally_instance_ids": [],
+            "squad_instance_ids": [],
+            "hostage_id": "0",
+            "hostage_hp": "0",
+            "hostage_max_hp": "0",
+            "enemy_birth_turn": "999",
+            "reinforce_count": 1,
+            "supply_count": "0",
+            "fix_count": "0"
+        },
+        {
+            "spot_id": "95238",
+            "belong": "1",
+            "if_random": "0",
+            "seed": 411,
+            "team_id": "0",
+            "enemy_team_id": "0",
+            "sangvis_team_id": "0",
+            "vehicle_with_user_id": "0",
+            "boss_hp": "0",
+            "enemy_hp_percent": "1",
+            "enemy_instance_id": "0",
+            "enemy_ai": 0,
+            "enemy_ai_para": "",
+            "ally_instance_ids": [],
+            "squad_instance_ids": [],
+            "hostage_id": "0",
+            "hostage_hp": "0",
+            "hostage_max_hp": "0",
+            "enemy_birth_turn": "999",
+            "reinforce_count": "0",
+            "supply_count": "0",
+            "fix_count": "0"
+        },
+        {
+            "spot_id": "95239",
+            "belong": "1",
+            "if_random": "0",
+            "seed": 144,
+            "team_id": "0",
+            "enemy_team_id": "0",
+            "sangvis_team_id": "0",
+            "vehicle_with_user_id": "0",
+            "boss_hp": "0",
+            "enemy_hp_percent": "1",
+            "enemy_instance_id": "0",
+            "enemy_ai": 0,
+            "enemy_ai_para": "",
+            "ally_instance_ids": [],
+            "squad_instance_ids": [],
+            "hostage_id": "0",
+            "hostage_hp": "0",
+            "hostage_max_hp": "0",
+            "enemy_birth_turn": "999",
+            "reinforce_count": "0",
+            "supply_count": "0",
+            "fix_count": "0"
+        },
+        {
+            "spot_id": "95241",
+            "belong": "3",
+            "if_random": "0",
+            "seed": 4376,
+            "team_id": "0",
+            "enemy_team_id": "0",
+            "sangvis_team_id": "0",
+            "vehicle_with_user_id": "0",
+            "boss_hp": "0",
+            "enemy_hp_percent": "1",
+            "enemy_instance_id": "0",
+            "enemy_ai": 0,
+            "enemy_ai_para": "",
+            "ally_instance_ids": [],
+            "squad_instance_ids": [],
+            "hostage_id": "0",
+            "hostage_hp": "0",
+            "hostage_max_hp": "0",
+            "enemy_birth_turn": "999",
+            "reinforce_count": "0",
+            "supply_count": "0",
+            "fix_count": "0"
+        },
+        {
+            "spot_id": "95244",
+            "belong": "3",
+            "if_random": "0",
+            "seed": 1169,
+            "team_id": "0",
+            "enemy_team_id": "0",
+            "sangvis_team_id": "0",
+            "vehicle_with_user_id": "0",
+            "boss_hp": "0",
+            "enemy_hp_percent": "1",
+            "enemy_instance_id": "0",
+            "enemy_ai": 0,
+            "enemy_ai_para": "",
+            "ally_instance_ids": [],
+            "squad_instance_ids": [],
+            "hostage_id": "0",
+            "hostage_hp": "0",
+            "hostage_max_hp": "0",
+            "enemy_birth_turn": "999",
+            "reinforce_count": "0",
+            "supply_count": "0",
+            "fix_count": "0"
+        },
+        {
+            "spot_id": "95252",
+            "belong": "1",
+            "if_random": "0",
+            "seed": 7888,
+            "team_id": "0",
+            "enemy_team_id": "0",
+            "sangvis_team_id": "0",
+            "vehicle_with_user_id": "0",
+            "boss_hp": "0",
+            "enemy_hp_percent": "1",
+            "enemy_instance_id": "0",
+            "enemy_ai": 0,
+            "enemy_ai_para": "",
+            "ally_instance_ids": [
+                1
+            ],
+            "squad_instance_ids": [],
+            "hostage_id": "0",
+            "hostage_hp": "0",
+            "hostage_max_hp": "0",
+            "enemy_birth_turn": "999",
+            "reinforce_count": "0",
+            "supply_count": "0",
+            "fix_count": "0"
+        },
+        {
+            "spot_id": "95256",
+            "belong": "1",
+            "if_random": "0",
+            "seed": 4142,
+            "team_id": "0",
+            "enemy_team_id": "0",
+            "sangvis_team_id": "0",
+            "vehicle_with_user_id": "0",
+            "boss_hp": "0",
+            "enemy_hp_percent": "1",
+            "enemy_instance_id": "0",
+            "enemy_ai": 0,
+            "enemy_ai_para": "",
+            "ally_instance_ids": [
+                2
+            ],
+            "squad_instance_ids": [],
+            "hostage_id": "0",
+            "hostage_hp": "0",
+            "hostage_max_hp": "0",
+            "enemy_birth_turn": "999",
+            "reinforce_count": "0",
+            "supply_count": "0",
+            "fix_count": "0"
+        },
+        {
+            "spot_id": "95263",
+            "belong": "1",
+            "if_random": "0",
+            "seed": 5456,
+            "team_id": "0",
+            "enemy_team_id": "0",
+            "sangvis_team_id": "0",
+            "vehicle_with_user_id": "0",
+            "boss_hp": "0",
+            "enemy_hp_percent": "1",
+            "enemy_instance_id": "0",
+            "enemy_ai": 0,
+            "enemy_ai_para": "",
+            "ally_instance_ids": [
+                3
+            ],
+            "squad_instance_ids": [],
+            "hostage_id": "0",
+            "hostage_hp": "0",
+            "hostage_max_hp": "0",
+            "enemy_birth_turn": "999",
+            "reinforce_count": "0",
+            "supply_count": "0",
+            "fix_count": "0"
+        },
+        {
+            "spot_id": "95265",
+            "belong": "1",
+            "if_random": "0",
+            "seed": 9308,
+            "team_id": "0",
+            "enemy_team_id": "0",
+            "sangvis_team_id": "0",
+            "vehicle_with_user_id": "0",
+            "boss_hp": "0",
+            "enemy_hp_percent": "1",
+            "enemy_instance_id": "0",
+            "enemy_ai": 0,
+            "enemy_ai_para": "",
+            "ally_instance_ids": [],
+            "squad_instance_ids": [],
+            "hostage_id": "0",
+            "hostage_hp": "0",
+            "hostage_max_hp": "0",
+            "enemy_birth_turn": "999",
+            "reinforce_count": "0",
+            "supply_count": "0",
+            "fix_count": "0"
+        },
+        {
+            "spot_id": "95331",
+            "belong": "2",
+            "if_random": "0",
+            "seed": 7046,
+            "team_id": "0",
+            "enemy_team_id": "0",
+            "sangvis_team_id": "0",
+            "vehicle_with_user_id": "0",
+            "boss_hp": "0",
+            "enemy_hp_percent": "1",
+            "enemy_instance_id": "0",
+            "enemy_ai": 0,
+            "enemy_ai_para": "",
+            "ally_instance_ids": [],
+            "squad_instance_ids": [],
+            "hostage_id": "0",
+            "hostage_hp": "0",
+            "hostage_max_hp": "0",
+            "enemy_birth_turn": "999",
+            "reinforce_count": "0",
+            "supply_count": "0",
+            "fix_count": "0"
+        }
+    ],
+    "building_info": {
+        "95236": {
+            "building_id": "94040909",
+            "spot": "95236",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95238": {
+            "building_id": "94040910",
+            "spot": "95238",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95239": {
+            "building_id": "94040908",
+            "spot": "95239",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95244": {
+            "building_id": "94040919",
+            "spot": "95244",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95245": {
+            "building_id": "94040913",
+            "spot": "95245",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95248": {
+            "building_id": "94040916",
+            "spot": "95248",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95251": {
+            "building_id": "94040901",
+            "spot": "95251",
+            "belong": "2",
+            "defender": "50"
+        },
+        "95254": {
+            "building_id": "94040901",
+            "spot": "95254",
+            "belong": "2",
+            "defender": "50"
+        },
+        "95257": {
+            "building_id": "94040901",
+            "spot": "95257",
+            "belong": "2",
+            "defender": "50"
+        },
+        "95259": {
+            "building_id": "94040901",
+            "spot": "95259",
+            "belong": "2",
+            "defender": "50"
+        },
+        "95261": {
+            "building_id": "94040901",
+            "spot": "95261",
+            "belong": "2",
+            "defender": "50"
+        },
+        "95264": {
+            "building_id": "94040901",
+            "spot": "95264",
+            "belong": "2",
+            "defender": "50"
+        },
+        "95265": {
+            "building_id": "94040921",
+            "spot": "95265",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95266": {
+            "building_id": "94040915",
+            "spot": "95266",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95267": {
+            "building_id": "94040918",
+            "spot": "95267",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95272": {
+            "building_id": "94040922",
+            "spot": "95272",
+            "belong": "2",
+            "defender": "50"
+        },
+        "95273": {
+            "building_id": "94040922",
+            "spot": "95273",
+            "belong": "2",
+            "defender": "50"
+        },
+        "95274": {
+            "building_id": "94040902",
+            "spot": "95274",
+            "belong": "3",
+            "defender": "9999"
+        },
+        "95285": {
+            "building_id": "94040911",
+            "spot": "95285",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95287": {
+            "building_id": "94040905",
+            "spot": "95287",
+            "belong": "0",
+            "defender": "50"
+        },
+        "95288": {
+            "building_id": "94040901",
+            "spot": "95288",
+            "belong": "2",
+            "defender": "50"
+        },
+        "95290": {
+            "building_id": "94040912",
+            "spot": "95290",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95291": {
+            "building_id": "94040907",
+            "spot": "95291",
+            "belong": "3",
+            "defender": "1299"
+        },
+        "95293": {
+            "building_id": "94040901",
+            "spot": "95293",
+            "belong": "2",
+            "defender": "50"
+        },
+        "95295": {
+            "building_id": "94040905",
+            "spot": "95295",
+            "belong": "0",
+            "defender": "50"
+        },
+        "95297": {
+            "building_id": "94040907",
+            "spot": "95297",
+            "belong": "3",
+            "defender": "1299"
+        },
+        "95300": {
+            "building_id": "94040905",
+            "spot": "95300",
+            "belong": "0",
+            "defender": "50"
+        },
+        "95301": {
+            "building_id": "94040901",
+            "spot": "95301",
+            "belong": "2",
+            "defender": "50"
+        },
+        "95307": {
+            "building_id": "94040904",
+            "spot": "95307",
+            "belong": "3",
+            "defender": "50"
+        },
+        "95308": {
+            "building_id": "94040904",
+            "spot": "95308",
+            "belong": "3",
+            "defender": "50"
+        },
+        "95309": {
+            "building_id": "94040904",
+            "spot": "95309",
+            "belong": "3",
+            "defender": "50"
+        },
+        "95310": {
+            "building_id": "94040904",
+            "spot": "95310",
+            "belong": "3",
+            "defender": "50"
+        },
+        "95312": {
+            "building_id": "94040903",
+            "spot": "95312",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95314": {
+            "building_id": "94040926",
+            "spot": "95314",
+            "belong": "0",
+            "defender": "999"
+        },
+        "95316": {
+            "building_id": "94040923",
+            "spot": "95316",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95318": {
+            "building_id": "94040905",
+            "spot": "95318",
+            "belong": "0",
+            "defender": "50"
+        },
+        "95319": {
+            "building_id": "94040924",
+            "spot": "95319",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95322": {
+            "building_id": "94040906",
+            "spot": "95322",
+            "belong": "0",
+            "defender": "999"
+        },
+        "95324": {
+            "building_id": "94040905",
+            "spot": "95324",
+            "belong": "0",
+            "defender": "50"
+        },
+        "95329": {
+            "building_id": "94040914",
+            "spot": "95329",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95330": {
+            "building_id": "94040917",
+            "spot": "95330",
+            "belong": "3",
+            "defender": "99999"
+        },
+        "95331": {
+            "building_id": "94040920",
+            "spot": "95331",
+            "belong": "3",
+            "defender": "99999"
+        }
+    },
+    "mission_win_step_control_ids": [],
+    "trigger_para": {
+        "drop_item": [],
+        "cost_item": []
+    },
+    "new_spot_change": {
+        "95294": {
+            "spot_id": 95294,
+            "type": 6,
+            "start_turn": "1",
+            "end_turn": 10,
+            "can_use_count": 0,
+            "use_count": 0
+        }
+    },
+    "squad_info": [],
+    "vehicle_info": [],
+    "ap": 8
+}

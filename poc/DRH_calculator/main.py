@@ -36,42 +36,26 @@ def process_s2c_logic(raw_data):
         decompressed_data = gzip.decompress(raw_data)
         json_obj = json.loads(decompressed_data.decode('utf-8'))
         
-        modified = False
-        
-        # 2. Logic: Full Visibility & Score Calc
+        # Check if this is a map/battle packet
         if "night_spots" in json_obj:
-            # --- CE Calculation ---
+            print("-" * 55)
+            
+            # --- Calculate Enemy Efficiency (Score) ---
             total_score = 0
             enemy_info = json_obj.get("enemy_instance_info", {})
-            for eid in enemy_info:
-                team_id = str(enemy_info[eid].get("enemy_team_id", ""))
+            for eid, info in enemy_info.items():
+                team_id = str(info.get("enemy_team_id", ""))
                 total_score += id_score_map.get(team_id, 0)
             
-            # Print Total Score in Green (ANSI)
-            print(f"\033[92m[>>>] MAP DATA DETECTED! TOTAL ENEMY SCORE: {total_score}\033[0m")
-            
-            # --- Visibility Modification ---
-            all_spot_ids = [spot.get("spot_id") for spot in json_obj["night_spots"] if "spot_id" in spot]
-            if all_spot_ids:
-                # Add all spots to can_see_spots
-                current_seen = set(json_obj.get("can_see_spots", []))
-                current_seen.update(all_spot_ids)
-                json_obj["can_see_spots"] = list(current_seen)
-                modified = True
-                print(f"[+] Visibility expanded: {len(all_spot_ids)} spots are now visible.")
+            # Print with comma separator (e.g., 790,908)
+            print(f"\033[92m[>>>] 地图数据到达! 当前敌方总能效 (Score): {total_score:,}\033[0m")
+            print("-" * 55)
 
-        # 3. Save original/modified JSON for logging
-        # save_json(json_obj, "S2C_MOD" if modified else "S2C")
+        # Save unmodified packet for analysis
+        save_json(json_obj, "S2C")
 
-        # 4. If modified, re-compress and return
-        if modified:
-            new_json_str = json.dumps(json_obj, ensure_ascii=False)
-            return gzip.compress(new_json_str.encode('utf-8'))
-        
     except Exception as e:
-        print(f"[!] S2C Logic Error: {e}")
-    
-    return None
+        print(f"[!] S2C Process Error: {e}")
 
 def save_json(content_obj, tag):
     global packet_counter
@@ -82,43 +66,36 @@ def save_json(content_obj, tag):
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(content_obj, f, indent=4, ensure_ascii=False)
         packet_counter += 1
-    except Exception as e:
-        print(f"[!] Error saving file: {e}")
+    except:
+        pass
 
 def on_message(message, data):
+    if message['type'] == 'error':
+        print(f"\n[JS Error] {message.get('description')}")
+        return
+
     if message['type'] == 'send':
         payload = message['payload']
         msg_id = payload.get('id')
 
-        if msg_id == 'S2C_REQ':
-            # This is a synchronous request from JS to process data
-            processed_data = process_s2c_logic(data)
-            if processed_data:
-                # Send back modified data
-                script.post({'type': 'S2C_RES', 'status': 'modified'}, processed_data)
-            else:
-                # Tell JS to use original data
-                script.post({'type': 'S2C_RES', 'status': 'original'}, None)
-
+        if msg_id == 'S2C':
+            process_s2c_logic(data)
         elif msg_id == 'C2S':
-            content = payload.get('content')
-            try:
-                json_obj = json.loads(content)
-                # save_json(json_obj, "C2S")
-                print(f"[--> C2S] Request captured and saved.")
-            except Exception as e:
-                print(f"[!] C2S Parse Error: {e}")
+            pass # Silent C2S to avoid console spam
 
 def main():
-    global script
-    process_name = "GrilsFrontLine.exe"
+    process_name = "GrilsFrontLine.exe" 
     load_score_config()
     
-    print(f"[*] Attaching to {process_name}...")
+    print(f"[*] Attaching to process: {process_name} ...")
     try:
         session = frida.attach(process_name)
     except Exception as e:
-        print(f"[!] Attachment failed: {e}")
+        print(f"[!] Attach failed: {e}")
+        return
+
+    if not os.path.exists("hook.js"):
+        print("[!] Cannot find hook.js")
         return
 
     with open("hook.js", "r", encoding="utf-8") as f:
@@ -128,7 +105,7 @@ def main():
     script.on('message', on_message)
     script.load()
     
-    print("[*] System active. Listening for traffic...")
+    print("[*] Read-Only Mode (Score Calculator) is running. (Press Ctrl+C to exit)")
     sys.stdin.read()
 
 if __name__ == '__main__':

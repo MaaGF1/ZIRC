@@ -7,7 +7,7 @@ import time
 
 # --- Configuration ---
 OUTPUT_DIR = "traffic_dumps"
-SCORE_FILE = os.path.join("Reign_of_Chaos", "id_score.json")
+SCORE_FILE = os.path.join("table", "ep11.5.reign_of_chaos.json")
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 

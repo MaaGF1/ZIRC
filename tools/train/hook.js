@@ -29,7 +29,7 @@ var DEBUFF = {
 /* --- Part I (存疑部分) --- */
     CRIT:  { num: 0, den: 10 },     // 暴击率
     // 当暴击发生时，写一个固定的百分比模拟未暴击，后续还需要调整
-    CRTI_DAMAGE: 0.8,
+    CRTI_DAMAGE: 0.7,
 
     DODGE: { num: 5, den: 10 },     // 闪避率
     /* 
@@ -115,7 +115,7 @@ function hook() {
                         var critPower = DEBUFF.CRIT.num / DEBUFF.CRIT.den;
                         if (Math.random() > critPower) {
                             this.ptrIsCrit.writeU8(0); 
-                            // 【暴击修复核心】：不仅不显示暴击，而且把现有伤害强行再打个 6 折！
+                            // 暂时写入固定值
                             debuffedDmg = Math.floor(debuffedDmg * DEBUFF.CRTI_DAMAGE); 
                             logThrottled("CRIT", "Crit nullified! Massive damage multiplier crushed.");
                         }

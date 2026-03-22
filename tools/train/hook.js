@@ -13,9 +13,13 @@ var rva_GetTeamId = 0x281A280; // CharacterSkillImpl$$GetTeamId
 // ----------------------------------------------------------------
 var DEBUFF = {
     ENABLED: true,
-    HIT:   { num: 5, den: 10 },  // 命中减半 (50% 概率将原有的命中强制改为 Miss)
+    
+    // 未生效部分
     DODGE: { num: 5, den: 10 },  // 回避减半 (50% 概率将敌方的 Miss 强制改判为命中)
     CRIT:  { num: 0, den: 10 },  // 暴击降至0倍 (100% 没收暴击)
+    
+    // 生效部分
+    HIT:   { num: 5, den: 10 },  // 命中减半 (50% 概率将原有的命中强制改为 Miss)
     ARMOR: { num: 7, den: 10 },  // 护甲降至70% (受到的伤害放大 10/7 倍)
     DMG:   { num: 5, den: 10 }   // 最终伤害减半
 };

@@ -252,7 +252,7 @@ if __name__ == '__main__':
     SIGN_KEY = "6aee2d0fe0b2afe11e4b7d59b30ff1f2"
     SQUAD_ID = 106360
     
-    MACRO_LOOPS = 10         # 大循环次数 (拆解次数)
+    MACRO_LOOPS = 200         # 大循环次数 (拆解次数)
     MISSIONS_PER_RETIRE = 50 # 每次大循环刷多少次图再进行拆解
 
     client = GFLClient(USER_UID, SIGN_KEY)

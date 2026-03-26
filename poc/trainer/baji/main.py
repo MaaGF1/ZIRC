@@ -85,8 +85,9 @@ def gf_authcode(string: str, operation: str = 'ENCODE', key: str = '', expiry: i
 # ==========================================
 # APIs
 # ==========================================
-def add_target_practice_enemy(uid: str, sign_key: str, enemy_id: int, req_idx: int):
-    json_payload = f'{{"enemy_team_id":{enemy_id},"fight_type":0,"fight_coef":"","fight_environment_group":"","order_id":1}}'
+def add_target_practice_enemy(uid: str, sign_key: str, enemy_id: int, req_idx: int, order_id: int):
+    # Dynamically inject the order_id parameter
+    json_payload = f'{{"enemy_team_id":{enemy_id},"fight_type":0,"fight_coef":"","fight_environment_group":"","order_id":{order_id}}}'
     
     # Call encrypted(GFL)
     encrypted_payload = gf_authcode(json_payload, 'ENCODE', sign_key)
@@ -107,7 +108,7 @@ def add_target_practice_enemy(uid: str, sign_key: str, enemy_id: int, req_idx: i
         "X-Unity-Version": "2018.4.36f1"
     }
     
-    print(f"[*] Sending Request for Enemy ID: {enemy_id} ...", end=" ")
+    print(f"[*] Sending Request - Enemy ID: {enemy_id} | Order ID: {order_id} ...", end=" ")
     try:
         response = requests.post(url, headers=headers, data=payload_data, timeout=10)
         if "1" in response.text:
@@ -126,9 +127,25 @@ if __name__ == '__main__':
     # TeamID List
     target_enemies = [6519263, 6519225, 6519223, 6519246, 6519206]
     
+    # Order List
+    target_orders = [1, 2, 3, 4, 5]
+    
+    # Length Check Logic
+    use_custom_orders = (len(target_enemies) == len(target_orders))
+    
+    if use_custom_orders:
+        print("[*] Order list length matches. Using custom order IDs.")
+    else:
+        print("[!] Order list length mismatch. Using auto-increment sequence (1, 2, 3...).")
+
     print("[*] Starting Batch Injection (Python Standalone)...")
+    
     for idx, enemy in enumerate(target_enemies):
-        add_target_practice_enemy(USER_UID, SIGN_KEY, enemy, idx)
+        # Determine the order_id based on the check
+        current_order = target_orders[idx] if use_custom_orders else (idx + 1)
+        
+        add_target_practice_enemy(USER_UID, SIGN_KEY, enemy, idx, current_order)
         # sleep interval
         time.sleep(1)
+        
     print("[*] All done.")

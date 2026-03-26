@@ -174,6 +174,13 @@ def check_drop_result(response_data: dict) -> list:
             gun_id = gun.get('gun_id')
             gun_uid = int(gun.get('gun_with_user_id'))
             print(f"[+] MISSION CLEARED! Got T-Doll! Gun ID: {gun_id} | UID: {gun_uid} ")
+            
+            # --- 新增的时间打印逻辑 ---
+            current_time = time.strftime("%H:%M:%S")
+            # \033[36m 是青色(Cyan)的 ANSI 颜色码，\033[0m 用来重置颜色
+            print(f"\033[36m[T] {current_time}\033[0m")
+            # --------------------------
+            
             collected_guns.append(gun_uid)
     else:
         print("[+] Mission cleared successfully. (No T-Doll drop this time)")
@@ -242,7 +249,7 @@ def retire_guns(client: GFLClient, gun_uids: list):
 
 if __name__ == '__main__':
     USER_UID = "4370354"
-    SIGN_KEY = "d7df1396a7874b87fad0c63719b438f5"
+    SIGN_KEY = "6aee2d0fe0b2afe11e4b7d59b30ff1f2"
     SQUAD_ID = 106360
     
     MACRO_LOOPS = 10         # 大循环次数 (拆解次数)

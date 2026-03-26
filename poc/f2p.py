@@ -69,7 +69,7 @@ def gf_authcode(string: str, operation: str = 'ENCODE', key: str = '', expiry: i
 
 
 # ==========================================
-# GFL API Client
+# GFL API Client (Added Retry Mechanism)
 # ==========================================
 
 class GFLClient:
@@ -91,9 +91,9 @@ class GFLClient:
         self.req_idx += 1
         return req_id
 
-    def send_request(self, endpoint: str, payload_dict: dict):
-        # 统一强制使用 outdatacode，绕过 signcode 复杂的拦截机制
-        json_str = json.dumps(payload_dict, separators=(',', ':'))
+    def send_request(self, endpoint: str, payload: dict, max_retries: int = 3):
+        """发送请求，支持 JSON 字典或数组，支持断网重试"""
+        json_str = json.dumps(payload, separators=(',', ':'))
         encrypted = gf_authcode(json_str, 'ENCODE', self.sign_key)
         
         data = {
@@ -104,131 +104,186 @@ class GFLClient:
 
         url = f"{self.base_url}{endpoint}"
         
-        try:
-            response = self.session.post(url, data=data, timeout=10)
-            text = response.text.strip()
-            
-            if text.startswith("#"):
-                decrypted_str = gf_authcode(text[1:], 'DECODE', self.sign_key)
-                if decrypted_str:
-                    try:
-                        return json.loads(decrypted_str)
-                    except json.JSONDecodeError:
-                        return {"error_local": "JSON parse error", "raw": decrypted_str}
-                else:
-                    return {"error_local": "Decryption failed.", "raw": text}
-            elif text.startswith("{") or text.startswith("["):
-                try:
-                    return json.loads(text)
-                except:
-                    pass
-            elif text.startswith("1"):
-                return {"success": True, "raw": text}
+        for attempt in range(max_retries):
+            try:
+                # 增加了 timeout 容忍网络波动
+                response = self.session.post(url, data=data, timeout=15)
+                text = response.text.strip()
                 
-            return {"error_local": "Unexpected plaintext response", "raw": text}
-            
-        except Exception as e:
-            return {"error_local": f"Network Exception: {str(e)}"}
+                if text.startswith("#"):
+                    decrypted_str = gf_authcode(text[1:], 'DECODE', self.sign_key)
+                    if decrypted_str:
+                        try:
+                            return json.loads(decrypted_str)
+                        except json.JSONDecodeError:
+                            return {"error_local": "JSON parse error", "raw": decrypted_str}
+                    else:
+                        return {"error_local": "Decryption failed.", "raw": text}
+                elif text.startswith("{") or text.startswith("["):
+                    try:
+                        return json.loads(text)
+                    except:
+                        pass
+                elif text.startswith("1"):
+                    return {"success": True, "raw": text}
+                    
+                return {"error_local": "Unexpected plaintext response", "raw": text}
+                
+            except requests.RequestException as e:
+                if attempt == max_retries - 1:
+                    return {"error_local": f"Network Exception after {max_retries} retries: {str(e)}"}
+                print(f"[!] Network error on {endpoint}, retrying ({attempt + 1}/{max_retries})...")
+                time.sleep(2)
 
 
 # ==========================================
 # Auto Farm Logic
 # ==========================================
 
+def abort_stuck_mission(client: GFLClient, mission_id: int):
+    """强制终止战役清空状态，解决 error:2 和 error:300 的死锁问题"""
+    print(f"[!] Attempting to Force Abort Mission {mission_id} to clear state...")
+    # 大多数情况下 /Mission/abortMission 或 /Mission/withdraw 可以重置状态
+    resp = client.send_request("/Mission/abortMission", {"mission_id": mission_id})
+    if resp.get("success") or "mission_win_result" in str(resp):
+        print("[+] Mission aborted successfully. State cleared.")
+    else:
+        print("[-] Abort returned:", resp)
+    time.sleep(2)
+
 def check_step_error(resp: dict, step_name: str) -> bool:
     if "error_local" in resp:
         print(f"[-] {step_name} Local Error: {resp['error_local']}")
-        print(f"    Raw output: {resp.get('raw', 'None')}")
         return True
     if "error" in resp:
         print(f"[-] {step_name} Server Error: {resp['error']}")
         return True
     return False
 
-def farm_mission_11880(client: GFLClient, squad_id: int):
-    mission_id = 11880
-    GUIDE_COURSE = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,1,0,0,0,0,0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,0,0,0,0,0,0,1,1,1,0,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-
-    print(f"[*] Deploying and starting mission {mission_id}...")
-    
-    # 1. combinationInfo
-    resp = client.send_request("/Mission/combinationInfo", {"mission_id": mission_id})
-    if check_step_error(resp, "combinationInfo"): return
-    
-    # 2. startMission
-    start_payload = {
-        "mission_id": mission_id,
-        "spots": [],
-        "squad_spots": [
-            {"spot_id": 901926, "squad_with_user_id": squad_id, "battleskill_switch": 1}
-        ],
-        "sangvis_spots": [], "vehicle_spots": [], "ally_spots": [], "mission_ally_spots": [],
-        "ally_id": int(time.time())
-    }
-    resp = client.send_request("/Mission/startMission", start_payload)
-    if check_step_error(resp, "startMission"): return
-    
-    # 3. Guide
-    guide_inner_json = json.dumps({"course": GUIDE_COURSE}, separators=(',', ':'))
-    resp = client.send_request("/Index/guide", {"guide": guide_inner_json})
-    if check_step_error(resp, "Index/guide"): return
-    
-    # 4. Turns
-    print("[*] Simulating turns to clear the mission...")
-    time.sleep(0.1)
-    
-    # 统一使用 outdatacode 发送空载荷
-    resp = client.send_request("/Mission/endTurn", {})
-    if check_step_error(resp, "endTurn"): return
-    
-    time.sleep(0.1)
-    resp = client.send_request("/Mission/startEnemyTurn", {})
-    if check_step_error(resp, "startEnemyTurn"): return
-    
-    time.sleep(0.1)
-    resp = client.send_request("/Mission/endEnemyTurn", {})
-    if check_step_error(resp, "endEnemyTurn"): return
-    
-    time.sleep(0.1)
-    # 最后一次回合请求，通常会带回结算奖励
-    final_resp = client.send_request("/Mission/startTurn", {})
-    if check_step_error(final_resp, "startTurn"): return
-    
-    # 5. Result
-    check_drop_result(final_resp)
-
-def check_drop_result(response_data: dict):
+def check_drop_result(response_data: dict) -> list:
+    """提取结算数据，返回收集到的人形 UID 列表"""
+    collected_guns = []
     win_result = response_data.get("mission_win_result", {})
     if not win_result:
         print("[!] Flow finished, but no 'mission_win_result' found.")
-        return
+        return collected_guns
         
     reward_guns = win_result.get("reward_gun", [])
     if reward_guns:
         for gun in reward_guns:
-            print(f"[+] MISSION CLEARED! Got T-Doll Drop! Gun ID: {gun.get('gun_id')}")
+            gun_id = gun.get('gun_id')
+            gun_uid = int(gun.get('gun_with_user_id'))
+            print(f"[+] MISSION CLEARED! Got T-Doll! Gun ID: {gun_id} | UID: {gun_uid} ")
+            collected_guns.append(gun_uid)
     else:
         print("[+] Mission cleared successfully. (No T-Doll drop this time)")
+        
+    return collected_guns
+
+def farm_mission_11880(client: GFLClient, squad_id: int):
+    """执行一次完整的 11880 战役，如果发生严重错误返回 None，否则返回获得的人形列表"""
+    mission_id = 11880
+    GUIDE_COURSE = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,1,0,0,0,0,0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,0,0,0,0,0,0,1,1,1,0,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+
+    # 1. combinationInfo
+    resp = client.send_request("/Mission/combinationInfo", {"mission_id": mission_id})
+    if check_step_error(resp, "combinationInfo"): return None
+    
+    # 2. startMission
+    start_payload = {
+        "mission_id": mission_id, "spots": [],
+        "squad_spots": [{"spot_id": 901926, "squad_with_user_id": squad_id, "battleskill_switch": 1}],
+        "sangvis_spots": [], "vehicle_spots": [], "ally_spots": [], "mission_ally_spots": [],
+        "ally_id": int(time.time())
+    }
+    resp = client.send_request("/Mission/startMission", start_payload)
+    if check_step_error(resp, "startMission"): return None
+    
+    # 3. Guide
+    guide_inner_json = json.dumps({"course": GUIDE_COURSE}, separators=(',', ':'))
+    resp = client.send_request("/Index/guide", {"guide": guide_inner_json})
+    if check_step_error(resp, "Index/guide"): return None
+    
+    # 4. Turns (加入适当延迟)
+    time.sleep(0.5)
+    resp = client.send_request("/Mission/endTurn", {})
+    if check_step_error(resp, "endTurn"): return None
+    
+    time.sleep(0.2)
+    resp = client.send_request("/Mission/startEnemyTurn", {})
+    if check_step_error(resp, "startEnemyTurn"): return None
+    
+    time.sleep(0.2)
+    resp = client.send_request("/Mission/endEnemyTurn", {})
+    if check_step_error(resp, "endEnemyTurn"): return None
+    
+    time.sleep(0.2)
+    final_resp = client.send_request("/Mission/startTurn", {})
+    if check_step_error(final_resp, "startTurn"): return None
+    
+    # 5. 返回掉落的 gun_uids 数组
+    return check_drop_result(final_resp)
+
+def retire_guns(client: GFLClient, gun_uids: list):
+    """调用接口自动拆解收集到的人形"""
+    if not gun_uids:
+        print("[*] No T-Dolls to retire in this batch.")
+        return
+    
+    print(f"[*] Submitting {len(gun_uids)} T-Dolls for Auto-Retire...")
+    # Payload 直接就是一个 JSON Array [11111, 22222]
+    resp = client.send_request("/Gun/retireGun", gun_uids)
+    
+    if resp.get("success"):
+        print("[+] Auto-Retire Successful! Workspace Cleared. ")
+    else:
+        print(f"[-] Retire Failed: {resp}")
 
 
 if __name__ == '__main__':
     USER_UID = "4370354"
-    SIGN_KEY = "7a750d1c4a17f24a39e80b832d26abbf"
+    SIGN_KEY = "d7df1396a7874b87fad0c63719b438f5"
     SQUAD_ID = 106360
-    LOOP_COUNT = 200
+    
+    MACRO_LOOPS = 10         # 大循环次数 (拆解次数)
+    MISSIONS_PER_RETIRE = 50 # 每次大循环刷多少次图再进行拆解
 
     client = GFLClient(USER_UID, SIGN_KEY)
 
     print("=========================================")
     print("   GFL Protocol Auto-Farming Initiated   ")
+    print("   Includes Error-Recovery & Auto-Retire ")
     print("=========================================")
 
-    for i in range(1, LOOP_COUNT + 1):
-        print(f"\n--- Run {i} / {LOOP_COUNT} ---")
-        farm_mission_11880(client, SQUAD_ID)
+    for macro in range(1, MACRO_LOOPS + 1):
+        print(f"\n=========================================")
+        print(f"  >>> MACRO BATCH {macro} / {MACRO_LOOPS} STARTING <<<")
+        print(f"=========================================")
         
-        if i < LOOP_COUNT:
-            print("[*] Sleeping for 4 seconds before next run...")
-            time.sleep(0.1)
+        batch_collected_guns = []
+        
+        for micro in range(1, MISSIONS_PER_RETIRE + 1):
+            print(f"\n--- Mission Run {micro} / {MISSIONS_PER_RETIRE} (Batch {macro}) ---")
             
-    print("\n[*] All farming runs completed.")
+            # 执行战役并获取掉落的人形 UID 列表
+            dropped_guns = farm_mission_11880(client, SQUAD_ID)
+            
+            # 如果 dropped_guns 为 None，说明遇到了严重错误（如 error:2, error:300）
+            if dropped_guns is None:
+                abort_stuck_mission(client, 11880)
+                print("[!] Skipping to next run to recover state...")
+                time.sleep(3)
+                continue
+                
+            # 将本次掉落追加到批次列表中
+            batch_collected_guns.extend(dropped_guns)
+            
+            if micro < MISSIONS_PER_RETIRE:
+                time.sleep(1) # 单局之间的保护性停顿
+                
+        # 当一个批次（比如 20 次）刷完后，统一拆解
+        print(f"\n[+] Batch {macro} completed. Preparing to retire...")
+        retire_guns(client, batch_collected_guns)
+        time.sleep(2)
+            
+    print("\n[*] All farming and retire runs completed gracefully.")

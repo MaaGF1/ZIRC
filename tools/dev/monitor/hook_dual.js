@@ -89,6 +89,10 @@ function hook() {
             if (strContent && strContent.length > 0) {
                 console.log("[C2S] Key used: " + strKey);
 
+                // Output Key
+                var strKey = getCSharpString(args[1]);
+                send({ id: "LOG", content: "[DEBUG] Encode Key is: " + strKey });
+
                 // If the string looks like JSON (starts with { or [), send it
                 if (strContent.trim().charAt(0) === '{' || strContent.trim().charAt(0) === '[') {
                     send({ id: "C2S", content: strContent });

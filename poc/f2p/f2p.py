@@ -20,7 +20,8 @@ CONFIG = {
     "MISSIONS_PER_RETIRE": 50,                                                  # Retire the doll after `MISSIONS_PER_RETIRE` times
     "SQUAD_ID": 106360,                                                         # BGM-71's ID
     "PROCESS_NAME": "GrilsFrontLine.exe",                                       # CN's steam version program with typo
-    "BASE_URL": "http://gfcn-game.gw.merge.sunborngame.com/index.php/1000"      # URL of CN's M4A1, replace the URL if you are using a different server
+    "BASE_URL": "http://gfcn-game.gw.merge.sunborngame.com/index.php/1000",     # URL of CN's M4A1, replace the URL if you are using a different server
+    "ADDR_ENCODE": 28343008                                                     # AC.AuthCode$$Encode Address
 }
 
 # ==========================================
@@ -259,9 +260,9 @@ def retire_guns(client: GFLClient, gun_uids: list):
 # [6] Worker Threads Logic
 # ==========================================
 
-# Extract Sign Key Only
+# Extract Sign Key Only (%d placeholder for the address)
 FRIDA_JS_SCRIPT = """
-var addr_Encode = 28343008; // AC.AuthCode$$Encode
+var addr_Encode = %d; // AC.AuthCode$$Encode
 
 function getCSharpString(ptr) {
     if (ptr.isNull()) return null;
@@ -310,7 +311,11 @@ def frida_worker():
     print(f"[*] Attaching Frida to process: {CONFIG['PROCESS_NAME']} ...")
     try:
         session = frida.attach(CONFIG['PROCESS_NAME'])
-        script = session.create_script(FRIDA_JS_SCRIPT)
+        
+        # Format the JS string with the address from CONFIG
+        script_code = FRIDA_JS_SCRIPT % CONFIG["ADDR_ENCODE"]
+        script = session.create_script(script_code)
+        
         script.on('message', on_frida_message)
         script.load()
         

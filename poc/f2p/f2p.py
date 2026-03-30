@@ -110,6 +110,13 @@ class GFLClient:
         self.sign_key = sign_key
         self.req_idx = 1
         self.session = requests.Session()
+        
+        # FIX: Force requests to bypass any residual proxy settings
+        self.session.proxies = {
+            "http": None,
+            "https": None
+        }
+        
         self.session.headers.update({
             "User-Agent": "UnityPlayer/2018.4.36f1 (UnityWebRequest/1.0, libcurl/7.52.0-DEV)",
             "X-Unity-Version": "2018.4.36f1",
@@ -118,6 +125,7 @@ class GFLClient:
         self.base_url = CONFIG["BASE_URL"]
 
     def _get_req_id(self):
+        # FIX: Reverted to the original logic. Timestamp MUST be dynamic!
         timestamp = int(time.time())
         req_id = f"{timestamp}{self.req_idx:05d}"
         self.req_idx += 1
@@ -293,9 +301,13 @@ def set_windows_proxy(enable: bool, proxy_addr="127.0.0.1:8080"):
 # ==========================================
 # [7] Smart Blind MITM Proxy Logic
 # ==========================================
-def blind_relay(src_sock, dst_sock):
-    """ Blindly forwards data between two sockets (used for HTTPS / generic traffic) """
+def blind_relay_with_sniffer(src_sock, dst_sock, is_target_api):
+    """ Forwards data and sniffs for keys without breaking the stream """
+    global stop_capture_flag
     sockets = [src_sock, dst_sock]
+    response_buffer = b""
+    keys_captured = False
+    
     try:
         while not stop_capture_flag:
             readable, _, _ = select.select(sockets, [], [], 1.0)
@@ -304,16 +316,41 @@ def blind_relay(src_sock, dst_sock):
             for sock in readable:
                 data = sock.recv(8192)
                 if not data:
-                    return # Connection closed
+                    return # Connection closed naturally by client/server
                 if sock is src_sock:
                     dst_sock.sendall(data)
                 else:
                     src_sock.sendall(data)
+                    
+                    # Sniff the data stream seamlessly
+                    if is_target_api and not keys_captured:
+                        response_buffer += data
+                        match = re.search(b'#([A-Za-z0-9+/=]+)', response_buffer)
+                        if match:
+                            encrypted_b64 = match.group(1).decode('ascii')
+                            decrypted = gf_authcode(encrypted_b64, 'DECODE', CONFIG["STATIC_KEY"])
+                            
+                            if decrypted:
+                                try:
+                                    json_data = json.loads(decrypted)
+                                    extracted_uid = json_data.get("uid")
+                                    extracted_sign = json_data.get("sign")
+                                    
+                                    if extracted_uid and extracted_sign:
+                                        CONFIG["USER_UID"] = str(extracted_uid)
+                                        CONFIG["SIGN_KEY"] = str(extracted_sign)
+                                        print(f"\n[+] SUCCESS! Keys Auto-Configured:")
+                                        print(f"    UID  : {CONFIG['USER_UID']}")
+                                        print(f"    SIGN : {CONFIG['SIGN_KEY']}")
+                                        print("\n[!] CRITICAL: Please wait for the game to fully load into the Commander Screen!")
+                                        print("[!] Then type '-r' to automatically stop proxy and begin farming.")
+                                        keys_captured = True # Stop regex parsing but keep stream alive!
+                                except Exception:
+                                    pass
     except Exception:
         pass
 
 def handle_proxy_client(client_socket):
-    """ Handles a single proxy connection, parses HTTP headers to find target """
     try:
         # Read the initial request
         request_header = b""
@@ -360,57 +397,16 @@ def handle_proxy_client(client_socket):
         target_socket.connect((host, port))
         
         if method == "CONNECT":
-            # HTTPS Blind Forwarding (No Certificate Warnings)
+            # HTTPS Blind Forwarding
             client_socket.sendall(b"HTTP/1.1 200 Connection Established\r\n\r\n")
-            blind_relay(client_socket, target_socket)
+            blind_relay_with_sniffer(client_socket, target_socket, False)
         else:
-            # HTTP Interception
+            # HTTP Interception & Sniffing
             is_target_api = "/Index/getUidPC" in url
             target_socket.sendall(request_header)
-            
-            # Read response and forward
-            response_buffer = b""
-            while not stop_capture_flag:
-                data = target_socket.recv(8192)
-                if not data:
-                    break
-                client_socket.sendall(data)
-                if is_target_api:
-                    response_buffer += data
-                    
-            # Capture SIGN_KEY if this was the target API
-            if is_target_api and response_buffer:
-                # Use regex to find the encrypted payload starting with '#'
-                # Payload is base64 characters: A-Z, a-z, 0-9, +, /, =
-                match = re.search(b'#([A-Za-z0-9+/=]+)', response_buffer)
-                if match:
-                    encrypted_b64 = match.group(1).decode('ascii')
-                    print("\n[+] Captured getUidPC Response! Decrypting with STATIC_KEY...")
-                    
-                    decrypted = gf_authcode(encrypted_b64, 'DECODE', CONFIG["STATIC_KEY"])
-                    if decrypted:
-                        try:
-                            json_data = json.loads(decrypted)
-                            extracted_uid = json_data.get("uid")
-                            extracted_sign = json_data.get("sign")
-                            
-                            if extracted_uid and extracted_sign:
-                                CONFIG["USER_UID"] = str(extracted_uid)
-                                CONFIG["SIGN_KEY"] = str(extracted_sign)
-                                print(f"\n[+] SUCCESS! Keys Auto-Configured:")
-                                print(f"    UID  : {CONFIG['USER_UID']}")
-                                print(f"    SIGN : {CONFIG['SIGN_KEY']}")
-                                print("[+] Stopping Proxy and restoring system network...")
-                                
-                                # Auto-stop the capture process
-                                global stop_capture_flag
-                                stop_capture_flag = True
-                        except Exception as e:
-                            print(f"[-] JSON parse error after decryption: {e}")
-                    else:
-                        print("[-] Decryption returned empty string. Wrong STATIC_KEY?")
+            blind_relay_with_sniffer(client_socket, target_socket, is_target_api)
 
-    except Exception as e:
+    except Exception:
         pass
     finally:
         try: client_socket.close()
@@ -431,8 +427,7 @@ def proxy_server_worker():
         
         # Turn ON Windows Proxy
         set_windows_proxy(True, f"127.0.0.1:{CONFIG['PROXY_PORT']}")
-        print("[*] System Proxy is hijacked. Please login to the game now.")
-        print("[*] (Type -q to cancel and restore network)")
+        print("[*] System Proxy is hijacked. Please start and login to the game now.")
         
         server.settimeout(1.0)
         while not stop_capture_flag:
@@ -578,8 +573,16 @@ def main_loop():
                     current_worker_thread.start()
                     
             elif cmd == '-r':
+                # FIX: Auto-stop Proxy gracefully if user types -r during capture
+                if worker_mode == 'c':
+                    print("[*] Automatically stopping Proxy to begin farming...")
+                    stop_capture_flag = True
+                    # Wait briefly for the proxy thread to shut down and restore network
+                    if current_worker_thread and current_worker_thread.is_alive():
+                        current_worker_thread.join(timeout=2.0)
+                
                 if current_worker_thread and current_worker_thread.is_alive():
-                    print("[!] A task is already running. Please stop it first (-q or -Q).")
+                    print("[!] Farm is already running. Please stop it first (-q or -Q).")
                 else:
                     stop_macro_flag = False
                     stop_micro_flag = False

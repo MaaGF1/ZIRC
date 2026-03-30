@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Unified Master Build Script for ZIRC.
+    Unified Master Build Script for ZIRC Trimmer.
 .EXAMPLE
     .\build.ps1 -Cpp -Mode Release
     .\build.ps1 -Python

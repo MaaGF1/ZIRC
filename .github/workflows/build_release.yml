@@ -45,14 +45,14 @@ jobs:
       - name: Execute Unified Build (C++)
         shell: pwsh
         run: |
-          cd src
+          cd src/trimmer
           # SCons will be available, MSVC is configured, CI runs Fallback offset generation.
           .\build.ps1 -Cpp -Mode release
           
       - name: Package Output (ZIP)
         shell: pwsh
         run: |
-          $DllPath = "src\build\cpp\version.dll"
+          $DllPath = "src\trimmer\build\cpp\version.dll"
           
           # 1. Verification: Fail fast if DLL is missing to prevent silent failures
           if (-not (Test-Path $DllPath)) {

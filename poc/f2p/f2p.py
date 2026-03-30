@@ -7,34 +7,38 @@ import gzip
 import os
 import sys
 import threading
-import frida
 import shlex
+import socket
+import select
+import re
+
+# For Auto-Proxy Configuration on Windows
+import winreg
+import ctypes
 
 # ==========================================
 # [1] Parameterized Configuration
 # ==========================================
 CONFIG = {
-    "USER_UID": "_InputYourID_",                                                # User ID
-    "SIGN_KEY": "1234567890abcdefghijklmnopqrstuv",                             # User's sign key
+    "USER_UID": "_InputYourID_",                                                # User ID (Will be auto-filled by Capture)
+    "SIGN_KEY": "1234567890abcdefghijklmnopqrstuv",                             # User's sign key (Will be auto-filled by Capture)
+    "STATIC_KEY": "yundoudou",                                                  # The global static key used before login
     "MACRO_LOOPS": 200,                                                         # total f2p times = MACRO_LOOPS * MISSIONS_PER_RETIRE
     "MISSIONS_PER_RETIRE": 50,                                                  # Retire the doll after `MISSIONS_PER_RETIRE` times
     "SQUAD_ID": 106360,                                                         # BGM-71's ID
-    "PROCESS_NAME": "GrilsFrontLine.exe",                                       # CN's steam version program with typo
     "BASE_URL": "http://gfcn-game.gw.merge.sunborngame.com/index.php/1000",     # URL of CN's M4A1, replace the URL if you are using a different server
-    "ADDR_ENCODE": 28343008                                                     # AC.AuthCode$$Encode Address
+    "PROXY_PORT": 8080
 }
 
 # ==========================================
 # [2] Threading State Flags
 # ==========================================
-# Threading control
 current_worker_thread = None
-worker_mode = None  # 'i' for Frida, 'r' for Farm, None for Idle
+worker_mode = None  # 'c' for Capture(Proxy), 'r' for Farm, None for Idle
 
-# Stop flags
 stop_macro_flag = False
 stop_micro_flag = False
-stop_frida_flag = False
+stop_capture_flag = False
 
 # ==========================================
 # [3] GFL Crypto Core
@@ -197,7 +201,7 @@ def check_drop_result(response_data: dict) -> list:
             print(f"[+] MISSION CLEARED! Got T-Doll! Gun ID: {gun_id} | UID: {gun_uid}")
             
             current_time = time.strftime("%H:%M:%S")
-            print(f"\033[36m[T] {current_time}\033[0m")
+            print(f"[*] Drop Time: {current_time}")
             
             collected_guns.append(gun_uid)
     else:
@@ -257,86 +261,212 @@ def retire_guns(client: GFLClient, gun_uids: list):
         print(f"[-] Retire Failed: {resp}")
 
 # ==========================================
-# [6] Worker Threads Logic
+# [6] System Proxy Configuration (Windows)
 # ==========================================
+INTERNET_OPTION_REFRESH = 37
+INTERNET_OPTION_SETTINGS_CHANGED = 39
 
-# Extract Sign Key Only (%d placeholder for the address)
-FRIDA_JS_SCRIPT = """
-var addr_Encode = %d; // AC.AuthCode$$Encode
+def refresh_windows_proxy():
+    internet_set_option = ctypes.windll.wininet.InternetSetOptionW
+    internet_set_option(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+    internet_set_option(0, INTERNET_OPTION_REFRESH, 0, 0)
 
-function getCSharpString(ptr) {
-    if (ptr.isNull()) return null;
-    try {
-        var len = ptr.add(0x10).readU32();
-        if (len === 0) return "";
-        return ptr.add(0x14).readUtf16String(len);
-    } catch (e) {
-        return null;
-    }
-}
-
-function hook() {
-    var gameAssembly = Process.findModuleByName("GameAssembly.dll");
-    if (!gameAssembly) {
-        setTimeout(hook, 1000);
-        return;
-    }
-
-    var targetC2S = gameAssembly.base.add(addr_Encode);
-    Interceptor.attach(targetC2S, {
-        onEnter: function(args) {
-            var strKey = getCSharpString(args[1]);
-            if (strKey && strKey.length > 0) {
-                send({ id: "KEY", content: strKey });
-            }
-        }
-    });
-}
-
-setTimeout(hook, 1000);
-"""
-
-def on_frida_message(message, data):
-    if message['type'] == 'send':
-        payload = message['payload']
-        if payload.get('id') == 'KEY':
-            key = payload.get('content')
-            if key != CONFIG["SIGN_KEY"]:
-                CONFIG["SIGN_KEY"] = key
-                print(f"\n[+] [Frida] New SIGN_KEY Captured and Updated: {key}")
-
-def frida_worker():
-    global stop_frida_flag, worker_mode, current_worker_thread
-    
-    print(f"[*] Attaching Frida to process: {CONFIG['PROCESS_NAME']} ...")
+def set_windows_proxy(enable: bool, proxy_addr="127.0.0.1:8080"):
     try:
-        session = frida.attach(CONFIG['PROCESS_NAME'])
+        reg_path = r"Software\Microsoft\Windows\CurrentVersion\Internet Settings"
+        hKey = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, winreg.KEY_WRITE)
         
-        # Format the JS string with the address from CONFIG
-        script_code = FRIDA_JS_SCRIPT % CONFIG["ADDR_ENCODE"]
-        script = session.create_script(script_code)
-        
-        script.on('message', on_frida_message)
-        script.load()
-        
-        print("[*] Frida successfully injected. Waiting for network traffic...")
-        print("[*] Type -q or -Q to safely detach Frida.")
-        
-        while not stop_frida_flag:
-            time.sleep(0.5)
+        if enable:
+            winreg.SetValueEx(hKey, "ProxyEnable", 0, winreg.REG_DWORD, 1)
+            winreg.SetValueEx(hKey, "ProxyServer", 0, winreg.REG_SZ, proxy_addr)
+            print(f"[*] Windows System Proxy ENABLED -> {proxy_addr}")
+        else:
+            winreg.SetValueEx(hKey, "ProxyEnable", 0, winreg.REG_DWORD, 0)
+            print(f"[*] Windows System Proxy DISABLED -> Restored to Direct")
             
-        session.detach()
-        print("[*] Frida detached safely.")
+        winreg.CloseKey(hKey)
+        refresh_windows_proxy()
     except Exception as e:
-        print(f"[!] Frida Error: {e}")
-        print("[!] Please ensure the game is running.")
-        
-    worker_mode = None
-    current_worker_thread = None
+        print(f"[!] Failed to modify Windows Proxy: {e}")
+        print("[!] Please run this script as Administrator.")
 
+# ==========================================
+# [7] Smart Blind MITM Proxy Logic
+# ==========================================
+def blind_relay(src_sock, dst_sock):
+    """ Blindly forwards data between two sockets (used for HTTPS / generic traffic) """
+    sockets = [src_sock, dst_sock]
+    try:
+        while not stop_capture_flag:
+            readable, _, _ = select.select(sockets, [], [], 1.0)
+            if not readable:
+                continue
+            for sock in readable:
+                data = sock.recv(8192)
+                if not data:
+                    return # Connection closed
+                if sock is src_sock:
+                    dst_sock.sendall(data)
+                else:
+                    src_sock.sendall(data)
+    except Exception:
+        pass
+
+def handle_proxy_client(client_socket):
+    """ Handles a single proxy connection, parses HTTP headers to find target """
+    try:
+        # Read the initial request
+        request_header = b""
+        while b"\r\n\r\n" not in request_header:
+            chunk = client_socket.recv(4096)
+            if not chunk:
+                break
+            request_header += chunk
+            
+        if not request_header:
+            client_socket.close()
+            return
+            
+        header_str = request_header.split(b"\r\n\r\n")[0].decode('ascii', errors='ignore')
+        lines = header_str.split('\r\n')
+        first_line = lines[0].split()
+        
+        if len(first_line) < 3:
+            client_socket.close()
+            return
+            
+        method, url, protocol = first_line
+        
+        # Parse Host header
+        host = ""
+        port = 80
+        for line in lines[1:]:
+            if line.lower().startswith("host:"):
+                host_val = line.split(":", 1)[1].strip()
+                if ":" in host_val:
+                    host, p = host_val.split(":", 1)
+                    port = int(p)
+                else:
+                    host = host_val
+                    port = 443 if method == "CONNECT" else 80
+                break
+                
+        if not host:
+            client_socket.close()
+            return
+
+        # Connect to Target Server
+        target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        target_socket.connect((host, port))
+        
+        if method == "CONNECT":
+            # HTTPS Blind Forwarding (No Certificate Warnings)
+            client_socket.sendall(b"HTTP/1.1 200 Connection Established\r\n\r\n")
+            blind_relay(client_socket, target_socket)
+        else:
+            # HTTP Interception
+            is_target_api = "/Index/getUidPC" in url
+            target_socket.sendall(request_header)
+            
+            # Read response and forward
+            response_buffer = b""
+            while not stop_capture_flag:
+                data = target_socket.recv(8192)
+                if not data:
+                    break
+                client_socket.sendall(data)
+                if is_target_api:
+                    response_buffer += data
+                    
+            # Capture SIGN_KEY if this was the target API
+            if is_target_api and response_buffer:
+                # Use regex to find the encrypted payload starting with '#'
+                # Payload is base64 characters: A-Z, a-z, 0-9, +, /, =
+                match = re.search(b'#([A-Za-z0-9+/=]+)', response_buffer)
+                if match:
+                    encrypted_b64 = match.group(1).decode('ascii')
+                    print("\n[+] Captured getUidPC Response! Decrypting with STATIC_KEY...")
+                    
+                    decrypted = gf_authcode(encrypted_b64, 'DECODE', CONFIG["STATIC_KEY"])
+                    if decrypted:
+                        try:
+                            json_data = json.loads(decrypted)
+                            extracted_uid = json_data.get("uid")
+                            extracted_sign = json_data.get("sign")
+                            
+                            if extracted_uid and extracted_sign:
+                                CONFIG["USER_UID"] = str(extracted_uid)
+                                CONFIG["SIGN_KEY"] = str(extracted_sign)
+                                print(f"\n[+] SUCCESS! Keys Auto-Configured:")
+                                print(f"    UID  : {CONFIG['USER_UID']}")
+                                print(f"    SIGN : {CONFIG['SIGN_KEY']}")
+                                print("[+] Stopping Proxy and restoring system network...")
+                                
+                                # Auto-stop the capture process
+                                global stop_capture_flag
+                                stop_capture_flag = True
+                        except Exception as e:
+                            print(f"[-] JSON parse error after decryption: {e}")
+                    else:
+                        print("[-] Decryption returned empty string. Wrong STATIC_KEY?")
+
+    except Exception as e:
+        pass
+    finally:
+        try: client_socket.close()
+        except: pass
+        try: target_socket.close()
+        except: pass
+
+def proxy_server_worker():
+    global stop_capture_flag, worker_mode, current_worker_thread
+    
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    
+    try:
+        server.bind(("127.0.0.1", CONFIG["PROXY_PORT"]))
+        server.listen(100)
+        print(f"[*] Proxy Server listening on 127.0.0.1:{CONFIG['PROXY_PORT']}...")
+        
+        # Turn ON Windows Proxy
+        set_windows_proxy(True, f"127.0.0.1:{CONFIG['PROXY_PORT']}")
+        print("[*] System Proxy is hijacked. Please login to the game now.")
+        print("[*] (Type -q to cancel and restore network)")
+        
+        server.settimeout(1.0)
+        while not stop_capture_flag:
+            try:
+                client_sock, addr = server.accept()
+                t = threading.Thread(target=handle_proxy_client, args=(client_sock,))
+                t.daemon = True
+                t.start()
+            except socket.timeout:
+                continue
+                
+    except Exception as e:
+        print(f"[!] Proxy Server Error: {e}")
+    finally:
+        server.close()
+        # Turn OFF Windows Proxy securely
+        set_windows_proxy(False)
+        print("[*] Capture Proxy shut down safely.")
+        
+        worker_mode = None
+        current_worker_thread = None
+
+# ==========================================
+# [8] Worker Threads Logic
+# ==========================================
 def farm_worker():
     global stop_macro_flag, stop_micro_flag, worker_mode, current_worker_thread
     
+    if CONFIG["SIGN_KEY"] == "1234567890abcdefghijklmnopqrstuv":
+        print("[!] SIGN_KEY is default. Please run Capture (-c) first!")
+        worker_mode = None
+        current_worker_thread = None
+        return
+
     client = GFLClient(CONFIG["USER_UID"], CONFIG["SIGN_KEY"])
 
     print("=========================================")
@@ -374,12 +504,10 @@ def farm_worker():
             if micro < CONFIG["MISSIONS_PER_RETIRE"]:
                 time.sleep(1) 
                 
-        # 边界保护：无论循环是正常结束还是被-Q中断，只要手里有枪，必须先拆解清理
         print(f"\n[+] Batch {macro} completed or interrupted. Preparing to retire...")
         retire_guns(client, batch_collected_guns)
         time.sleep(2)
         
-        # 如果是-Q引发的单局结束，拆完之后就退出大循环
         if stop_micro_flag:
             break
             
@@ -388,22 +516,22 @@ def farm_worker():
     current_worker_thread = None
 
 # ==========================================
-# [7] Interactive Command Line Interface
+# [9] Interactive Command Line Interface
 # ==========================================
 
 def print_menu():
     print("\n================= MENU =================")
-    print(" -i : Inject Frida to capture SIGN_KEY")
+    print(" -c : Start Capture Proxy (Auto-extract Keys via network)")
     print(" -r : Run Auto-Farming")
-    print(" -q : Stop Frida OR Stop Farm after current Macro")
-    print(" -Q : Stop Frida OR Stop Farm after current Micro")
+    print(" -q : Stop Capture OR Stop Farm after current Macro")
+    print(" -Q : Stop Capture OR Stop Farm after current Micro")
     print(" -s : Set configs (e.g. -s --uid 123 --key abc)")
-    print(" -E : Exit program safely")
+    print(" -E : Exit program safely (Will auto-restore Proxy)")
     print("========================================\n")
 
 def process_settings(cmd_str):
     try:
-        parts = shlex.split(cmd_str)[1:] # Remove '-s'
+        parts = shlex.split(cmd_str)[1:]
         for i in range(0, len(parts), 2):
             key = parts[i]
             val = parts[i+1] if i+1 < len(parts) else None
@@ -427,7 +555,7 @@ def process_settings(cmd_str):
 
 def main_loop():
     global current_worker_thread, worker_mode
-    global stop_macro_flag, stop_micro_flag, stop_frida_flag
+    global stop_macro_flag, stop_micro_flag, stop_capture_flag
     
     print_menu()
     
@@ -439,13 +567,13 @@ def main_loop():
                 
             cmd = cmd_input.split()[0]
             
-            if cmd == '-i':
+            if cmd == '-c':
                 if current_worker_thread and current_worker_thread.is_alive():
                     print("[!] A task is already running. Please stop it first (-q or -Q).")
                 else:
-                    stop_frida_flag = False
-                    worker_mode = 'i'
-                    current_worker_thread = threading.Thread(target=frida_worker)
+                    stop_capture_flag = False
+                    worker_mode = 'c'
+                    current_worker_thread = threading.Thread(target=proxy_server_worker)
                     current_worker_thread.daemon = True
                     current_worker_thread.start()
                     
@@ -461,9 +589,9 @@ def main_loop():
                     current_worker_thread.start()
                     
             elif cmd == '-q':
-                if worker_mode == 'i':
-                    print("[*] Stopping Frida...")
-                    stop_frida_flag = True
+                if worker_mode == 'c':
+                    print("[*] Stopping Proxy and restoring network...")
+                    stop_capture_flag = True
                 elif worker_mode == 'r':
                     print("[*] Boundary Protection: Will safely exit after current MACRO batch completes...")
                     stop_macro_flag = True
@@ -471,9 +599,9 @@ def main_loop():
                     print("[*] No task is currently running.")
                     
             elif cmd == '-Q':
-                if worker_mode == 'i':
-                    print("[*] Stopping Frida...")
-                    stop_frida_flag = True
+                if worker_mode == 'c':
+                    print("[*] Stopping Proxy and restoring network...")
+                    stop_capture_flag = True
                 elif worker_mode == 'r':
                     print("[*] Boundary Protection: Will safely exit after current MICRO run completes...")
                     stop_micro_flag = True
@@ -488,9 +616,13 @@ def main_loop():
                     
             elif cmd == '-E':
                 print("[*] Emergency Exit requested. Cleaning up resources...")
-                stop_frida_flag = True
+                stop_capture_flag = True
                 stop_macro_flag = True
                 stop_micro_flag = True
+                
+                # Make sure to restore Windows proxy before exiting!
+                set_windows_proxy(False)
+                
                 if current_worker_thread and current_worker_thread.is_alive():
                     print("[*] Waiting for background threads to terminate safely...")
                     current_worker_thread.join(timeout=3)
@@ -502,7 +634,7 @@ def main_loop():
                 print_menu()
                 
         except KeyboardInterrupt:
-            print("\n[!] Please use '-E' to exit the program safely to avoid server desync.")
+            print("\n[!] Please use '-E' to exit the program safely to avoid server desync and proxy stuck.")
             
 if __name__ == '__main__':
     main_loop()

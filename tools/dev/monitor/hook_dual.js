@@ -78,31 +78,29 @@ function hook() {
     });
 
     // --- Hook C2S (Client To Server) ---
-    var targetS2C = gameAssembly.add(addr_DecodeWithGzip);
-    Interceptor.attach(targetS2C, {
+    var targetC2S = gameAssembly.add(addr_Encode);
+    Interceptor.attach(targetC2S, {
         onEnter: function(args) {
-            this.is_target = true; 
-            
-            // Ciphertext to be decrypted
-            var strSource = getCSharpString(args[0]); 
-            
-            // Key used for decryption
+            // args[0] is source string (Raw JSON)
+            // args[1] is key string
+            var strContent = getCSharpString(args[0]);
             var strKey = getCSharpString(args[1]);
             
-            if (strSource && strSource.length > 0) {
-                console.log("\n[!] Trigger decryption (Decode)!");
-                console.log("[!] Ciphertext: " + strSource.substring(0, 20) + "...");
-                console.log("[!] Key: " + strKey);
-                send({ id: "LOG", content: "[S2C Decode] Key is: " + strKey });
+            if (strContent && strContent.length > 0) {
+                console.log("[C2S] Key used: " + strKey);
+
+                // Output Key
+                var strKey = getCSharpString(args[1]);
+                send({ id: "LOG", content: "[DEBUG] Encode Key is: " + strKey });
+
+                // If the string looks like JSON (starts with { or [), send it
+                if (strContent.trim().charAt(0) === '{' || strContent.trim().charAt(0) === '[') {
+                    send({ id: "C2S", content: strContent });
+                }
             }
         },
         onLeave: function(retval) {
-            if (this.is_target) {
-                var data = getCSharpByteArray(retval);
-                if (data) {
-                    send({ id: "S2C" }, data);
-                }
-            }
+            // We don't need the result of Encode (it is encrypted)
         }
     });
 

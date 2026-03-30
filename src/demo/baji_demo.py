@@ -1,13 +1,34 @@
+import sys
 import time
-from gflzirc import GFLClient
+import threading
+from gflzirc import GFLClient, GFLCaptureProxy, set_windows_proxy
 
-# User Config
-USER_UID = "_Input_Your_User_ID_"
-SIGN_KEY = "Key_From_Monitor" 
-BASE_URL = "http://gfcn-game.gw.merge.sunborngame.com/index.php/1000"
+CONFIG = {
+    "USER_UID": "_InputYourID_",
+    "SIGN_KEY": "1234567890abcdefghijklmnopqrstuv",
+    "STATIC_KEY": "yundoudou",
+    "TARGET_ENEMIES": [6519263, 6519225, 6519223, 6519246, 6519206],
+    "TARGET_ORDERS": [1, 2, 3, 4, 5],
+    "BASE_URL": "http://gfcn-game.gw.merge.sunborngame.com/index.php/1000",
+    "PROXY_PORT": 8080
+}
+
+current_worker_thread = None
+worker_mode = None
+proxy_instance = None
+
+stop_flag = False
+
+def on_keys_captured(uid: str, sign: str):
+    CONFIG["USER_UID"] = uid
+    CONFIG["SIGN_KEY"] = sign
+    print(f"\n[+] SUCCESS! Keys Auto-Configured:")
+    print(f"    UID  : {CONFIG['USER_UID']}")
+    print(f"    SIGN : {CONFIG['SIGN_KEY']}")
+    print("\n[!] CRITICAL: Please wait for the game to fully load into the Commander Screen!")
+    print("[!] Then type '-r' to automatically stop proxy and begin injection.")
 
 def add_target_practice_enemy(client: GFLClient, enemy_id: int, order_id: int):
-    # Using GFLClient handles the JSON conversion, encryption, req_id and network requests
     payload = {
         "enemy_team_id": enemy_id,
         "fight_type": 0,
@@ -19,18 +40,23 @@ def add_target_practice_enemy(client: GFLClient, enemy_id: int, order_id: int):
     print(f"[*] Sending Request - Enemy ID: {enemy_id} | Order ID: {order_id} ...", end=" ")
     response = client.send_request("Targettrain/addCollect", payload)
     
-    if response.get("success") or "1" in str(response.get("raw", "")):
+    if response and (response.get("success") or "1" in str(response.get("raw", ""))):
         print("[ SUCCESS ]")
     else:
         print(f"[ FAIL ] Server returned: {response}")
 
-if __name__ == '__main__':
-    # Initialize the reusable client from our ZIRC core library
-    client = GFLClient(USER_UID, SIGN_KEY, BASE_URL)
+def baji_worker():
+    global stop_flag, worker_mode, current_worker_thread
     
-    target_enemies = [6519263, 6519225, 6519223, 6519246, 6519206]
-    target_orders = [1, 2, 3, 4, 5]
+    if CONFIG["SIGN_KEY"] == "1234567890abcdefghijklmnopqrstuv":
+        print("[!] SIGN_KEY is default. Run Capture (-c) first!")
+        worker_mode, current_worker_thread = None, None
+        return
+
+    client = GFLClient(CONFIG["USER_UID"], CONFIG["SIGN_KEY"], CONFIG["BASE_URL"])
     
+    target_enemies = CONFIG["TARGET_ENEMIES"]
+    target_orders = CONFIG["TARGET_ORDERS"]
     use_custom_orders = (len(target_enemies) == len(target_orders))
     
     if use_custom_orders:
@@ -38,11 +64,76 @@ if __name__ == '__main__':
     else:
         print("[!] Order list length mismatch. Using auto-increment sequence.")
 
-    print("[*] Starting Batch Injection with ZIRC Core...")
+    print("\n=== GFL Target Practice Injection Started ===")
     
     for idx, enemy in enumerate(target_enemies):
+        if stop_flag:
+            print("[*] Injection interrupted by user.")
+            break
+            
         current_order = target_orders[idx] if use_custom_orders else (idx + 1)
         add_target_practice_enemy(client, enemy, current_order)
-        time.sleep(1)
         
-    print("[*] All done.")
+        if idx < len(target_enemies) - 1:
+            time.sleep(1)
+            
+    print("\n[*] Injection runs ended.")
+    worker_mode, current_worker_thread = None, None
+
+def print_menu():
+    print("\n================= MENU =================")
+    print(" -c : Start Capture Proxy")
+    print(" -r : Run Target Practice Injection")
+    print(" -q : Stop safely")
+    print(" -E : Exit program")
+    print("========================================\n")
+
+if __name__ == '__main__':
+    print_menu()
+    while True:
+        try:
+            cmd = input("GFL-BAJI> ").strip()
+            if not cmd: continue
+            cmd_prefix = cmd.split()[0]
+            
+            if cmd_prefix == '-c':
+                if proxy_instance:
+                    print("[!] Proxy is already running!")
+                    continue
+                proxy_instance = GFLCaptureProxy(CONFIG["PROXY_PORT"], CONFIG["STATIC_KEY"], on_keys_captured)
+                proxy_instance.start()
+                set_windows_proxy(True, f"127.0.0.1:{CONFIG['PROXY_PORT']}")
+                worker_mode = 'c'
+                print(f"[*] Capture Proxy Started on {CONFIG['PROXY_PORT']}. Windows Proxy SET.")
+                
+            elif cmd_prefix == '-r':
+                if worker_mode == 'c' and proxy_instance:
+                    print("[*] Stopping Proxy to begin injection...")
+                    proxy_instance.stop()
+                    set_windows_proxy(False)
+                    proxy_instance = None
+                    time.sleep(1)
+                
+                stop_flag = False
+                worker_mode = 'r'
+                current_worker_thread = threading.Thread(target=baji_worker)
+                current_worker_thread.daemon = True
+                current_worker_thread.start()
+                
+            elif cmd_prefix == '-q':
+                stop_flag = True
+                print("[*] Will stop injection safely...")
+                
+            elif cmd_prefix == '-E':
+                if proxy_instance: proxy_instance.stop()
+                set_windows_proxy(False)
+                stop_flag = True
+                print("[*] Exited cleanly. Windows proxy restored.")
+                sys.exit(0)
+                
+            else:
+                print(f"[!] Unknown command: {cmd_prefix}")
+                print_menu()
+                
+        except KeyboardInterrupt:
+            print("\n[!] Use '-E' to exit safely!")

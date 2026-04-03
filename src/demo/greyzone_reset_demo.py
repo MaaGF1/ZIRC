@@ -103,8 +103,8 @@ def greyzone_reset_worker():
             print(f"\n[+] SUCCESS! Desired GreyZone map generated after {attempts} attempts!")
             break
             
-        # Sleep to prevent server abuse/banning
-        time.sleep(1.5)
+        # Sleep to wait server
+        time.sleep(0.5)
         
     print("\n[*] GreyZone reset worker ended.")
     worker_mode, current_worker_thread = None, None

@@ -57,7 +57,7 @@ def check_drop_result(response_data: dict) -> list:
 
 def check_greyzone_conditions(resp: dict) -> bool:
     status = resp.get("daily_status_with_user_info", {})
-    # Priority 1: Check if boss spot_id is 138
+    # Priority 1: Check if respawn(initial) spot_id is 138(RightUpper)
     if str(status.get("spot_id")) != "138":
         return False
         
@@ -65,12 +65,12 @@ def check_greyzone_conditions(resp: dict) -> bool:
     # Convert list to dict for faster spot lookup
     spots = {str(spot.get("spot_id")): spot.get("mission", "") for spot in map_list}
     
-    # Priority 2: Check spot 136 mission prefix
+    # Priority 2: Check spot 136(Right Mountain) mission prefix
     mission_136 = spots.get("136", "")
     if not mission_136.startswith("1:521018,2:"):
         return False
         
-    # Priority 3: Check spot 127 exact mission match
+    # Priority 3: Check spot 127(Vehicle) exact mission match
     mission_127 = spots.get("127", "")
     valid_127_missions = ["1:550501,2:550005", "1:550001,2:550505"]
     if mission_127 not in valid_127_missions:

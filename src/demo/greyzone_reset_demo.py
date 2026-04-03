@@ -57,39 +57,23 @@ def check_drop_result(response_data: dict) -> list:
 
 def check_greyzone_conditions(resp: dict) -> bool:
     status = resp.get("daily_status_with_user_info", {})
+    # Priority 1: Check if respawn(initial) spot_id is 138(RightUpper)
+    if str(status.get("spot_id")) != "138":
+        return False
+        
     map_list = resp.get("daily_map_with_user_info", [])
-    
-    # Pre-fetch values for debug logging
-    respawn_spot = str(status.get("spot_id"))
-    
     # Convert list to dict for faster spot lookup
     spots = {str(spot.get("spot_id")): spot.get("mission", "") for spot in map_list}
     
-    mission_136 = spots.get("136", "")
-    mission_127 = spots.get("127", "")
-    mission_119 = spots.get("119", "")
-    
-    # Print debug logs
-    print(f"    P1: Respawn Spot = {respawn_spot}")
-    print(f"    P2: Spot 136's Mission = {mission_136}")
-    print(f"    P3: Spot 127's Mission = {mission_127}")
-    print(f"    P4: Spot 119's Mission = {mission_119}")
-    
-    # Priority 1: Check if respawn(initial) spot_id is 138(RightUpper)
-    if respawn_spot != "138":
-        return False
-        
     # Priority 2: Check spot 136(Right Mountain) mission prefix
+    mission_136 = spots.get("136", "")
     if not mission_136.startswith("1:521018,2:"):
         return False
         
     # Priority 3: Check spot 127(Vehicle) exact mission match
+    mission_127 = spots.get("127", "")
     valid_127_missions = ["1:550501,2:550005", "1:550001,2:550505"]
     if mission_127 not in valid_127_missions:
-        return False
-    
-    # Priority 4: Check spot 119(127's down one) night mission prefix (if 5800 i.e. Halloween)
-    if ",2:5800" not in mission_119:
         return False
         
     return True

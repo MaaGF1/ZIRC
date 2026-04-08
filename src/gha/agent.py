@@ -1,6 +1,13 @@
 # src/gha/agent.py
-import os
 import sys
+import platform
+import types
+
+# MOCK winreg on non-Windows environments to bypass import errors in gflzirc
+if platform.system() != "Windows":
+    sys.modules["winreg"] = types.ModuleType("winreg")
+
+import os
 import time
 import json
 from datetime import datetime
@@ -71,7 +78,6 @@ class GFLAgent:
             f"---\n"
         )
         
-        # Overwrite summary file with latest stats
         with open(summary_path, "w") as f:
             f.write(content)
 
@@ -89,7 +95,7 @@ class GFLAgent:
             self.error_count += 1
             return True
         
-        self.error_count = 0  # Reset on success
+        self.error_count = 0
         return False
 
     def check_drop_result(self, response_data: dict) -> list:
@@ -227,7 +233,6 @@ class GFLAgent:
                     abort_id = 10352
                     
                 if dropped is None:
-                    # Error occurred during run
                     self.client.send_request(API_MISSION_ABORT, {"mission_id": abort_id})
                     time.sleep(3)
                     continue
@@ -241,7 +246,6 @@ class GFLAgent:
             self.write_summary(status="Running")
             time.sleep(2)
             
-            # Check execution time to prevent GHA Timeout
             elapsed = time.time() - self.start_time
             if elapsed > MAX_RUNTIME_SEC:
                 print(f"\n[!] Time limit reached ({elapsed}s). Preparing to respawn to avoid GHA timeout.")

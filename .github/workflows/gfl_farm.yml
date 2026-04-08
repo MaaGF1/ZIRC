@@ -28,8 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Assuming src/core contains pyproject.toml / setup.py
-          pip install ./src/core
+          pip install gflzirc
 
       - name: Run GFL Agent
         env:
@@ -53,7 +52,6 @@ jobs:
       - name: Trigger Next Workflow
         if: env.RESPAWN_NEEDED == 'true'
         env:
-          # A classic PAT with 'repo' scope is required to trigger workflows.
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           gh workflow run "GFL Auto Farm Workflow" -f mission_type=${{ github.event.inputs.mission_type }}

@@ -101,10 +101,8 @@ class GFLAgent:
             try:
                 resp = self.client.send_request(api_endpoint, payload)
                 
-                # BUG FIXED: Accept ANY valid parsed JSON (including empty list [])
+                # 完全对齐原版行为：不管返回什么对象(包括[])，只要不是触发异常抛出，就直接返回
                 if resp is not None:
-                    if isinstance(resp, list) and not resp:
-                        print(f"[*] {step_name}: Server returned []. (Normal behavior, proceeding)")
                     return resp
                     
             except Exception as e:
@@ -116,11 +114,11 @@ class GFLAgent:
         return {"error_local": "Max retries reached or empty server response."}
 
     def check_step_error(self, resp, step_name: str) -> bool:
+        # 完全对齐原版行为：只检查 isinstance(dict) 时的 error_local 和 error
         if resp is None:
             self.error_count += 1
             return True
             
-        # Only check for error strings if the response is actually a dictionary
         if isinstance(resp, dict):
             if "error_local" in resp:
                 print(f"[-] {step_name} Local Error: {resp['error_local']}")
@@ -133,11 +131,11 @@ class GFLAgent:
                 self.error_count += 1
                 return True
         
-        # If it's a list [] or valid dict without errors, we are safe.
+        # 只要没有明确抛出错误，就重置错误计数器并放行
         self.error_count = 0
         return False
 
-    def check_drop_result(self, response_data: dict) -> list:
+    def check_drop_result(self, response_data) -> list:
         collected_guns = []
         if not isinstance(response_data, dict):
             return collected_guns
@@ -155,7 +153,7 @@ class GFLAgent:
                 collected_guns.append(gun_uid)
         return collected_guns
 
-    def parse_random_node_drop(self, resp_data: dict):
+    def parse_random_node_drop(self, resp_data):
         if not isinstance(resp_data, dict):
             return
         keys = list(resp_data.keys())
@@ -287,4 +285,14 @@ class GFLAgent:
             elapsed = time.time() - self.start_time
             if elapsed > MAX_RUNTIME_SEC:
                 print(f"\n[!] Time limit reached ({elapsed}s). Preparing to respawn.")
-                with open("respawn.flag", "w")
+                with open("respawn.flag", "w") as f:
+                    f.write("1")
+                self.write_summary(status="Timeout Reached - Spawning Next Job")
+                sys.exit(0)
+                
+        print("\n[*] All macros completed gracefully.")
+        self.write_summary(status="Completed")
+
+if __name__ == '__main__':
+    agent = GFLAgent()
+    agent.run()

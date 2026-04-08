@@ -3,9 +3,17 @@ import sys
 import platform
 import types
 
-# MOCK winreg on non-Windows environments to bypass import errors in gflzirc
+# 1. 拦截并伪造 Windows 注册表库，防报错
 if platform.system() != "Windows":
     sys.modules["winreg"] = types.ModuleType("winreg")
+
+import socket
+# 2. 强制网络请求只走 IPv4 (防 WARP IPv6 被国内云盾拦截)
+old_getaddrinfo = socket.getaddrinfo
+def new_getaddrinfo(*args, **kwargs):
+    responses = old_getaddrinfo(*args, **kwargs)
+    return [response for response in responses if response[0] == socket.AF_INET]
+socket.getaddrinfo = new_getaddrinfo
 
 import os
 import time
@@ -32,7 +40,6 @@ class GFLAgent:
         self.macro_count = 0
         self.error_count = 0
         
-        # Load configs
         config_str = os.environ.get("GFL_CONFIG", "{}")
         try:
             self.config = json.loads(config_str)
@@ -40,18 +47,24 @@ class GFLAgent:
             print(f"[-] FATAL: Failed to parse GFL_CONFIG JSON. {e}")
             sys.exit(1)
             
-        self.sign_key = os.environ.get("GFL_SIGN_KEY", "")
+        self.sign_key = os.environ.get("GFL_SIGN_KEY", "").strip() # 强制去除可能的换行符/空格
         self.mission_type = os.environ.get("GFL_MISSION_TYPE", "f2p")
         
         if not self.sign_key or not self.config.get("USER_UID"):
             print("[-] FATAL: Missing UID or SIGN_KEY.")
             sys.exit(1)
 
+        # 校验服务器配置
         server_key = self.config.get("SERVER_KEY", "M4A1")
-        self.base_url = SERVERS.get(server_key, SERVERS["M4A1"])
+        self.base_url = SERVERS.get(server_key)
+        if not self.base_url:
+            print(f"[-] FATAL: Invalid SERVER_KEY: {server_key}. Check your GFL_CONFIG secret.")
+            sys.exit(1)
+            
+        print(f"[*] Target Server URL: {self.base_url}")
         
         self.client = GFLClient(
-            self.config["USER_UID"], 
+            str(self.config["USER_UID"]), 
             self.sign_key, 
             self.base_url
         )
@@ -77,31 +90,37 @@ class GFLAgent:
             f"| **Timestamp** | {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')} |\n"
             f"---\n"
         )
-        
         with open(summary_path, "w") as f:
             f.write(content)
 
     def safe_request(self, api_endpoint: str, payload: dict, step_name: str, max_retries=3):
-        """
-        带有重试机制的网络请求封装。专门应对 GHA 跨洋网络波动。
-        """
         for attempt in range(1, max_retries + 1):
             try:
                 resp = self.client.send_request(api_endpoint, payload)
-                if resp is not None:
+                
+                # --- 核心排障 Debug 信息 ---
+                raw_type = type(resp)
+                raw_len = len(str(resp))
+                print(f"[DEBUG] {step_name} Attempt {attempt} | Type: {raw_type} | DataLength: {raw_len}")
+                if raw_len < 300: # 如果返回值很短，直接打印出来看是不是报错信息
+                    print(f"[DEBUG] Data Content: {resp}")
+                
+                # 修复: 必须判断 resp 里面真的有数据（不能是空字典 {}）
+                if resp: 
                     return resp
-                print(f"[-] {step_name}: Network response is empty. (Attempt {attempt}/{max_retries})")
+                    
+                print(f"[-] {step_name}: Request succeed but response is empty/invalid. (Attempt {attempt}/{max_retries})")
             except Exception as e:
-                print(f"[-] {step_name}: Request Exception -> {e}. (Attempt {attempt}/{max_retries})")
+                print(f"[-] {step_name}: Exception -> {e}. (Attempt {attempt}/{max_retries})")
             
             if attempt < max_retries:
-                time.sleep(3) # Wait before retry
+                time.sleep(3)
                 
-        return None
+        return {} # 最终失败返回空字典
 
     def check_step_error(self, resp: dict, step_name: str) -> bool:
         if not resp:
-            print(f"[-] {step_name}: Network Request Ultimately Failed after retries.")
+            print(f"[-] {step_name}: Final failure after retries.")
             self.error_count += 1
             return True
         if "error_local" in resp:
@@ -113,7 +132,7 @@ class GFLAgent:
             self.error_count += 1
             return True
         
-        self.error_count = 0 # Reset error counter on successful network request
+        self.error_count = 0
         return False
 
     def check_drop_result(self, response_data: dict) -> list:
@@ -211,7 +230,7 @@ class GFLAgent:
         self.parse_random_node_drop(move2_resp)
         time.sleep(0.2)
 
-        self.safe_request(API_MISSION_ABORT, {"mission_id": mission_id}, "missionAbort")
+        self.safe_request(API_MISSION_ABORT, {"mission_id": mission_id}, "missionAbort", max_retries=1)
         time.sleep(0.5)
         
         return []
@@ -237,7 +256,7 @@ class GFLAgent:
             
             for micro in range(1, micro_target + 1):
                 if self.error_count >= MAX_CONSECUTIVE_ERRORS:
-                    print("\n[!] FATAL: Too many consecutive errors. Auth might be expired or Server IP blocked.")
+                    print("\n[!] FATAL: Too many consecutive errors. Aborting.")
                     self.write_summary(status="FATAL ERROR (Aborted)")
                     sys.exit(1)
                     
@@ -251,7 +270,6 @@ class GFLAgent:
                     abort_id = 10352
                     
                 if dropped is None:
-                    # Try to abort cleanly if a step failed
                     self.safe_request(API_MISSION_ABORT, {"mission_id": abort_id}, "missionAbort", max_retries=1)
                     time.sleep(3)
                     continue
@@ -267,13 +285,13 @@ class GFLAgent:
             
             elapsed = time.time() - self.start_time
             if elapsed > MAX_RUNTIME_SEC:
-                print(f"\n[!] Time limit reached ({elapsed}s). Preparing to respawn to avoid GHA timeout.")
+                print(f"\n[!] Time limit reached ({elapsed}s). Preparing respawn.")
                 with open("respawn.flag", "w") as f:
                     f.write("1")
                 self.write_summary(status="Timeout Reached - Spawning Next Job")
                 sys.exit(0)
                 
-        print("\n[*] All target macros completed gracefully.")
+        print("\n[*] All macros completed gracefully.")
         self.write_summary(status="Completed")
 
 if __name__ == '__main__':

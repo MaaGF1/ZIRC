@@ -2,13 +2,14 @@
 import sys
 import platform
 import types
+import time
 
 # 1. Bypass winreg on Linux
 if platform.system() != "Windows":
     sys.modules["winreg"] = types.ModuleType("winreg")
 
 import socket
-# 2. Force IPv4
+# 2. Force IPv4 to bypass WAF
 old_getaddrinfo = socket.getaddrinfo
 def new_getaddrinfo(*args, **kwargs):
     responses = old_getaddrinfo(*args, **kwargs)
@@ -16,9 +17,26 @@ def new_getaddrinfo(*args, **kwargs):
 socket.getaddrinfo = new_getaddrinfo
 
 import os
-import time
 import json
 from datetime import datetime
+
+# =========================================================================
+# 3. [CRITICAL PATCH] Anti-Replay Attack Fix for Cross-Machine Clock Drift
+# =========================================================================
+import gflzirc.client
+original_get_req_id = gflzirc.client.GFLClient._get_req_id
+
+def patched_get_req_id(self):
+    # 强制将时间戳推后 86400 秒 (24小时)。
+    # 这样可以保证 GHA 产生的时间戳永远大于你本地 Windows 产生的时间戳，
+    # 从而完美绕过散爆服务器的 req_id 重放攻击防御 (导致返回 [])。
+    timestamp = int(time.time()) + 86400
+    req_id = f"{timestamp}{self.req_idx:05d}"
+    self.req_idx += 1
+    return req_id
+
+gflzirc.client.GFLClient._get_req_id = patched_get_req_id
+# =========================================================================
 
 from gflzirc import (
     GFLClient, SERVERS,
@@ -46,10 +64,8 @@ class GFLAgent:
             self.config = json.loads(config_str)
         except Exception as e:
             print(f"[-] FATAL: Failed to parse GFL_CONFIG JSON. Exception: {e}")
-            print(f"[DEBUG] Raw Config String: {config_str}")
             sys.exit(1)
             
-        # Strip potential spaces, quotes or newlines from Secret
         self.sign_key = os.environ.get("GFL_SIGN_KEY", "").strip().strip('"').strip("'")
         self.mission_type = os.environ.get("GFL_MISSION_TYPE", "f2p")
         
@@ -57,30 +73,13 @@ class GFLAgent:
         server_key = self.config.get("SERVER_KEY", "M4A1")
         self.base_url = SERVERS.get(server_key)
         
-        # === CONFIGURATION AUDIT (Debug Print) ===
         print("\n================ CONFIGURATION AUDIT ================")
         print(f"[*] Mission Type : {self.mission_type.upper()}")
-        
-        # Mask UID safely
-        masked_uid = uid[:-3] + "***" if len(uid) > 3 else "INVALID_UID"
-        print(f"[*] USER_UID     : {masked_uid} (Length: {len(uid)})")
-        
-        # Mask SIGN_KEY safely
-        if len(self.sign_key) > 12:
-            masked_sign = self.sign_key[:8] + "*" * (len(self.sign_key)-12) + self.sign_key[-4:]
-            print(f"[*] SIGN_KEY     : {masked_sign} (Length: {len(self.sign_key)})")
-        else:
-            print(f"[*] SIGN_KEY     : INVALID_OR_TOO_SHORT (Length: {len(self.sign_key)})")
-            
         print(f"[*] SERVER_KEY   : {server_key}")
-        print(f"[*] BASE_URL     : {self.base_url}")
         print("=====================================================\n")
 
-        if not self.sign_key or not uid or self.sign_key == "INVALID_OR_TOO_SHORT":
-            print("[-] FATAL: Missing or Invalid UID / SIGN_KEY.")
-            sys.exit(1)
-        if not self.base_url:
-            print(f"[-] FATAL: Invalid SERVER_KEY: {server_key}.")
+        if not self.sign_key or not uid:
+            print("[-] FATAL: Missing UID or SIGN_KEY.")
             sys.exit(1)
             
         self.client = GFLClient(uid, self.sign_key, self.base_url)
@@ -116,12 +115,11 @@ class GFLAgent:
                 
                 # Check for actual data presence
                 if resp and isinstance(resp, dict):
-                    # Even if it's an error dict from client like error_local, return it for upper layer logic
                     return resp
                 elif isinstance(resp, list) and not resp:
-                    print(f"[-] {step_name}: Request succeed but response is empty list []. Probable Auth Reject. (Attempt {attempt}/{max_retries})")
+                    print(f"[-] {step_name}: Returned empty list []. Potential Replay Attack block. (Attempt {attempt}/{max_retries})")
                 else:
-                    print(f"[-] {step_name}: Request succeed but response is unexpected format. (Attempt {attempt}/{max_retries})")
+                    print(f"[-] {step_name}: Unexpected format. (Attempt {attempt}/{max_retries})")
                     
             except Exception as e:
                 print(f"[-] {step_name}: Exception -> {e}. (Attempt {attempt}/{max_retries})")
@@ -129,7 +127,6 @@ class GFLAgent:
             if attempt < max_retries:
                 time.sleep(3)
                 
-        # Return fallback error dict to trigger check_step_error
         return {"error_local": "Max retries reached or empty server response."}
 
     def check_step_error(self, resp: dict, step_name: str) -> bool:
@@ -138,10 +135,13 @@ class GFLAgent:
             self.error_count += 1
             return True
         if "error_local" in resp:
+            # error:3 is expected when aborting a non-existent mission, don't count as fatal
+            if "error:3" in str(resp.get('raw', '')):
+                return False
+                
             print(f"[-] {step_name} Local Error: {resp['error_local']}")
-            # Debug print the raw server output if auth fails
             if 'raw' in resp:
-                print(f"[DEBUG] Raw Server Payload: {resp['raw']}")
+                print(f"[DEBUG] Server Payload: {resp['raw']}")
             self.error_count += 1
             return True
         if "error" in resp:
@@ -182,9 +182,6 @@ class GFLAgent:
     def farm_mission_11880(self):
         mission_id = 11880
         squad_id = self.config.get("SQUAD_ID")
-        if not squad_id:
-            print("[-] FATAL: SQUAD_ID not set in config.")
-            return None
 
         if self.check_step_error(self.safe_request(API_MISSION_COMBINFO, {"mission_id": mission_id}, "combinationInfo"), "combinationInfo"): return None
         
@@ -213,9 +210,6 @@ class GFLAgent:
     def farm_mission_10352(self):
         mission_id = 10352
         team_id = self.config.get("TEAM_ID")
-        if not team_id:
-            print("[-] FATAL: TEAM_ID not set in config.")
-            return None
 
         if self.check_step_error(self.safe_request(API_MISSION_COMBINFO, {"mission_id": mission_id}, "combinationInfo"), "combinationInfo"): return None
         

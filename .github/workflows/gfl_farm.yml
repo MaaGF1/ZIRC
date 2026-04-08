@@ -30,6 +30,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install gflzirc
 
+      - name: Setup Cloudflare WARP to Bypass WAF
+        run: |
+          echo "Installing Cloudflare WARP..."
+          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+          sudo apt-get update
+          sudo apt-get install -y cloudflare-warp
+          
+          echo "Registering and Connecting WARP..."
+          warp-cli --accept-tos registration new
+          warp-cli --accept-tos connect
+          
+          echo "Waiting for WARP tunnel to stabilize..."
+          sleep 5
+          
+          echo "Current Public IP:"
+          curl -s ifconfig.me
+          echo ""
+
       - name: Run GFL Agent
         env:
           GFL_CONFIG: ${{ secrets.GFL_CONFIG }}

@@ -81,9 +81,27 @@ class GFLAgent:
         with open(summary_path, "w") as f:
             f.write(content)
 
+    def safe_request(self, api_endpoint: str, payload: dict, step_name: str, max_retries=3):
+        """
+        带有重试机制的网络请求封装。专门应对 GHA 跨洋网络波动。
+        """
+        for attempt in range(1, max_retries + 1):
+            try:
+                resp = self.client.send_request(api_endpoint, payload)
+                if resp is not None:
+                    return resp
+                print(f"[-] {step_name}: Network response is empty. (Attempt {attempt}/{max_retries})")
+            except Exception as e:
+                print(f"[-] {step_name}: Request Exception -> {e}. (Attempt {attempt}/{max_retries})")
+            
+            if attempt < max_retries:
+                time.sleep(3) # Wait before retry
+                
+        return None
+
     def check_step_error(self, resp: dict, step_name: str) -> bool:
         if not resp:
-            print(f"[-] {step_name} Network Request Failed.")
+            print(f"[-] {step_name}: Network Request Ultimately Failed after retries.")
             self.error_count += 1
             return True
         if "error_local" in resp:
@@ -95,7 +113,7 @@ class GFLAgent:
             self.error_count += 1
             return True
         
-        self.error_count = 0
+        self.error_count = 0 # Reset error counter on successful network request
         return False
 
     def check_drop_result(self, response_data: dict) -> list:
@@ -132,7 +150,7 @@ class GFLAgent:
             print("[-] FATAL: SQUAD_ID not set in config.")
             return None
 
-        if self.check_step_error(self.client.send_request(API_MISSION_COMBINFO, {"mission_id": mission_id}), "combinationInfo"): return None
+        if self.check_step_error(self.safe_request(API_MISSION_COMBINFO, {"mission_id": mission_id}, "combinationInfo"), "combinationInfo"): return None
         
         start_payload = {
             "mission_id": mission_id, "spots": [],
@@ -141,17 +159,17 @@ class GFLAgent:
             "ally_id": int(time.time())
         }
         
-        if self.check_step_error(self.client.send_request(API_MISSION_START, start_payload), "startMission"): return None
-        if self.check_step_error(self.client.send_request(API_INDEX_GUIDE, {"guide": json.dumps({"course": GUIDE_COURSE_11880}, separators=(',', ':'))}), "guide"): return None
+        if self.check_step_error(self.safe_request(API_MISSION_START, start_payload, "startMission"), "startMission"): return None
+        if self.check_step_error(self.safe_request(API_INDEX_GUIDE, {"guide": json.dumps({"course": GUIDE_COURSE_11880}, separators=(',', ':'))}, "guide"), "guide"): return None
         time.sleep(0.5)
-        if self.check_step_error(self.client.send_request(API_MISSION_END_TURN, {}), "endTurn"): return None
+        if self.check_step_error(self.safe_request(API_MISSION_END_TURN, {}, "endTurn"), "endTurn"): return None
         time.sleep(0.2)
-        if self.check_step_error(self.client.send_request(API_MISSION_START_ENEMY_TURN, {}), "startEnemyTurn"): return None
+        if self.check_step_error(self.safe_request(API_MISSION_START_ENEMY_TURN, {}, "startEnemyTurn"), "startEnemyTurn"): return None
         time.sleep(0.2)
-        if self.check_step_error(self.client.send_request(API_MISSION_END_ENEMY_TURN, {}), "endEnemyTurn"): return None
+        if self.check_step_error(self.safe_request(API_MISSION_END_ENEMY_TURN, {}, "endEnemyTurn"), "endEnemyTurn"): return None
         time.sleep(0.2)
         
-        final_resp = self.client.send_request(API_MISSION_START_TURN, {})
+        final_resp = self.safe_request(API_MISSION_START_TURN, {}, "startTurn")
         if self.check_step_error(final_resp, "startTurn"): return None
         
         return self.check_drop_result(final_resp)
@@ -163,7 +181,7 @@ class GFLAgent:
             print("[-] FATAL: TEAM_ID not set in config.")
             return None
 
-        if self.check_step_error(self.client.send_request(API_MISSION_COMBINFO, {"mission_id": mission_id}), "combinationInfo"): return None
+        if self.check_step_error(self.safe_request(API_MISSION_COMBINFO, {"mission_id": mission_id}, "combinationInfo"), "combinationInfo"): return None
         
         start_payload = {
             "mission_id": mission_id, 
@@ -172,28 +190,28 @@ class GFLAgent:
             "ally_spots": [], "mission_ally_spots": [],
             "ally_id": int(time.time())
         }
-        if self.check_step_error(self.client.send_request(API_MISSION_START, start_payload), "startMission"): return None
-        if self.check_step_error(self.client.send_request(API_INDEX_GUIDE, {"guide": json.dumps({"course": GUIDE_COURSE_10352}, separators=(',', ':'))}), "guide"): return None
+        if self.check_step_error(self.safe_request(API_MISSION_START, start_payload, "startMission"), "startMission"): return None
+        if self.check_step_error(self.safe_request(API_INDEX_GUIDE, {"guide": json.dumps({"course": GUIDE_COURSE_10352}, separators=(',', ':'))}, "guide"), "guide"): return None
         time.sleep(0.2)
 
         move1_payload = {
             "person_type": 1, "person_id": team_id,
             "from_spot_id": 13280, "to_spot_id": 13277, "move_type": 1
         }
-        if self.check_step_error(self.client.send_request(API_MISSION_TEAM_MOVE, move1_payload), "teamMove1"): return None
+        if self.check_step_error(self.safe_request(API_MISSION_TEAM_MOVE, move1_payload, "teamMove1"), "teamMove1"): return None
         time.sleep(0.2)
 
         move2_payload = {
             "person_type": 1, "person_id": team_id,
             "from_spot_id": 13277, "to_spot_id": 13278, "move_type": 1
         }
-        move2_resp = self.client.send_request(API_MISSION_TEAM_MOVE, move2_payload)
+        move2_resp = self.safe_request(API_MISSION_TEAM_MOVE, move2_payload, "teamMove2")
         if self.check_step_error(move2_resp, "teamMove2"): return None
         
         self.parse_random_node_drop(move2_resp)
         time.sleep(0.2)
 
-        self.client.send_request(API_MISSION_ABORT, {"mission_id": mission_id})
+        self.safe_request(API_MISSION_ABORT, {"mission_id": mission_id}, "missionAbort")
         time.sleep(0.5)
         
         return []
@@ -201,7 +219,7 @@ class GFLAgent:
     def retire_guns(self, gun_uids: list):
         if not gun_uids: return
         print(f"[*] Submitting {len(gun_uids)} T-Dolls for Auto-Retire...")
-        resp = self.client.send_request(API_GUN_RETIRE, gun_uids)
+        resp = self.safe_request(API_GUN_RETIRE, gun_uids, "retireGuns")
         if resp and resp.get("success"): 
             print("[+] Auto-Retire Successful!")
         else: 
@@ -219,7 +237,7 @@ class GFLAgent:
             
             for micro in range(1, micro_target + 1):
                 if self.error_count >= MAX_CONSECUTIVE_ERRORS:
-                    print("\n[!] FATAL: Too many consecutive errors. Auth might be expired or server in maintenance.")
+                    print("\n[!] FATAL: Too many consecutive errors. Auth might be expired or Server IP blocked.")
                     self.write_summary(status="FATAL ERROR (Aborted)")
                     sys.exit(1)
                     
@@ -233,7 +251,8 @@ class GFLAgent:
                     abort_id = 10352
                     
                 if dropped is None:
-                    self.client.send_request(API_MISSION_ABORT, {"mission_id": abort_id})
+                    # Try to abort cleanly if a step failed
+                    self.safe_request(API_MISSION_ABORT, {"mission_id": abort_id}, "missionAbort", max_retries=1)
                     time.sleep(3)
                     continue
                     

@@ -3,12 +3,12 @@ import sys
 import platform
 import types
 
-# 1. 拦截并伪造 Windows 注册表库，防报错
+# 1. Bypass winreg on Linux
 if platform.system() != "Windows":
     sys.modules["winreg"] = types.ModuleType("winreg")
 
 import socket
-# 2. 强制网络请求只走 IPv4 (防 WARP IPv6 被国内云盾拦截)
+# 2. Force IPv4
 old_getaddrinfo = socket.getaddrinfo
 def new_getaddrinfo(*args, **kwargs):
     responses = old_getaddrinfo(*args, **kwargs)
@@ -40,34 +40,50 @@ class GFLAgent:
         self.macro_count = 0
         self.error_count = 0
         
-        config_str = os.environ.get("GFL_CONFIG", "{}")
+        # Load Configs
+        config_str = os.environ.get("GFL_CONFIG", "{}").strip()
         try:
             self.config = json.loads(config_str)
         except Exception as e:
-            print(f"[-] FATAL: Failed to parse GFL_CONFIG JSON. {e}")
+            print(f"[-] FATAL: Failed to parse GFL_CONFIG JSON. Exception: {e}")
+            print(f"[DEBUG] Raw Config String: {config_str}")
             sys.exit(1)
             
-        self.sign_key = os.environ.get("GFL_SIGN_KEY", "").strip() # 强制去除可能的换行符/空格
+        # Strip potential spaces, quotes or newlines from Secret
+        self.sign_key = os.environ.get("GFL_SIGN_KEY", "").strip().strip('"').strip("'")
         self.mission_type = os.environ.get("GFL_MISSION_TYPE", "f2p")
         
-        if not self.sign_key or not self.config.get("USER_UID"):
-            print("[-] FATAL: Missing UID or SIGN_KEY.")
-            sys.exit(1)
-
-        # 校验服务器配置
+        uid = str(self.config.get("USER_UID", "")).strip()
         server_key = self.config.get("SERVER_KEY", "M4A1")
         self.base_url = SERVERS.get(server_key)
+        
+        # === CONFIGURATION AUDIT (Debug Print) ===
+        print("\n================ CONFIGURATION AUDIT ================")
+        print(f"[*] Mission Type : {self.mission_type.upper()}")
+        
+        # Mask UID safely
+        masked_uid = uid[:-3] + "***" if len(uid) > 3 else "INVALID_UID"
+        print(f"[*] USER_UID     : {masked_uid} (Length: {len(uid)})")
+        
+        # Mask SIGN_KEY safely
+        if len(self.sign_key) > 12:
+            masked_sign = self.sign_key[:8] + "*" * (len(self.sign_key)-12) + self.sign_key[-4:]
+            print(f"[*] SIGN_KEY     : {masked_sign} (Length: {len(self.sign_key)})")
+        else:
+            print(f"[*] SIGN_KEY     : INVALID_OR_TOO_SHORT (Length: {len(self.sign_key)})")
+            
+        print(f"[*] SERVER_KEY   : {server_key}")
+        print(f"[*] BASE_URL     : {self.base_url}")
+        print("=====================================================\n")
+
+        if not self.sign_key or not uid or self.sign_key == "INVALID_OR_TOO_SHORT":
+            print("[-] FATAL: Missing or Invalid UID / SIGN_KEY.")
+            sys.exit(1)
         if not self.base_url:
-            print(f"[-] FATAL: Invalid SERVER_KEY: {server_key}. Check your GFL_CONFIG secret.")
+            print(f"[-] FATAL: Invalid SERVER_KEY: {server_key}.")
             sys.exit(1)
             
-        print(f"[*] Target Server URL: {self.base_url}")
-        
-        self.client = GFLClient(
-            str(self.config["USER_UID"]), 
-            self.sign_key, 
-            self.base_url
-        )
+        self.client = GFLClient(uid, self.sign_key, self.base_url)
 
     def write_summary(self, status="Running"):
         summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
@@ -98,25 +114,23 @@ class GFLAgent:
             try:
                 resp = self.client.send_request(api_endpoint, payload)
                 
-                # --- 核心排障 Debug 信息 ---
-                raw_type = type(resp)
-                raw_len = len(str(resp))
-                print(f"[DEBUG] {step_name} Attempt {attempt} | Type: {raw_type} | DataLength: {raw_len}")
-                if raw_len < 300: # 如果返回值很短，直接打印出来看是不是报错信息
-                    print(f"[DEBUG] Data Content: {resp}")
-                
-                # 修复: 必须判断 resp 里面真的有数据（不能是空字典 {}）
-                if resp: 
+                # Check for actual data presence
+                if resp and isinstance(resp, dict):
+                    # Even if it's an error dict from client like error_local, return it for upper layer logic
                     return resp
+                elif isinstance(resp, list) and not resp:
+                    print(f"[-] {step_name}: Request succeed but response is empty list []. Probable Auth Reject. (Attempt {attempt}/{max_retries})")
+                else:
+                    print(f"[-] {step_name}: Request succeed but response is unexpected format. (Attempt {attempt}/{max_retries})")
                     
-                print(f"[-] {step_name}: Request succeed but response is empty/invalid. (Attempt {attempt}/{max_retries})")
             except Exception as e:
                 print(f"[-] {step_name}: Exception -> {e}. (Attempt {attempt}/{max_retries})")
             
             if attempt < max_retries:
                 time.sleep(3)
                 
-        return {} # 最终失败返回空字典
+        # Return fallback error dict to trigger check_step_error
+        return {"error_local": "Max retries reached or empty server response."}
 
     def check_step_error(self, resp: dict, step_name: str) -> bool:
         if not resp:
@@ -125,6 +139,9 @@ class GFLAgent:
             return True
         if "error_local" in resp:
             print(f"[-] {step_name} Local Error: {resp['error_local']}")
+            # Debug print the raw server output if auth fails
+            if 'raw' in resp:
+                print(f"[DEBUG] Raw Server Payload: {resp['raw']}")
             self.error_count += 1
             return True
         if "error" in resp:

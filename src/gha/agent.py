@@ -1,42 +1,9 @@
 # src/gha/agent.py
-import sys
-import platform
-import types
-import time
-
-# 1. Bypass winreg on Linux
-if platform.system() != "Windows":
-    sys.modules["winreg"] = types.ModuleType("winreg")
-
-import socket
-# 2. Force IPv4 to bypass WAF
-old_getaddrinfo = socket.getaddrinfo
-def new_getaddrinfo(*args, **kwargs):
-    responses = old_getaddrinfo(*args, **kwargs)
-    return [response for response in responses if response[0] == socket.AF_INET]
-socket.getaddrinfo = new_getaddrinfo
-
 import os
+import sys
+import time
 import json
 from datetime import datetime
-
-# =========================================================================
-# 3. [CRITICAL PATCH] Anti-Replay Attack Fix for Cross-Machine Clock Drift
-# =========================================================================
-import gflzirc.client
-original_get_req_id = gflzirc.client.GFLClient._get_req_id
-
-def patched_get_req_id(self):
-    # 强制将时间戳推后 86400 秒 (24小时)。
-    # 这样可以保证 GHA 产生的时间戳永远大于你本地 Windows 产生的时间戳，
-    # 从而完美绕过散爆服务器的 req_id 重放攻击防御 (导致返回 [])。
-    timestamp = int(time.time()) + 86400
-    req_id = f"{timestamp}{self.req_idx:05d}"
-    self.req_idx += 1
-    return req_id
-
-gflzirc.client.GFLClient._get_req_id = patched_get_req_id
-# =========================================================================
 
 from gflzirc import (
     GFLClient, SERVERS,
@@ -73,13 +40,28 @@ class GFLAgent:
         server_key = self.config.get("SERVER_KEY", "M4A1")
         self.base_url = SERVERS.get(server_key)
         
+        # === CONFIGURATION AUDIT ===
         print("\n================ CONFIGURATION AUDIT ================")
         print(f"[*] Mission Type : {self.mission_type.upper()}")
+        
+        masked_uid = uid[:-3] + "***" if len(uid) > 3 else "INVALID"
+        print(f"[*] USER_UID     : {masked_uid} (Length: {len(uid)})")
+        
+        if len(self.sign_key) > 12:
+            masked_sign = self.sign_key[:8] + "*" * (len(self.sign_key)-12) + self.sign_key[-4:]
+            print(f"[*] SIGN_KEY     : {masked_sign} (Length: {len(self.sign_key)})")
+        else:
+            print(f"[*] SIGN_KEY     : INVALID_OR_TOO_SHORT")
+            
         print(f"[*] SERVER_KEY   : {server_key}")
+        print(f"[*] BASE_URL     : {self.base_url}")
         print("=====================================================\n")
 
-        if not self.sign_key or not uid:
-            print("[-] FATAL: Missing UID or SIGN_KEY.")
+        if not self.sign_key or not uid or len(self.sign_key) < 12:
+            print("[-] FATAL: Missing or Invalid UID / SIGN_KEY.")
+            sys.exit(1)
+        if not self.base_url:
+            print(f"[-] FATAL: Invalid SERVER_KEY: {server_key}.")
             sys.exit(1)
             
         self.client = GFLClient(uid, self.sign_key, self.base_url)
@@ -113,13 +95,12 @@ class GFLAgent:
             try:
                 resp = self.client.send_request(api_endpoint, payload)
                 
-                # Check for actual data presence
                 if resp and isinstance(resp, dict):
                     return resp
                 elif isinstance(resp, list) and not resp:
-                    print(f"[-] {step_name}: Returned empty list []. Potential Replay Attack block. (Attempt {attempt}/{max_retries})")
+                    print(f"[-] {step_name}: Request succeed but got empty list []. WAF intercepted or Auth Reject. (Attempt {attempt}/{max_retries})")
                 else:
-                    print(f"[-] {step_name}: Unexpected format. (Attempt {attempt}/{max_retries})")
+                    print(f"[-] {step_name}: Request succeed but response is unexpected. (Attempt {attempt}/{max_retries})")
                     
             except Exception as e:
                 print(f"[-] {step_name}: Exception -> {e}. (Attempt {attempt}/{max_retries})")
@@ -131,17 +112,12 @@ class GFLAgent:
 
     def check_step_error(self, resp: dict, step_name: str) -> bool:
         if not resp:
-            print(f"[-] {step_name}: Final failure after retries.")
             self.error_count += 1
             return True
         if "error_local" in resp:
-            # error:3 is expected when aborting a non-existent mission, don't count as fatal
-            if "error:3" in str(resp.get('raw', '')):
-                return False
-                
             print(f"[-] {step_name} Local Error: {resp['error_local']}")
             if 'raw' in resp:
-                print(f"[DEBUG] Server Payload: {resp['raw']}")
+                print(f"[DEBUG] Raw Server Payload: {resp['raw']}")
             self.error_count += 1
             return True
         if "error" in resp:
@@ -163,7 +139,7 @@ class GFLAgent:
             for gun in reward_guns:
                 gun_id = gun.get('gun_id')
                 gun_uid = int(gun.get('gun_with_user_id'))
-                print(f"[+] Got T-Doll! Gun ID: {gun_id} | UID: {gun_uid}")
+                print(f"[+] Got T-Doll! Gun ID: {gun_id} | UID: {gun_uid} | Time: {time.strftime('%H:%M:%S')}")
                 collected_guns.append(gun_uid)
         return collected_guns
 
@@ -267,7 +243,7 @@ class GFLAgent:
             
             for micro in range(1, micro_target + 1):
                 if self.error_count >= MAX_CONSECUTIVE_ERRORS:
-                    print("\n[!] FATAL: Too many consecutive errors. Aborting.")
+                    print("\n[!] FATAL: Too many consecutive errors. Server WAF blocked or Auth Expired.")
                     self.write_summary(status="FATAL ERROR (Aborted)")
                     sys.exit(1)
                     
@@ -296,7 +272,7 @@ class GFLAgent:
             
             elapsed = time.time() - self.start_time
             if elapsed > MAX_RUNTIME_SEC:
-                print(f"\n[!] Time limit reached ({elapsed}s). Preparing respawn.")
+                print(f"\n[!] Time limit reached ({elapsed}s). Preparing to respawn.")
                 with open("respawn.flag", "w") as f:
                     f.write("1")
                 self.write_summary(status="Timeout Reached - Spawning Next Job")

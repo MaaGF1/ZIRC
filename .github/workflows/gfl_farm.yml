@@ -14,7 +14,7 @@ on:
 
 jobs:
   farm:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     
     steps:
       - name: Checkout Repository
@@ -28,26 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install gflzirc
-
-      - name: Setup Cloudflare WARP to Bypass WAF
-        run: |
-          echo "Installing Cloudflare WARP..."
-          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
-          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
-          sudo apt-get update
-          sudo apt-get install -y cloudflare-warp
-          
-          echo "Registering and Connecting WARP..."
-          warp-cli --accept-tos registration new
-          warp-cli --accept-tos connect
-          
-          echo "Waiting for WARP tunnel to stabilize..."
-          sleep 5
-          
-          echo "Current Public IP:"
-          curl -s ifconfig.me
-          echo ""
+          pip install gflzirc requests
 
       - name: Run GFL Agent
         env:
@@ -59,19 +40,21 @@ jobs:
 
       - name: Check for Respawn Flag
         id: check_respawn
+        shell: pwsh
         run: |
-          if [ -f "respawn.flag" ]; then
-            echo "RESPAWN_NEEDED=true" >> $GITHUB_ENV
-            echo "Respawn flag detected. Triggering next job..."
-          else
-            echo "RESPAWN_NEEDED=false" >> $GITHUB_ENV
-            echo "No respawn flag. Job completed or failed fatally."
-          fi
+          if (Test-Path "respawn.flag") {
+            echo "RESPAWN_NEEDED=true" >> $env:GITHUB_ENV
+            Write-Host "Respawn flag detected. Triggering next job..."
+          } else {
+            echo "RESPAWN_NEEDED=false" >> $env:GITHUB_ENV
+            Write-Host "No respawn flag. Job completed or failed fatally."
+          }
 
       - name: Trigger Next Workflow
         if: env.RESPAWN_NEEDED == 'true'
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
+        shell: pwsh
         run: |
-          gh workflow run "GFL Auto Farm Workflow" -f mission_type=${{ github.event.inputs.mission_type }}
-          echo "Next job triggered successfully."
+          gh workflow run "GFL Auto Farm Workflow" -f mission_type="${{ github.event.inputs.mission_type }}"
+          Write-Host "Next job triggered successfully."

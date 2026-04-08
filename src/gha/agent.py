@@ -3,7 +3,13 @@ import os
 import sys
 import time
 import json
+import platform
+import types
 from datetime import datetime
+
+# Cross-platform compatibility for gflzirc
+if platform.system() != "Windows":
+    sys.modules["winreg"] = types.ModuleType("winreg")
 
 from gflzirc import (
     GFLClient, SERVERS,
@@ -95,12 +101,11 @@ class GFLAgent:
             try:
                 resp = self.client.send_request(api_endpoint, payload)
                 
-                if resp and isinstance(resp, dict):
+                # BUG FIXED: Accept ANY valid parsed JSON (including empty list [])
+                if resp is not None:
+                    if isinstance(resp, list) and not resp:
+                        print(f"[*] {step_name}: Server returned []. (Normal behavior, proceeding)")
                     return resp
-                elif isinstance(resp, list) and not resp:
-                    print(f"[-] {step_name}: Request succeed but got empty list []. WAF intercepted or Auth Reject. (Attempt {attempt}/{max_retries})")
-                else:
-                    print(f"[-] {step_name}: Request succeed but response is unexpected. (Attempt {attempt}/{max_retries})")
                     
             except Exception as e:
                 print(f"[-] {step_name}: Exception -> {e}. (Attempt {attempt}/{max_retries})")
@@ -110,26 +115,33 @@ class GFLAgent:
                 
         return {"error_local": "Max retries reached or empty server response."}
 
-    def check_step_error(self, resp: dict, step_name: str) -> bool:
-        if not resp:
+    def check_step_error(self, resp, step_name: str) -> bool:
+        if resp is None:
             self.error_count += 1
             return True
-        if "error_local" in resp:
-            print(f"[-] {step_name} Local Error: {resp['error_local']}")
-            if 'raw' in resp:
-                print(f"[DEBUG] Raw Server Payload: {resp['raw']}")
-            self.error_count += 1
-            return True
-        if "error" in resp:
-            print(f"[-] {step_name} Server Error: {resp['error']}")
-            self.error_count += 1
-            return True
+            
+        # Only check for error strings if the response is actually a dictionary
+        if isinstance(resp, dict):
+            if "error_local" in resp:
+                print(f"[-] {step_name} Local Error: {resp['error_local']}")
+                if 'raw' in resp:
+                    print(f"[DEBUG] Raw Server Payload: {resp['raw']}")
+                self.error_count += 1
+                return True
+            if "error" in resp:
+                print(f"[-] {step_name} Server Error: {resp['error']}")
+                self.error_count += 1
+                return True
         
+        # If it's a list [] or valid dict without errors, we are safe.
         self.error_count = 0
         return False
 
     def check_drop_result(self, response_data: dict) -> list:
         collected_guns = []
+        if not isinstance(response_data, dict):
+            return collected_guns
+            
         win_result = response_data.get("mission_win_result", {})
         if not win_result: 
             return collected_guns
@@ -144,6 +156,8 @@ class GFLAgent:
         return collected_guns
 
     def parse_random_node_drop(self, resp_data: dict):
+        if not isinstance(resp_data, dict):
+            return
         keys = list(resp_data.keys())
         try:
             target_idx = keys.index("building_defender_change") - 1
@@ -226,7 +240,7 @@ class GFLAgent:
         if not gun_uids: return
         print(f"[*] Submitting {len(gun_uids)} T-Dolls for Auto-Retire...")
         resp = self.safe_request(API_GUN_RETIRE, gun_uids, "retireGuns")
-        if resp and resp.get("success"): 
+        if isinstance(resp, dict) and resp.get("success"): 
             print("[+] Auto-Retire Successful!")
         else: 
             print(f"[-] Retire Failed: {resp}")
@@ -273,14 +287,4 @@ class GFLAgent:
             elapsed = time.time() - self.start_time
             if elapsed > MAX_RUNTIME_SEC:
                 print(f"\n[!] Time limit reached ({elapsed}s). Preparing to respawn.")
-                with open("respawn.flag", "w") as f:
-                    f.write("1")
-                self.write_summary(status="Timeout Reached - Spawning Next Job")
-                sys.exit(0)
-                
-        print("\n[*] All macros completed gracefully.")
-        self.write_summary(status="Completed")
-
-if __name__ == '__main__':
-    agent = GFLAgent()
-    agent.run()
+                with open("respawn.flag", "w")

@@ -1,4 +1,5 @@
 # src/gha/agent.py
+
 import os
 import sys
 import time
@@ -101,7 +102,7 @@ class GFLAgent:
             try:
                 resp = self.client.send_request(api_endpoint, payload)
                 
-                # 完全对齐原版行为：不管返回什么对象(包括[])，只要不是触发异常抛出，就直接返回
+                # 不管返回什么对象(包括[])，只要不是触发异常抛出，就直接返回
                 if resp is not None:
                     return resp
                     
@@ -114,7 +115,7 @@ class GFLAgent:
         return {"error_local": "Max retries reached or empty server response."}
 
     def check_step_error(self, resp, step_name: str) -> bool:
-        # 完全对齐原版行为：只检查 isinstance(dict) 时的 error_local 和 error
+        # 只检查 isinstance(dict) 时的 error_local 和 error
         if resp is None:
             self.error_count += 1
             return True

@@ -35,6 +35,8 @@ jobs:
           GFL_CONFIG: ${{ secrets.GFL_CONFIG }}
           GFL_SIGN_KEY: ${{ secrets.GFL_SIGN_KEY }}
           GFL_MISSION_TYPE: ${{ github.event.inputs.mission_type }}
+          # Force Python to flush stdout immediately for real-time GHA logging
+          PYTHONUNBUFFERED: "1"
         run: |
           python src/gha/agent.py
 

@@ -28,9 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-
-          # Note: Install the local version of gflzirc to ensure consistency
-          pip install requests
+          # Install the local version of gflzirc (and other lib from pyproject.toml)
           pip install ./src/core
 
       - name: Run GFL Agent

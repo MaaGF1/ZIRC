@@ -61,6 +61,7 @@ def is_vehicle_mission(mission: str) -> bool:
 
 def is_mountain_mission(mission: str) -> bool:
     # Mountain mission
+	# Note: 521021 is 150 points' mountain mission
     return mission.startswith("1:521018,2:")
 
 def check_strategy_1(spots: dict) -> bool:

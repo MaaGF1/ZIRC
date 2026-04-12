@@ -44,6 +44,8 @@ def check_step_error(resp: dict, step_name: str) -> bool:
 # Strategy Group Definitions
 # ==========================================
 
+# Note|TODO: Halloween 5800x
+
 def is_vehicle_mission(mission: str) -> bool:
 	# Vehicle missions e.g.
 		# "1:550501,2:550005",
@@ -52,7 +54,7 @@ def is_vehicle_mission(mission: str) -> bool:
 		# "1:550003,2:550007",
 		# "1:550503,2:550007",
 		# "1:550504,2:550508"
-    # Loose match for vehicle missions: "1:55*,2:55*"
+    # Loose match for vehicle missions: "1:55*,2:55*" (event not 2:55)
     if not mission:
         return False
     return mission.startswith("1:55") and ",2:55" in mission

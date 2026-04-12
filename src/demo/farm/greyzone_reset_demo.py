@@ -135,7 +135,7 @@ def check_greyzone_conditions(resp: dict) -> bool:
     print(f"    [Map] 136(RM)={m136} | 127(RV)={m127} | 121(LM)={m121}")
     print(f"    [Map] 104(MV)={m104} | 84(BV)={m84} | 78(Opt)={m78}")
     
-    # Strategy Group Evaluation (OR Logic)
+    # Priority 2: Strategy Group Evaluation (OR Logic)
     if check_strategy_1(spots):
         print("    [+] Matched Strategy 1: Right Mountain + Vehicle")
         return True

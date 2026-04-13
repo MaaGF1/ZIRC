@@ -13,7 +13,7 @@ CONFIG = {
     "PROXY_PORT": 8080,
     "LOCAL_WEB_PORT": 8081,
     "OUTPUT_DIR": "traffic_dumps",
-    # 离线模式：直接访问本地的 HTTP 服务
+    # Offline mode: access local HTTP service directly
     "TARGET_URL": "http://127.0.0.1:8081/gflmaps/index.html"
 }
 
@@ -22,18 +22,18 @@ packet_counter = 1
 radar_window = None
 
 # ==============================================================
-# 1. 本地轻量级 HTTP 服务器 (提供离线前端及 GFLData JSON)
+# 1. Local Lightweight HTTP Server (Provides offline frontend & GFLData JSON)
 # ==============================================================
 class NoCacheHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
-        # 禁用本地缓存，防止前端修改后不生效
+        # Disable local cache to prevent frontend modifications from being ignored
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.send_header("Pragma", "no-cache")
         self.send_header("Expires", "0")
         super().end_headers()
 
 def start_local_web_server():
-    """在后台运行本地 HTTP 服务，根目录映射为当前脚本所在目录"""
+    """Run local HTTP service in background, map root directory to current script directory"""
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     socketserver.TCPServer.allow_reuse_address = True
     try:
@@ -45,32 +45,33 @@ def start_local_web_server():
 
 
 # ==============================================================
-# 2. 核心抓包代理业务逻辑 (源自 monitor.py)
+# 2. Core Packet Capture Proxy Logic (Derived from monitor.py)
 # ==============================================================
 def save_json(content_obj, tag, url=""):
-    global packet_counter
-    
-    if not os.path.exists(CONFIG["OUTPUT_DIR"]):
-        os.makedirs(CONFIG["OUTPUT_DIR"])
-        
-    timestamp = int(time.time())
-    
-    endpoint = "unknown"
-    if url and "index.php" in url:
-        parts = url.split("index.php")
-        if len(parts) > 1 and parts[1]:
-            endpoint = parts[1].strip('/').replace('/', '_')
-            
-    filename = f"{packet_counter:04d}_{tag}_{endpoint}_{timestamp}.json"
-    filepath = os.path.join(CONFIG["OUTPUT_DIR"], filename)
-    
-    try:
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(content_obj, f, indent=4, ensure_ascii=False)
-        print(f"[+] Saved: {filename}")
-        packet_counter += 1
-    except Exception as e:
-        print(f"[!] Error saving file: {e}")
+    pass
+    # global packet_counter
+    # 
+    # if not os.path.exists(CONFIG["OUTPUT_DIR"]):
+    #     os.makedirs(CONFIG["OUTPUT_DIR"])
+    #     
+    # timestamp = int(time.time())
+    # 
+    # endpoint = "unknown"
+    # if url and "index.php" in url:
+    #     parts = url.split("index.php")
+    #     if len(parts) > 1 and parts[1]:
+    #         endpoint = parts[1].strip('/').replace('/', '_')
+    #         
+    # filename = f"{packet_counter:04d}_{tag}_{endpoint}_{timestamp}.json"
+    # filepath = os.path.join(CONFIG["OUTPUT_DIR"], filename)
+    # 
+    # try:
+    #     with open(filepath, "w", encoding="utf-8") as f:
+    #         json.dump(content_obj, f, indent=4, ensure_ascii=False)
+    #     print(f"[+] Saved: {filename}")
+    #     packet_counter += 1
+    # except Exception as e:
+    #     print(f"[!] Error saving file: {e}")
 
 def parse_payload(payload):
     """
@@ -105,14 +106,14 @@ def on_traffic(event_type: str, url: str, data):
     elif event_upper == "C2S":
         print(f"\n[--> C2S] Captured Request: {url}")
         json_obj = parse_payload(data)
-        save_json(json_obj, "C2S", url)
+        # save_json(json_obj, "C2S", url)
         
     elif event_upper == "S2C":
         print(f"[<-- S2C] Decrypted Server Response.")
         json_obj = parse_payload(data)
-        save_json(json_obj, "S2C", url)
+        # save_json(json_obj, "S2C", url)
         
-        # 将地图动态数据推送到雷达窗口 (PyWebView)
+        # Push dynamic map data to radar window (PyWebView)
         if isinstance(json_obj, dict) and "spot_act_info" in json_obj:
             if radar_window:
                 try:
@@ -124,11 +125,11 @@ def on_traffic(event_type: str, url: str, data):
     else:
         print(f"\n[?] UNKNOWN/FALLBACK EVENT ({event_type}): {url}")
         json_obj = parse_payload(data)
-        save_json(json_obj, f"UNHANDLED_{event_upper}", url)
+        # save_json(json_obj, f"UNHANDLED_{event_upper}", url)
 
 
 # ==============================================================
-# 3. CLI 控制台逻辑 (后台运行)
+# 3. CLI Console Logic (Background execution)
 # ==============================================================
 def print_menu():
     print("\n================= MENU =================")
@@ -140,7 +141,7 @@ def print_menu():
 def cli_loop():
     global proxy_instance
     print_menu()
-    # 短暂等待以防止输入提示与 Web Server 的启动提示重叠
+    # Short delay to prevent input prompt overlapping with Web Server startup prompt
     time.sleep(0.5) 
     
     while True:
@@ -157,7 +158,7 @@ def cli_loop():
                 proxy_instance.start()
                 set_windows_proxy(True, f"127.0.0.1:{CONFIG['PROXY_PORT']}")
                 print(f"[*] Network Monitor Started on {CONFIG['PROXY_PORT']}. Windows Proxy SET.")
-                print("[*] All decrypted C2S and S2C traffic will be saved to /traffic_dumps/.")
+                # print("[*] All decrypted C2S and S2C traffic will be saved to /traffic_dumps/.")
                 
             elif cmd_prefix == '-q':
                 if proxy_instance:
@@ -176,11 +177,11 @@ def cli_loop():
                 set_windows_proxy(False)
                 print("[*] Windows proxy restored.")
                 
-                # 关闭 GUI 窗口
+                # Close GUI window
                 if radar_window:
                     radar_window.destroy()
                 
-                # 强制终止整个进程
+                # Force terminate the entire process
                 os._exit(0)
                 
             else:
@@ -192,7 +193,7 @@ def cli_loop():
 
 
 def on_window_closed():
-    """当 WebView 窗口被点击 'X' 关闭时的清理工作"""
+    """Cleanup tasks when WebView window is closed via 'X'"""
     print("\n[*] Window closed via UI. Cleaning up proxy settings and exiting...")
     if proxy_instance:
         proxy_instance.stop()
@@ -201,21 +202,21 @@ def on_window_closed():
 
 
 # ==============================================================
-# 4. 主入口
+# 4. Main Entry Point
 # ==============================================================
 if __name__ == '__main__':
-    # 配置 PyWebView 的启动环境，让其绕过系统代理直接访问本地的 Web 服务
+    # Configure PyWebView startup environment to bypass system proxy and access local Web service directly
     os.environ['WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS'] = '--proxy-bypass-list=127.0.0.1,localhost'
 
-    # 1. 启动本地静态 Web 服务线程
+    # 1. Start local static Web service thread
     web_thread = threading.Thread(target=start_local_web_server, daemon=True)
     web_thread.start()
 
-    # 2. 启动 CLI 命令行交互线程
+    # 2. Start CLI interactive thread
     cli_thread = threading.Thread(target=cli_loop, daemon=True)
     cli_thread.start()
 
-    # 3. 在主线程中拉起 PyWebView 窗口
+    # 3. Launch PyWebView window in main thread
     radar_window = webview.create_window(
         title='GFL Live Radar (Offline Mode)',
         url=CONFIG["TARGET_URL"],
@@ -225,5 +226,5 @@ if __name__ == '__main__':
    
     radar_window.events.closed += on_window_closed
     
-    # 这一步会阻塞主线程，直到窗口被关闭
+    # This step blocks the main thread until the window is closed
     webview.start(gui='edgechromium')

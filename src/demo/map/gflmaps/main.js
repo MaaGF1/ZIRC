@@ -902,11 +902,14 @@
     
     // The better way to implement this would be to just make a dict from Gun_txt and gun.json.
     const getGunName = (gun_id, excludeIdFromCnName) => {	
-      const enName = Gun_txt[Gun.filter(gun => gun.id == gun_id)[0].name];
-      const cnName = Gun_cn_txt[Gun.filter(gun => gun.id == gun_id)[0].name];
+      const gunObj = Gun.find(gun => gun.id == gun_id);
+      if (!gunObj) return `[gun-${gun_id}]`; // 如果遇到不存在的ID，直接返回ID，防止崩溃
+    
+      const enName = Gun_txt[gunObj.name];
+      const cnName = Gun_cn_txt[gunObj.name];
       
       if (enName) {
-        return enName  
+      return enName;
       }
       else if (excludeIdFromCnName && cnName) {
         return cnName;
@@ -917,11 +920,14 @@
     };
     
     const getEquipName = (equip_id, excludeIdFromCnName) => {
-      const enName = Equip_txt[Equip.filter(equip => equip.id == equip_id)[0].name];
-      const cnName = Equip_cn_txt[Equip.filter(equip => equip.id == equip_id)[0].name];
+      const equipObj = Equip.find(equip => equip.id == equip_id);
+      if (!equipObj) return `[equip-${equip_id}]`; // 如果遇到不存在的ID，直接返回ID
+    
+      const enName = Equip_txt[equipObj.name];
+      const cnName = Equip_cn_txt[equipObj.name];
       
       if (enName) {
-        return enName  
+      return enName;
       }
       else if (excludeIdFromCnName && cnName) {
         return cnName;
@@ -932,11 +938,14 @@
     };
     
     const getSangvisName = (sangvis_id, excludeIdFromCnName) => {
-      const enName = Sangvis_txt[Sangvis.filter(sangvis => sangvis.id == sangvis_id)[0].name];
-      const cnName = Sangvis_cn_txt[Sangvis.filter(sangvis => sangvis.id == sangvis_id)[0].name];
+      const sangvisObj = Sangvis.find(sangvis => sangvis.id == sangvis_id);
+      if (!sangvisObj) return `[sangvis-${sangvis_id}]`; // 如果遇到不存在的ID，直接返回ID
+    
+      const enName = Sangvis_txt[sangvisObj.name];
+      const cnName = Sangvis_cn_txt[sangvisObj.name];
       
       if (enName) {
-        return enName  
+      return enName;
       }
       else if (excludeIdFromCnName && cnName) {
         return cnName;

@@ -62,7 +62,11 @@ class HttpStreamDecoder:
             consumed = 0
             body_data = b""
             
-            if b'transfer-encoding: chunked' in headers_lower:
+            # Robust check for chunked encoding using string instead of bytes
+            chunked_match = re.search(r'transfer-encoding:\s*([^\r\n]+)', headers_lower)
+            is_chunked = chunked_match and 'chunked' in chunked_match.group(1)
+            
+            if is_chunked:
                 idx = body_start
                 while True:
                     chunk_head_end = self.buffer.find(b'\r\n', idx)

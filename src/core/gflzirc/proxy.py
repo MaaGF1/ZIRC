@@ -49,18 +49,20 @@ class HttpStreamDecoder:
         self.buffer += data
 
     def get_messages(self):
+        """Returns a list of tuples: (headers_str, body_data)"""
         messages = []
         while b'\r\n\r\n' in self.buffer:
             headers_end = self.buffer.find(b'\r\n\r\n')
             headers_part = self.buffer[:headers_end]
-            headers_str = headers_part.decode('ascii', errors='ignore').lower()
+            headers_str = headers_part.decode('ascii', errors='ignore')
+            headers_lower = headers_str.lower()
             
             body_start = headers_end + 4
             message_complete = False
             consumed = 0
             body_data = b""
             
-            if b'transfer-encoding: chunked' in headers_part.lower():
+            if b'transfer-encoding: chunked' in headers_lower:
                 idx = body_start
                 while True:
                     chunk_head_end = self.buffer.find(b'\r\n', idx)
@@ -90,7 +92,7 @@ class HttpStreamDecoder:
                     body_data += self.buffer[chunk_head_end+2 : chunk_head_end+2+chunk_size]
                     idx = chunk_data_end
             else:
-                m = re.search(r'content-length:\s*(\d+)', headers_str)
+                m = re.search(r'content-length:\s*(\d+)', headers_lower)
                 if m:
                     content_length = int(m.group(1))
                     if len(self.buffer) >= body_start + content_length:
@@ -105,7 +107,7 @@ class HttpStreamDecoder:
                         break  # Wait for socket to close
 
             if message_complete:
-                messages.append(body_data)
+                messages.append((headers_str, body_data))
                 self.buffer = self.buffer[consumed:]
             else:
                 break
@@ -116,7 +118,9 @@ class HttpStreamDecoder:
         """Force extract remaining body if connection closed without Content-Length"""
         if b'\r\n\r\n' in self.buffer:
             headers_end = self.buffer.find(b'\r\n\r\n')
-            return [self.buffer[headers_end + 4:]]
+            headers_part = self.buffer[:headers_end]
+            headers_str = headers_part.decode('ascii', errors='ignore')
+            return [(headers_str, self.buffer[headers_end + 4:])]
         return []
 
 class GFLProxy:
@@ -134,54 +138,88 @@ class GFLProxy:
             except Exception:
                 pass
 
-    def _process_req_messages(self, messages, request_url):
-        for body in messages:
-            try:
-                body_str = body.decode('ascii', errors='ignore')
-                parsed_qs = urllib.parse.parse_qs(body_str)
-                if 'outdatacode' in parsed_qs:
-                    encrypted_b64 = parsed_qs['outdatacode'][0]
-                    decrypted = gf_authcode(encrypted_b64, 'DECODE', self.current_key)
-                    if decrypted:
-                        try:
-                            json_data = json.loads(decrypted)
-                            self._trigger_callback("C2S", request_url, json_data)
-                        except Exception:
-                            pass
-            except Exception:
-                pass
+    def _process_req_body(self, body, request_url):
+        try:
+            body_str = body.decode('ascii', errors='ignore')
+            parsed_qs = urllib.parse.parse_qs(body_str)
+            if 'outdatacode' in parsed_qs:
+                encrypted_b64 = parsed_qs['outdatacode'][0]
+                decrypted = gf_authcode(encrypted_b64, 'DECODE', self.current_key)
+                if decrypted:
+                    try:
+                        json_data = json.loads(decrypted)
+                        self._trigger_callback("C2S", request_url, json_data)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
 
-    def _process_res_messages(self, messages, request_url):
-        for body in messages:
-            try:
-                match = re.search(b'#([A-Za-z0-9+/=]+)', body)
-                if match:
-                    encrypted_b64 = match.group(1).decode('ascii')
-                    decrypted = gf_authcode(encrypted_b64, 'DECODE', self.current_key)
-                    if decrypted:
-                        try:
-                            json_data = json.loads(decrypted)
-                            self._trigger_callback("S2C", request_url, json_data)
-                            
-                            # Dynamic Key Upgrade Mechanism
-                            uid = json_data.get("uid")
-                            sign = json_data.get("sign")
-                            if uid and sign and str(sign) != self.current_key:
-                                self.current_key = str(sign)
-                                self._trigger_callback("SYS_KEY_UPGRADE", request_url, {"uid": uid, "sign": sign})
-                        except Exception:
-                            pass
-            except Exception:
-                pass
+    def _process_res_body(self, body, request_url):
+        try:
+            match = re.search(b'#([A-Za-z0-9+/=]+)', body)
+            if match:
+                encrypted_b64 = match.group(1).decode('ascii')
+                decrypted = gf_authcode(encrypted_b64, 'DECODE', self.current_key)
+                if decrypted:
+                    try:
+                        json_data = json.loads(decrypted)
+                        self._trigger_callback("S2C", request_url, json_data)
+                        
+                        # Dynamic Key Upgrade Mechanism
+                        uid = json_data.get("uid")
+                        sign = json_data.get("sign")
+                        if uid and sign and str(sign) != self.current_key:
+                            self.current_key = str(sign)
+                            self._trigger_callback("SYS_KEY_UPGRADE", request_url, {"uid": uid, "sign": sign})
+                    except Exception:
+                        pass
+        except Exception:
+            pass
 
-    def _relay_and_analyze(self, src_sock, dst_sock, is_target_api, request_url, initial_req_buffer=b""):
+    def _relay_and_analyze(self, src_sock, dst_sock, initial_req_buffer=b"", is_https_tunnel=False):
         sockets = [src_sock, dst_sock]
-        req_decoder = HttpStreamDecoder(is_request=True)
-        res_decoder = HttpStreamDecoder(is_request=False)
+        req_decoder = HttpStreamDecoder(is_request=True) if not is_https_tunnel else None
+        res_decoder = HttpStreamDecoder(is_request=False) if not is_https_tunnel else None
         
-        if is_target_api and initial_req_buffer:
-            req_decoder.push(initial_req_buffer)
-            self._process_req_messages(req_decoder.get_messages(), request_url)
+        # FIFO queue to map responses to their respective request URLs
+        url_queue = []
+
+        def handle_requests(data):
+            if not req_decoder: return
+            req_decoder.push(data)
+            for headers_str, body in req_decoder.get_messages():
+                # Extract URL from the start-line
+                lines = headers_str.split('\r\n')
+                url = ""
+                if lines and len(lines[0].split()) >= 2:
+                    url = lines[0].split()[1]
+                
+                url_queue.append(url)
+                
+                # Only analyze if it targets the game API
+                if url and "index.php" in url:
+                    self._process_req_body(body, url)
+
+        def handle_responses(data, is_flush=False):
+            if not res_decoder: return
+            
+            msgs = []
+            if not is_flush:
+                res_decoder.push(data)
+                msgs = res_decoder.get_messages()
+            else:
+                msgs = res_decoder.flush()
+                
+            for headers_str, body in msgs:
+                # Match this response to the earliest pending request URL
+                url = url_queue.pop(0) if url_queue else ""
+                
+                # Only analyze if the corresponding request was targeting the game API
+                if url and "index.php" in url:
+                    self._process_res_body(body, url)
+
+        if initial_req_buffer:
+            handle_requests(initial_req_buffer)
             
         try:
             while not self.stop_event.is_set():
@@ -190,24 +228,19 @@ class GFLProxy:
                     continue
                     
                 for sock in readable:
-                    # Increased buffer size to 32KB to handle massive packets faster
                     data = sock.recv(32768)
                     if not data:
                         # Socket closed: process remaining data
-                        if sock is dst_sock and is_target_api:
-                            self._process_res_messages(res_decoder.flush(), request_url)
+                        if sock is dst_sock:
+                            handle_responses(b"", is_flush=True)
                         return 
                         
                     if sock is src_sock:
                         dst_sock.sendall(data)
-                        if is_target_api:
-                            req_decoder.push(data)
-                            self._process_req_messages(req_decoder.get_messages(), request_url)
+                        handle_requests(data)
                     else:
                         src_sock.sendall(data)
-                        if is_target_api:
-                            res_decoder.push(data)
-                            self._process_res_messages(res_decoder.get_messages(), request_url)
+                        handle_responses(data)
         except Exception:
             pass
 
@@ -251,11 +284,10 @@ class GFLProxy:
             
             if method == "CONNECT":
                 client_socket.sendall(b"HTTP/1.1 200 Connection Established\r\n\r\n")
-                self._relay_and_analyze(client_socket, target_socket, False, url, b"")
+                self._relay_and_analyze(client_socket, target_socket, initial_req_buffer=b"", is_https_tunnel=True)
             else:
-                is_target_api = "index.php" in url
                 target_socket.sendall(request_header)
-                self._relay_and_analyze(client_socket, target_socket, is_target_api, url, request_header)
+                self._relay_and_analyze(client_socket, target_socket, initial_req_buffer=request_header, is_https_tunnel=False)
 
         except Exception:
             pass

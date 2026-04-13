@@ -71,14 +71,16 @@ class HttpStreamDecoder:
                     try:
                         chunk_size = int(chunk_size_str, 16)
                     except ValueError:
-                        consumed = len(self.buffer)
+                        # Clear corrupted buffer to avoid infinite loop
+                        self.buffer = b""
                         break
                         
                     if chunk_size == 0:
-                        end_seq = chunk_head_end + 4
-                        if len(self.buffer) >= end_seq:
+                        # Scan for the end of optional trailer headers
+                        trailer_end = self.buffer.find(b'\r\n\r\n', chunk_head_end)
+                        if trailer_end != -1:
                             message_complete = True
-                            consumed = end_seq
+                            consumed = trailer_end + 4
                         break
                         
                     chunk_data_end = chunk_head_end + 2 + chunk_size + 2

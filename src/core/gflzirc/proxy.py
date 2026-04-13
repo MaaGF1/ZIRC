@@ -36,12 +36,88 @@ def set_windows_proxy(enable: bool, proxy_addr="127.0.0.1:8080"):
     except Exception:
         return False
 
+class HttpStreamDecoder:
+    """
+    Robust HTTP Stream Parser.
+    Handles Keep-Alive, Content-Length, and Chunked Transfer-Encoding correctly.
+    """
+    def __init__(self, is_request=False):
+        self.buffer = b""
+        self.is_request = is_request
+
+    def push(self, data: bytes):
+        self.buffer += data
+
+    def get_messages(self):
+        messages = []
+        while b'\r\n\r\n' in self.buffer:
+            headers_end = self.buffer.find(b'\r\n\r\n')
+            headers_part = self.buffer[:headers_end]
+            headers_str = headers_part.decode('ascii', errors='ignore').lower()
+            
+            body_start = headers_end + 4
+            message_complete = False
+            consumed = 0
+            body_data = b""
+            
+            if b'transfer-encoding: chunked' in headers_part.lower():
+                idx = body_start
+                while True:
+                    chunk_head_end = self.buffer.find(b'\r\n', idx)
+                    if chunk_head_end == -1:
+                        break  # Wait for more data
+                        
+                    chunk_size_str = self.buffer[idx:chunk_head_end].split(b';')[0].strip()
+                    try:
+                        chunk_size = int(chunk_size_str, 16)
+                    except ValueError:
+                        consumed = len(self.buffer)
+                        break
+                        
+                    if chunk_size == 0:
+                        end_seq = chunk_head_end + 4
+                        if len(self.buffer) >= end_seq:
+                            message_complete = True
+                            consumed = end_seq
+                        break
+                        
+                    chunk_data_end = chunk_head_end + 2 + chunk_size + 2
+                    if len(self.buffer) < chunk_data_end:
+                        break  # Wait for more data
+                        
+                    body_data += self.buffer[chunk_head_end+2 : chunk_head_end+2+chunk_size]
+                    idx = chunk_data_end
+            else:
+                m = re.search(r'content-length:\s*(\d+)', headers_str)
+                if m:
+                    content_length = int(m.group(1))
+                    if len(self.buffer) >= body_start + content_length:
+                        body_data = self.buffer[body_start : body_start + content_length]
+                        message_complete = True
+                        consumed = body_start + content_length
+                else:
+                    if self.is_request:
+                        message_complete = True
+                        consumed = body_start
+                    else:
+                        break  # Wait for socket to close
+
+            if message_complete:
+                messages.append(body_data)
+                self.buffer = self.buffer[consumed:]
+            else:
+                break
+                
+        return messages
+
+    def flush(self):
+        """Force extract remaining body if connection closed without Content-Length"""
+        if b'\r\n\r\n' in self.buffer:
+            headers_end = self.buffer.find(b'\r\n\r\n')
+            return [self.buffer[headers_end + 4:]]
+        return []
+
 class GFLProxy:
-    """
-    Unified Proxy for GFL API.
-    Decrypts both S2C and C2S payloads and dynamically upgrades the crypto key.
-    Provides callbacks for C2S, S2C, and SYS_KEY_UPGRADE events.
-    """
     def __init__(self, port: int, static_key: str, on_traffic_callback=None):
         self.port = port
         self.current_key = static_key
@@ -56,67 +132,80 @@ class GFLProxy:
             except Exception:
                 pass
 
-    def _relay_and_analyze(self, src_sock, dst_sock, is_target_api, request_url):
+    def _process_req_messages(self, messages, request_url):
+        for body in messages:
+            try:
+                body_str = body.decode('ascii', errors='ignore')
+                parsed_qs = urllib.parse.parse_qs(body_str)
+                if 'outdatacode' in parsed_qs:
+                    encrypted_b64 = parsed_qs['outdatacode'][0]
+                    decrypted = gf_authcode(encrypted_b64, 'DECODE', self.current_key)
+                    if decrypted:
+                        try:
+                            json_data = json.loads(decrypted)
+                            self._trigger_callback("C2S", request_url, json_data)
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+    def _process_res_messages(self, messages, request_url):
+        for body in messages:
+            try:
+                match = re.search(b'#([A-Za-z0-9+/=]+)', body)
+                if match:
+                    encrypted_b64 = match.group(1).decode('ascii')
+                    decrypted = gf_authcode(encrypted_b64, 'DECODE', self.current_key)
+                    if decrypted:
+                        try:
+                            json_data = json.loads(decrypted)
+                            self._trigger_callback("S2C", request_url, json_data)
+                            
+                            # Dynamic Key Upgrade Mechanism
+                            uid = json_data.get("uid")
+                            sign = json_data.get("sign")
+                            if uid and sign and str(sign) != self.current_key:
+                                self.current_key = str(sign)
+                                self._trigger_callback("SYS_KEY_UPGRADE", request_url, {"uid": uid, "sign": sign})
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+    def _relay_and_analyze(self, src_sock, dst_sock, is_target_api, request_url, initial_req_buffer=b""):
         sockets = [src_sock, dst_sock]
-        req_buffer = b""
-        res_buffer = b""
-        c2s_parsed = False
-        s2c_parsed = False
+        req_decoder = HttpStreamDecoder(is_request=True)
+        res_decoder = HttpStreamDecoder(is_request=False)
         
+        if is_target_api and initial_req_buffer:
+            req_decoder.push(initial_req_buffer)
+            self._process_req_messages(req_decoder.get_messages(), request_url)
+            
         try:
             while not self.stop_event.is_set():
                 readable, _, _ = select.select(sockets, [], [], 1.0)
                 if not readable:
                     continue
+                    
                 for sock in readable:
-                    data = sock.recv(8192)
+                    # Increased buffer size to 32KB to handle massive packets faster
+                    data = sock.recv(32768)
                     if not data:
+                        # Socket closed: process remaining data
+                        if sock is dst_sock and is_target_api:
+                            self._process_res_messages(res_decoder.flush(), request_url)
                         return 
                         
                     if sock is src_sock:
                         dst_sock.sendall(data)
-                        if is_target_api and not c2s_parsed:
-                            req_buffer += data
-                            # Attempt to parse C2S outdatacode
-                            try:
-                                if b'\r\n\r\n' in req_buffer:
-                                    body_str = req_buffer.split(b'\r\n\r\n', 1)[1].decode('ascii', errors='ignore')
-                                    parsed_qs = urllib.parse.parse_qs(body_str)
-                                    if 'outdatacode' in parsed_qs:
-                                        encrypted_b64 = parsed_qs['outdatacode'][0]
-                                        decrypted = gf_authcode(encrypted_b64, 'DECODE', self.current_key)
-                                        if decrypted:
-                                            try:
-                                                json_data = json.loads(decrypted)
-                                                self._trigger_callback("C2S", request_url, json_data)
-                                                c2s_parsed = True
-                                            except Exception:
-                                                pass
-                            except Exception:
-                                pass
+                        if is_target_api:
+                            req_decoder.push(data)
+                            self._process_req_messages(req_decoder.get_messages(), request_url)
                     else:
                         src_sock.sendall(data)
-                        if is_target_api and not s2c_parsed:
-                            res_buffer += data
-                            # Attempt to parse S2C response starting with #
-                            match = re.search(b'#([A-Za-z0-9+/=]+)', res_buffer)
-                            if match:
-                                encrypted_b64 = match.group(1).decode('ascii')
-                                decrypted = gf_authcode(encrypted_b64, 'DECODE', self.current_key)
-                                if decrypted:
-                                    try:
-                                        json_data = json.loads(decrypted)
-                                        self._trigger_callback("S2C", request_url, json_data)
-                                        s2c_parsed = True
-                                        
-                                        # Key Upgrade Mechanism
-                                        uid = json_data.get("uid")
-                                        sign = json_data.get("sign")
-                                        if uid and sign and str(sign) != self.current_key:
-                                            self.current_key = str(sign)
-                                            self._trigger_callback("SYS_KEY_UPGRADE", request_url, {"uid": uid, "sign": sign})
-                                    except Exception:
-                                        pass
+                        if is_target_api:
+                            res_decoder.push(data)
+                            self._process_res_messages(res_decoder.get_messages(), request_url)
         except Exception:
             pass
 
@@ -160,11 +249,11 @@ class GFLProxy:
             
             if method == "CONNECT":
                 client_socket.sendall(b"HTTP/1.1 200 Connection Established\r\n\r\n")
-                self._relay_and_analyze(client_socket, target_socket, False, url)
+                self._relay_and_analyze(client_socket, target_socket, False, url, b"")
             else:
                 is_target_api = "index.php" in url
                 target_socket.sendall(request_header)
-                self._relay_and_analyze(client_socket, target_socket, is_target_api, url)
+                self._relay_and_analyze(client_socket, target_socket, is_target_api, url, request_header)
 
         except Exception:
             pass
@@ -192,7 +281,7 @@ class GFLProxy:
                     t.start()
                 except socket.timeout:
                     continue
-        except Exception as e:
+        except Exception:
             pass
         finally:
             server.close()

@@ -13,13 +13,11 @@ if platform.system() != "Windows":
     sys.modules["winreg"] = types.ModuleType("winreg")
 
 from gflzirc import (
-    GFLClient, SERVERS,
-    API_MISSION_COMBINFO, API_MISSION_START, API_INDEX_GUIDE,
-    API_MISSION_END_TURN, API_MISSION_START_ENEMY_TURN,
-    API_MISSION_END_ENEMY_TURN, API_MISSION_START_TURN,
-    API_MISSION_ABORT, API_GUN_RETIRE, API_MISSION_TEAM_MOVE,
-    GUIDE_COURSE_11880, GUIDE_COURSE_10352
+    GFLClient, SERVERS, API_GUN_RETIRE, API_MISSION_ABORT
 )
+
+# Import our modular mission handlers
+from missions import MISSION_HANDLERS
 
 # Constants
 MAX_RUNTIME_SEC = 5 * 3600 + 30 * 60  # 5 hours 30 mins
@@ -32,23 +30,51 @@ class GFLAgent:
         self.macro_count = 0
         self.error_count = 0
         
-        # Load Configs
-        config_str = os.environ.get("GFL_CONFIG", "{}").strip()
+        # 1. Fetch raw Environment Variables
+        self.account_idx = int(os.environ.get("GFL_ACCOUNT_INDEX", "0"))
+        self.mission_type = os.environ.get("GFL_MISSION_TYPE", "f2p")
+        
+        config_raw = os.environ.get("GFL_CONFIG", "{}").strip()
+        sign_raw = os.environ.get("GFL_SIGN_KEY", "").strip()
+
+        # 2. Parse Configs safely
         try:
-            self.config = json.loads(config_str)
+            parsed_configs = json.loads(config_raw)
+            # Normalize to list if single dict is provided
+            if not isinstance(parsed_configs, list):
+                parsed_configs = [parsed_configs]
+                
+            self.config = parsed_configs[self.account_idx]
         except Exception as e:
             print(f"[-] FATAL: Failed to parse GFL_CONFIG JSON. Exception: {e}")
             sys.exit(1)
             
-        self.sign_key = os.environ.get("GFL_SIGN_KEY", "").strip().strip('"').strip("'")
-        self.mission_type = os.environ.get("GFL_MISSION_TYPE", "f2p")
+        # 3. Parse Sign Keys safely
+        try:
+            parsed_signs = json.loads(sign_raw)
+            if not isinstance(parsed_signs, list):
+                parsed_signs = [str(parsed_signs)]
+        except Exception:
+            # Fallback for plain text signature string
+            parsed_signs = [sign_raw]
+            
+        # Extract matching sign key. If array is too short, reuse the last provided sign
+        raw_sign = parsed_signs[self.account_idx] if self.account_idx < len(parsed_signs) else parsed_signs[-1]
+        self.sign_key = raw_sign.strip().strip('"').strip("'")
         
         uid = str(self.config.get("USER_UID", "")).strip()
         server_key = self.config.get("SERVER_KEY", "M4A1")
         self.base_url = SERVERS.get(server_key)
         
+        # Resolve Mission Handler
+        handler_class = MISSION_HANDLERS.get(self.mission_type)
+        if not handler_class:
+            print(f"[-] FATAL: Unknown mission type '{self.mission_type}'.")
+            sys.exit(1)
+        self.mission_handler = handler_class(self)
+        
         # === CONFIGURATION AUDIT ===
-        print("\n================ CONFIGURATION AUDIT ================")
+        print(f"\n================ ACCOUNT [{self.account_idx}] AUDIT ================")
         print(f"[*] Mission Type : {self.mission_type.upper()}")
         
         masked_uid = uid[:-3] + "***" if len(uid) > 3 else "INVALID"
@@ -84,7 +110,7 @@ class GFLAgent:
         time_str = f"{hours:02d}h {mins:02d}m {secs:02d}s"
         
         content = (
-            f"### GFL Auto-Farm Report ({self.mission_type.upper()})\n"
+            f"### GFL Auto-Farm Report: Account [{self.account_idx}] ({self.mission_type.upper()})\n"
             f"| Metric | Value |\n"
             f"| ------ | ----- |\n"
             f"| **Status** | {status} |\n"
@@ -101,11 +127,8 @@ class GFLAgent:
         for attempt in range(1, max_retries + 1):
             try:
                 resp = self.client.send_request(api_endpoint, payload)
-                
-                # 不管返回什么对象(包括[])，只要不是触发异常抛出，就直接返回
                 if resp is not None:
                     return resp
-                    
             except Exception as e:
                 print(f"[-] {step_name}: Exception -> {e}. (Attempt {attempt}/{max_retries})")
             
@@ -168,73 +191,6 @@ class GFLAgent:
         except ValueError:
             pass
 
-    def farm_mission_11880(self):
-        mission_id = 11880
-        squad_id = self.config.get("SQUAD_ID")
-
-        if self.check_step_error(self.safe_request(API_MISSION_COMBINFO, {"mission_id": mission_id}, "combinationInfo"), "combinationInfo"): return None
-        
-        start_payload = {
-            "mission_id": mission_id, "spots": [],
-            "squad_spots": [{"spot_id": 901926, "squad_with_user_id": squad_id, "battleskill_switch": 1}],
-            "sangvis_spots": [], "vehicle_spots": [], "ally_spots": [], "mission_ally_spots": [],
-            "ally_id": int(time.time())
-        }
-        
-        if self.check_step_error(self.safe_request(API_MISSION_START, start_payload, "startMission"), "startMission"): return None
-        if self.check_step_error(self.safe_request(API_INDEX_GUIDE, {"guide": json.dumps({"course": GUIDE_COURSE_11880}, separators=(',', ':'))}, "guide"), "guide"): return None
-        time.sleep(0.5)
-        if self.check_step_error(self.safe_request(API_MISSION_END_TURN, {}, "endTurn"), "endTurn"): return None
-        time.sleep(0.2)
-        if self.check_step_error(self.safe_request(API_MISSION_START_ENEMY_TURN, {}, "startEnemyTurn"), "startEnemyTurn"): return None
-        time.sleep(0.2)
-        if self.check_step_error(self.safe_request(API_MISSION_END_ENEMY_TURN, {}, "endEnemyTurn"), "endEnemyTurn"): return None
-        time.sleep(0.2)
-        
-        final_resp = self.safe_request(API_MISSION_START_TURN, {}, "startTurn")
-        if self.check_step_error(final_resp, "startTurn"): return None
-        
-        return self.check_drop_result(final_resp)
-
-    def farm_mission_10352(self):
-        mission_id = 10352
-        team_id = self.config.get("TEAM_ID")
-
-        if self.check_step_error(self.safe_request(API_MISSION_COMBINFO, {"mission_id": mission_id}, "combinationInfo"), "combinationInfo"): return None
-        
-        start_payload = {
-            "mission_id": mission_id, 
-            "spots": [{"spot_id": 13280, "team_id": team_id}],
-            "squad_spots": [], "sangvis_spots": [], "vehicle_spots": [], 
-            "ally_spots": [], "mission_ally_spots": [],
-            "ally_id": int(time.time())
-        }
-        if self.check_step_error(self.safe_request(API_MISSION_START, start_payload, "startMission"), "startMission"): return None
-        if self.check_step_error(self.safe_request(API_INDEX_GUIDE, {"guide": json.dumps({"course": GUIDE_COURSE_10352}, separators=(',', ':'))}, "guide"), "guide"): return None
-        time.sleep(0.2)
-
-        move1_payload = {
-            "person_type": 1, "person_id": team_id,
-            "from_spot_id": 13280, "to_spot_id": 13277, "move_type": 1
-        }
-        if self.check_step_error(self.safe_request(API_MISSION_TEAM_MOVE, move1_payload, "teamMove1"), "teamMove1"): return None
-        time.sleep(0.2)
-
-        move2_payload = {
-            "person_type": 1, "person_id": team_id,
-            "from_spot_id": 13277, "to_spot_id": 13278, "move_type": 1
-        }
-        move2_resp = self.safe_request(API_MISSION_TEAM_MOVE, move2_payload, "teamMove2")
-        if self.check_step_error(move2_resp, "teamMove2"): return None
-        
-        self.parse_random_node_drop(move2_resp)
-        time.sleep(0.2)
-
-        self.safe_request(API_MISSION_ABORT, {"mission_id": mission_id}, "missionAbort", max_retries=1)
-        time.sleep(0.5)
-        
-        return []
-
     def retire_guns(self, gun_uids: list):
         if not gun_uids: return
         print(f"[*] Submitting {len(gun_uids)} T-Dolls for Auto-Retire...")
@@ -245,7 +201,7 @@ class GFLAgent:
             print(f"[-] Retire Failed: {resp}")
 
     def run(self):
-        print(f"=== GHA Auto-Farming Started: {self.mission_type.upper()} ===")
+        print(f"=== GHA Auto-Farming Started: {self.mission_type.upper()} [Acct: {self.account_idx}] ===")
         
         macro_target = self.config.get("MACRO_LOOPS", 200)
         micro_target = self.config.get("MISSIONS_PER_RETIRE", 50)
@@ -262,14 +218,12 @@ class GFLAgent:
                     
                 print(f"[*] Micro Run: {micro}/{micro_target}")
                 
-                if self.mission_type == "f2p":
-                    dropped = self.farm_mission_11880()
-                    abort_id = 11880
-                else:
-                    dropped = self.farm_mission_10352()
-                    abort_id = 10352
+                # Use modular handler
+                dropped = self.mission_handler.farm()
                     
                 if dropped is None:
+                    # Generic fallback
+                    abort_id = self.mission_handler.get_mission_id()
                     self.safe_request(API_MISSION_ABORT, {"mission_id": abort_id}, "missionAbort", max_retries=1)
                     time.sleep(3)
                     continue

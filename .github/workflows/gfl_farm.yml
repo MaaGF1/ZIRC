@@ -13,8 +13,56 @@ on:
           - pick_coin
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Determine Matrix Length
+        id: set-matrix
+        env:
+          GFL_CONFIG_RAW: ${{ secrets.GFL_CONFIG }}
+        run: |
+          python -c '
+          import os, json
+
+          config_raw = os.environ.get("GFL_CONFIG_RAW", "").strip()
+          length = 1
+
+          if config_raw:
+              try:
+                  configs = json.loads(config_raw)
+                  if isinstance(configs, list):
+                      length = len(configs)
+              except Exception as e:
+                  print(f"[-] Warning: JSON parse failed. Secret format might be invalid.")
+                  print(f"[-] Exception: {e}")
+                  print(f"[*] Fallback to single account mode (length=1).")
+
+          # Generate pure integer array: [0] or [0, 1]
+          matrix_arr = list(range(length))
+          
+          # CRITICAL: separators=(",", ":") removes ALL spaces! Output is strictly [0,1]
+          matrix_json = json.dumps(matrix_arr, separators=(",", ":"))
+          print(f"[*] Generated Index Matrix: {matrix_json}")
+          
+          # Write safely to GITHUB_OUTPUT as a strict single line
+          output_path = os.environ.get("GITHUB_OUTPUT")
+          with open(output_path, "a") as f:
+              f.write(f"matrix={matrix_json}\n")
+          '
+          
+      - name: Verify Output
+        run: |
+          echo "The final matrix string passed to the next job is: ${{ steps.set-matrix.outputs.matrix }}"
+
   farm:
+    needs: prepare
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        account_index: ${{ fromJson(needs.prepare.outputs.matrix) }}
     
     steps:
       - name: Checkout Repository
@@ -28,15 +76,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Install the local version of gflzirc (and other lib from pyproject.toml)
           pip install ./src/core
 
       - name: Run GFL Agent
         env:
+          # Directly passing Secrets to circumvent GHA Output limits
           GFL_CONFIG: ${{ secrets.GFL_CONFIG }}
           GFL_SIGN_KEY: ${{ secrets.GFL_SIGN_KEY }}
           GFL_MISSION_TYPE: ${{ github.event.inputs.mission_type }}
-          # Force Python to flush stdout immediately for real-time GHA logging
+          GFL_ACCOUNT_INDEX: ${{ matrix.account_index }}
           PYTHONUNBUFFERED: "1"
         run: |
           python src/gha/agent.py
@@ -46,18 +94,37 @@ jobs:
         shell: pwsh
         run: |
           if (Test-Path "respawn.flag") {
-            echo "RESPAWN_NEEDED=true" >> $env:GITHUB_ENV
-            Write-Host "Respawn flag detected. Triggering next job..."
-          } else {
-            echo "RESPAWN_NEEDED=false" >> $env:GITHUB_ENV
-            Write-Host "No respawn flag. Job completed or failed fatally."
+            echo "1" > "respawn_${{ matrix.account_index }}.flag"
+            Write-Host "Respawn flag detected for account ${{ matrix.account_index }}."
           }
 
+      - name: Upload Respawn Flag
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: respawn-flag-${{ matrix.account_index }}
+          path: respawn_${{ matrix.account_index }}.flag
+          if-no-files-found: ignore
+
+  trigger_next:
+    needs: farm
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all respawn flags
+        uses: actions/download-artifact@v4
+        with:
+          pattern: respawn-flag-*
+          merge-multiple: true
+
       - name: Trigger Next Workflow
-        if: env.RESPAWN_NEEDED == 'true'
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
-        shell: pwsh
         run: |
-          gh workflow run "GFL Auto Farm Workflow" -f mission_type="${{ github.event.inputs.mission_type }}"
-          Write-Host "Next job triggered successfully."
+          if ls respawn_*.flag 1> /dev/null 2>&1; then
+            echo "Respawn flag(s) found. Triggering next job..."
+            gh workflow run "GFL Auto Farm Workflow" -f mission_type="${{ github.event.inputs.mission_type }}"
+            echo "Next job triggered successfully."
+          else
+            echo "No respawn flags found. All jobs completed or failed fatally."
+          fi

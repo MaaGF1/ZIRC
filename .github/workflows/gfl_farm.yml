@@ -51,6 +51,7 @@ jobs:
           with open(output_path, "a") as f:
               f.write(f"matrix={matrix_json}\n")
           '
+          
       - name: Verify Output
         run: |
           echo "The final matrix string passed to the next job is: ${{ steps.set-matrix.outputs.matrix }}"

@@ -24,8 +24,8 @@ jobs:
           GFL_CONFIG_RAW: ${{ secrets.GFL_CONFIG }}
           GFL_SIGN_KEY_RAW: ${{ secrets.GFL_SIGN_KEY }}
         run: |
-          python -c '
-          import os, json, sys
+          cat << 'EOF' > parse_matrix.py
+          import os, json, sys, uuid
 
           config_raw = os.environ.get("GFL_CONFIG_RAW", "").strip()
           sign_raw = os.environ.get("GFL_SIGN_KEY_RAW", "").strip()
@@ -55,6 +55,7 @@ jobs:
           # Build Matrix Array
           matrix_arr = []
           for i in range(len(configs)):
+              # If signs array is shorter than configs, fallback to the last sign key
               sign_val = signs[i] if i < len(signs) else signs[-1]
               matrix_arr.append({
                   "index": i,
@@ -65,9 +66,15 @@ jobs:
           matrix_json = json.dumps(matrix_arr)
           print(f"Generated Matrix: {matrix_json}")
           
+          # Safely write to GITHUB_OUTPUT using EOF delimiter for complex JSON
+          eof_marker = f"EOF-{uuid.uuid4().hex}"
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write(f"matrix={matrix_json}\n")
-          '
+              f.write(f"matrix<<{eof_marker}\n")
+              f.write(f"{matrix_json}\n")
+              f.write(f"{eof_marker}\n")
+          EOF
+          
+          python parse_matrix.py
 
   farm:
     needs: prepare

@@ -1809,18 +1809,16 @@
     
     const generateEnemyTeamRow = (spot, enemy_team_id, spotAllyTeam, controllableAllyTeamInfo, userealce = false) => {
       let rareDrops = [];
-      var teamLeaderEnemyId;
+      var teamLeaderEnemyId = 0;
       var efect = 0;
       let hasFakeCeError = false;
       const matchingEnemyTeam = Enemy_team.find((team) => team.id == enemy_team_id);
+      
       if (matchingEnemyTeam) {  
           /*-- 效能欺诈 --*/
           if (matchingEnemyTeam.effect_ext != 0) {
             efect = Math.abs(matchingEnemyTeam.effect_ext);
-    
-            // When using fake CE, the game client can display the incorrect CE... This is due to single-precision
-            // floating point errors.
-            const enemyUnitCount = Enemy_in_team_by_team_id[enemy_team_id].length;
+            const enemyUnitCount = Enemy_in_team_by_team_id[enemy_team_id] ? Enemy_in_team_by_team_id[enemy_team_id].length : 1;
             const perUnitCE = Math.fround(efect / enemyUnitCount);
             const clientTotal = Math.ceil([...Array(enemyUnitCount)].reduce((subtotal) => Math.fround(subtotal + perUnitCE), 0));
             if (Math.ceil(clientTotal) > efect) {
@@ -1828,23 +1826,18 @@
             }
           }
           teamLeaderEnemyId = matchingEnemyTeam["enemy_leader"];
+          
+          let limitGuns = matchingEnemyTeam.limit_guns ? matchingEnemyTeam.limit_guns.split(",") : [];
+          let limitEquips = matchingEnemyTeam.limit_equips ? matchingEnemyTeam.limit_equips.split(",") : [];
+          
           rareDrops = [
-            ...matchingEnemyTeam.limit_guns
-              .split(",")
-              .filter((id) => !!id && id !== "0")
-              .map((id) => getGunName(id, /*excludeIdFromCnName=*/true)),
-            ...matchingEnemyTeam.limit_equips
-              .split(",")
-              .filter((id) => !!id && id !== "0")
-              .map((id) => getEquipName(id, /*excludeIdFromCnName=*/true)),
+            ...limitGuns.filter((id) => !!id && id !== "0").map((id) => getGunName(id, true)),
+            ...limitEquips.filter((id) => !!id && id !== "0").map((id) => getEquipName(id, true)),
           ];
-          // Mica didn't put Agent Vector and Agent 416's equips on the drop tables.
-          if (matchingEnemyTeam.id == 6431007) {
-            rareDrops.push(getEquipName(199, /*excludeIdFromCnName=*/true));
-          } else if (matchingEnemyTeam.id == 6431008) {
-            rareDrops.push(getEquipName(202, /*excludeIdFromCnName=*/true));
-          }
+          if (matchingEnemyTeam.id == 6431007) rareDrops.push(getEquipName(199, true));
+          else if (matchingEnemyTeam.id == 6431008) rareDrops.push(getEquipName(202, true));
       }
+    
       let teamID = "";
       let teamLeader = "";
       let teamAI = "";
@@ -1857,13 +1850,12 @@
     
       if (spotAllyTeam && spotAllyTeam.initial_type == 1) {
         teamID = `ally_team-${spotAllyTeam.id}`;
-    
         if (spotAllyTeam.guns) {
           const allyGuns = getAllyGuns(spotAllyTeam.guns.split(",").filter(gunInAllyId => !!gunInAllyId));
           if (allyGuns.length) {
             const teamLeaderDoll = allyGuns.find(allyGuns => allyGuns.gunInAllyRow["location"] == 1);
-            teamLeader = teamLeaderDoll.name;
-            chibiCode = teamLeaderDoll.code;
+            teamLeader = teamLeaderDoll ? teamLeaderDoll.name : "Unknown";
+            chibiCode = teamLeaderDoll ? teamLeaderDoll.code : null;
             teamComposition = allyGuns.map(allyGuns => allyGuns.name).join(", ");
           }
         } else if (spotAllyTeam.sangvis) {
@@ -1871,7 +1863,6 @@
           if (allySangvis.length) {
             teamLeader = allySangvis[0].name;
             chibiCode = allySangvis[0].code;
-    
             let compositionMap = {};
             allySangvis.forEach(unit => {compositionMap[unit.name] = (compositionMap[unit.name] || 0) + 1;});
             teamComposition = Object.entries(compositionMap).map(([name, count]) => `${name} x${count}`).join(", ");
@@ -1885,36 +1876,38 @@
           if (AITypeMatch) {
             const teamAIType = Number(AITypeMatch[1]);
             const matchingTeamAI = Team_ai.find((teamAI) => teamAI.force_id === 4 && teamAI.ai_type === teamAIType);
-            if (matchingTeamAI) {
-              teamAI = matchingTeamAI.name;
-            }
+            if (matchingTeamAI) teamAI = matchingTeamAI.name;
           }
-          if (!teamAI) {
-            teamAI = "?";
-          }
+          if (!teamAI) teamAI = "?";
         }
         teamAIDisplay = teamAI;
         teamAlignment = UI_TEXT["team_alignment_ally"];
-        // TODO calculate allied team CE? It's not very useful, though.
       } else {
-        /*-- enemyai 敌方行动逻辑 --*/
-        let enemy_ai;
-        let enemy_ai_num = matchingEnemyTeam["ai"];
+        teamID = enemy_team_id;
+    
+        // [FIX]: 安全提取 AI 属性，防止未收录敌军导致崩溃
+        let enemy_ai_num = matchingEnemyTeam ? matchingEnemyTeam["ai"] : 0;
+        let enemy_ai_con = matchingEnemyTeam ? matchingEnemyTeam["ai_content"] : "";
         let ai_row = null;
-        // force_id = {1 (mission), 2 (enemy), 3 (ally), 4 (friend)}
-        if (matchingEnemyTeam["if_stay"]) {
+    
+        if (matchingEnemyTeam && matchingEnemyTeam["if_stay"]) {
           enemy_ai_num = 999;
           ai_row = Team_ai.find(({force_id, ai_type}) => force_id === 1 && ai_type === enemy_ai_num);
         } else if(enemy_ai_num == 0) {
-          enemy_ai_num = Mission_map[Number($("#missionselect").val())].enemy_ai_type;
+          let mission_data = Mission_map[Number($("#missionselect").val())];
+          enemy_ai_num = mission_data ? mission_data.enemy_ai_type : 0;
           ai_row = Team_ai.find(({force_id, ai_type}) => force_id === 1 && ai_type === enemy_ai_num);
         } else {
           ai_row = Team_ai.find(({force_id, ai_type}) => force_id === 2 && ai_type === enemy_ai_num);
         }
-        enemy_ai = ai_row?.name;
-        let enemy_ai_con = matchingEnemyTeam["ai_content"];
-    
-        teamID = enemy_team_id;
+        
+        let enemy_ai = ai_row ? ai_row.name : "?";
+        teamAI = enemy_ai;
+        teamAIDisplay = enemy_ai + ((enemy_ai == UI_TEXT["team_ai_alert"]) ? ("[" + enemy_ai_con + "]") : "");
+        if (ai_row && ai_row.pic === "ai_random") {
+          teamAI = UI_TEXT["team_ai_random"];
+          teamAIDisplay = UI_TEXT["team_ai_random"];
+        }
     
         const teamLeaderEnemyCharacterType = Enemy_charater_type.find(e => e.id == teamLeaderEnemyId);
         if (teamLeaderEnemyCharacterType) {
@@ -1924,12 +1917,6 @@
           teamLeader = `[${teamLeaderEnemyId}]`;
         }
     
-        teamAI = enemy_ai;
-        teamAIDisplay = enemy_ai + ((enemy_ai == UI_TEXT["team_ai_alert"]) ? ("[" + enemy_ai_con + "]") : "");
-        if (ai_row?.pic === "ai_random") {
-          teamAI = UI_TEXT["team_ai_random"];
-          teamAIDisplay = UI_TEXT["team_ai_random"];
-        }
         teamAlignment = spotAllyTeam ? spotAllyTeam.name : UI_TEXT["team_alignment_enemy"];
         teamCEPre208 = userealce ? efectcal(enemy_team_id, 0, 300) : (efect == 0 ? efectcal(enemy_team_id, 0, 300) : efect);
         teamCEPost208 = userealce ? efectcal(enemy_team_id, 0, 600) : (efect == 0 ? efectcal(enemy_team_id, 0, 600) : efect);
@@ -1942,7 +1929,6 @@
     
       const teamLocation = spot ? Number(spot["id"]) : "?";
     
-      /*-- 利用数组存储效能数据以优化计算 --*/
       spotinfo.push({
         sename: teamLeader,
         sefectPre208:(userealce ? efectcal(enemy_team_id, 0, 300) : ((efect == 0) ? efectcal(enemy_team_id, 0, 300) : efect)),
@@ -2629,20 +2615,26 @@
       var efect_details = {};
       if (enemy_team_id != 0) {
           if (Number($("#campaignselect").val()) < 6000){
-            turn = $("#turnselect").val()
-            teamData = Enemy_team_map[enemy_team_id];
-            eval(`correction_turn={${teamData["correction_turn"]}}`)
-            levelOffset = correction_turn[Number(turn)] || 0
+            let turn = $("#turnselect").val();
+            let teamData = Enemy_team_map[enemy_team_id];
+            // [FIX]: 安全检查团队数据是否存在
+            if (teamData && teamData["correction_turn"]) {
+                try {
+                    eval(`correction_turn={${teamData["correction_turn"]}}`);
+                    levelOffset = correction_turn[Number(turn)] || 0;
+                } catch(e) {
+                    console.error("[efectcal] Error evaluating correction_turn", e);
+                }
+            }
           }
           if (!Enemy_in_team_by_team_id[Number(enemy_team_id)]) {
             return detail ? {} : 0;
           }
     
           Enemy_in_team_by_team_id[Number(enemy_team_id)].forEach(({id, enemy_character_type_id, level, number, def_percent}) => {
-            level = level+levelOffset
+            level = level+levelOffset;
             var charatype = Enemy_character_type_by_id[enemy_character_type_id];
             if (!charatype) {
-              console.error(`Enemy_character_type id=${enemy_character_type_id} not found.`);
               return;
             }
     
@@ -2657,19 +2649,18 @@
             var attr_def = enemyattribute(charatype , "def" , level);
             var attr_tenacity = enemyattribute(charatype , "tenacity", level);
             var attr_def_percent = Number(def_percent);
-            /*-- 攻击：ceiling：22*扩编数*((pow + def_break*0.85) * rate/50 * hit/(hit+35) +2) --*/
+            
             var efect_att = ceiling(22*attr_number*((attr_pow + attr_def_break*0.85) * attr_rate/50 * attr_hit/(attr_hit+35) +2));
-            /*-- 防御：ceiling：0.25*(maxlife * (35+dodge)/35 * armorCoef/(armorCoef-armor) + 100) * (def_max*2-def+1200*2)/(def_max-def+1200) /2 --*/
             var efect_def = ceiling(
               0.25
                 * (bround(attr_number * attr_maxlife)
                      * (35+attr_dodge)/35 * armorCoef/(armorCoef-attr_armor)
-                     * (/* MICAAAAAAAAAAAAAAAAAAAAAAA */ Math.trunc(attr_tenacity / 100) + 1.0 - 0.6/100)
+                     * (Math.trunc(attr_tenacity / 100) + 1.0 - 0.6/100)
                      + 100)
                 * (attr_def*2 - attr_def*attr_def_percent/100 + 1200*2)
                 / (attr_def - attr_def*attr_def_percent/100 + 1200)
               / 2);
-            indiv_efect = ceiling(Number(charatype.effect_ratio) * (efect_att + efect_def))
+            indiv_efect = ceiling(Number(charatype.effect_ratio) * (efect_att + efect_def));
             efect += indiv_efect;
             if (detail) {
                 efect_details[id] = indiv_efect;
@@ -3430,112 +3421,117 @@
         $("#thisdiv").html(output);
     }
     
-    /* =========================================================
-       GFLH MiniMap (Python WebView)
-       ========================================================= */
-    /* =========================================================
-       GFLH MiniMap (Python WebView) - 修复自动切图版
-       ========================================================= */
-       window.updateLiveMap = function(liveData) {
-        console.log("[Live Radar] 接收到实时地图数据:", liveData);
-    
-        // 校验数据合法性，仅当包含点位变动信息时才处理
-        if (!liveData || !liveData.spot_act_info || liveData.spot_act_info.length === 0) {
-            return; 
+  /* =========================================================
+   GFLH MiniMap (Python WebView) - 修复作用域与切图版 (V3 终极修复)
+   ========================================================= */
+  window.updateLiveMap = function(liveData) {
+    try {
+        console.log("[Live Radar] ====== 接收到实时地图数据 ======");
+        console.log(liveData);
+
+        // 1. 解析 change_belong 和 change_belong2 (这在第三方行动、夜战占点时非常常见)
+        let belongUpdates = {};
+        if (liveData.change_belong) Object.assign(belongUpdates, liveData.change_belong);
+        if (liveData.change_belong2) Object.assign(belongUpdates, liveData.change_belong2);
+
+        // 2. 解析 spot_act_info
+        let liveSpotMap = {};
+        if (liveData.spot_act_info && liveData.spot_act_info.length > 0) {
+            liveData.spot_act_info.forEach(spot => {
+                liveSpotMap[spot.spot_id] = spot;
+            });
         }
-    
-        // 1. 根据传来的第一个 spot_id，反推当前游戏正在打哪张图 (mission_id)
-        let firstSpotId = liveData.spot_act_info[0].spot_id;
-        let targetSpot = Spot.find(s => s.id == firstSpotId);
-        if (!targetSpot) {
-            console.error("[Live Radar] 未知点位 ID，无法推断地图:", firstSpotId);
+
+        // 如果既没有 spot_act_info，也没有 change_belong，说明没有视觉可见的地图变化，跳过
+        if (Object.keys(liveSpotMap).length === 0 && Object.keys(belongUpdates).length === 0) {
+            console.log("[Live Radar] 数据中无关键点位变化，跳过更新。");
             return;
         }
-        let activeMissionId = targetSpot.mission_id;
-    
-        // 2. 将收到的实时点位信息映射为字典
-        let liveSpotMap = {};
-        liveData.spot_act_info.forEach(spot => {
-            liveSpotMap[spot.spot_id] = spot;
-        });
-    
-        // 3. 遍历全局的静态 Spot 数据，进行状态覆盖
-        // 注意：不能只遍历 dspot，必须覆盖全局的 Spot，这样切图时才能读到最新的动态数据
+
+        // 3. 尝试推断当前 mission_id
+        let firstSpotId = null;
+        if (liveData.spot_act_info && liveData.spot_act_info.length > 0) {
+            firstSpotId = liveData.spot_act_info[0].spot_id;
+        } else if (Object.keys(belongUpdates).length > 0) {
+            firstSpotId = Object.keys(belongUpdates)[0];
+        }
+
+        let targetSpot = Spot.find(s => s.id == firstSpotId);
+        if (!targetSpot) {
+            console.warn(`[Live Radar] 警告: 未知点位 ID (${firstSpotId})，可能是系统动态生成的暗区点位，无法进行自动切图。将强行原地刷新。`);
+        }
+        let activeMissionId = targetSpot ? targetSpot.mission_id : Number($("#missionselect").val());
+
+        console.log(`[Live Radar] 解析出目标战役 ID: ${activeMissionId}`);
+
+        // 4. 遍历并覆盖全局点位数据
         for (let i = 0; i < Spot.length; i++) {
             let spotId = String(Spot[i].id);
             
+            // 优先处理 belong 颜色变更 (阵营反转)
+            if (belongUpdates[spotId] !== undefined) {
+                Spot[i].belong = parseInt(belongUpdates[spotId]);
+            }
+
+            // 处理 spot_act_info 详细变更 (覆盖占领、血量、敌军队伍)
             if (liveSpotMap[spotId]) {
                 let realSpot = liveSpotMap[spotId];
-                
-                // 更新点位的占领归属权：0=中立, 1=我方, 2=敌方/铁血, 3=第三方
-                Spot[i].belong = parseInt(realSpot.belong);
-    
-                // 更新敌方队伍
-                if (realSpot.enemy_team_id !== "0") {
+                Spot[i].belong = parseInt(realSpot.belong); 
+
+                if (realSpot.enemy_team_id && realSpot.enemy_team_id !== "0") {
                     Spot[i].enemy_team_id = parseInt(realSpot.enemy_team_id);
                 } else {
-                    Spot[i].enemy_team_id = 0; // 该点位的敌人已被消灭或不存在
+                    Spot[i].enemy_team_id = 0;
                 }
-    
-                // 更新人质血量信息 (如果存在)
+
                 if (realSpot.hostage_hp && realSpot.hostage_hp !== "0") {
                     Spot[i].hostage_info = realSpot.hostage_id + "," + realSpot.hostage_hp;
                 } else if (Spot[i].hostage_info) {
-                    Spot[i].hostage_info = ""; // 人质已被救援或死亡
+                    Spot[i].hostage_info = "";
                 }
             }
         }
-    
-        console.log("[Live Radar] 全局内存点位状态覆盖完毕。");
-    
-        // 4. 检查前端 UI 是否需要切图
+
+        console.log("[Live Radar] 全局内存点位状态覆盖完毕。准备重绘 UI...");
+
+        // 5. 自动切图与重绘逻辑
         let currentUiMissionId = Number($("#missionselect").val());
         
         if (currentUiMissionId !== activeMissionId) {
-            console.log(`[Live Radar] 自动切图触发: ${currentUiMissionId} -> ${activeMissionId}`);
-    
-            // 查找该 mission 属于哪个战役大类，并更新上方战役下拉框
+            console.log(`[Live Radar] -> 自动切图触发: ${currentUiMissionId} -> ${activeMissionId}`);
+            let gzMissionsToDiff = [];
+            Daily_mission_group.forEach(i => i.mission_group.split(",").forEach(j => gzMissionsToDiff[Number(j)] = i.difficulty));
+            
             let missionData = Mission_map[activeMissionId];
             if (missionData) {
-                let targetCampaign = convertGameCampaignToUiCampaign(missionData.campaign);
-                
-                if (targetCampaign) {
-                    $("#campaignselect").val(targetCampaign);
-                    // 刷新该战役下的关卡下拉框列表
-                    $("#missionselect").children().remove();
-                    getMissionOptionsForCampaign(targetCampaign).forEach((option) => {
-                        var elem = document.createElement("OPTION");
-                        elem.value = option.value;
-                        elem.innerHTML = option.innerHTML;
-                        $("#missionselect").append(elem);
-                    });
-                }
+                let rawCamp = missionData.campaign;
+                let diffStr = gzMissionsToDiff[activeMissionId] !== undefined ? gzMissionsToDiff[activeMissionId] : "";
+                let targetCampaign = convertGameCampaignToUiCampaign(Number("" + rawCamp + diffStr));
+
+                if (!targetCampaign) targetCampaign = rawCamp;
+
+                // 强制修改 URL 触发重绘
+                window.history.pushState({}, '', `#campaign=${targetCampaign}&mission=${activeMissionId}`);
+                updatemap();
+            } else {
+                console.error(`[Live Radar] 找不到 Mission ID: ${activeMissionId} 的配置数据，无法切图！`);
             }
-    
-            // 选中正确的关卡
-            $("#missionselect").val(activeMissionId);
-    
-            // 触发完整的地图更新逻辑（会清空画布并根据最新的 Spot 数组重绘）
-            updatemap();
-    
         } else {
-            // 如果 UI 已经在当前地图，只做原地重绘
-            console.log("[Live Radar] 处于当前地图，原地刷新视图...");
-            
+            console.log("[Live Radar] -> 处于当前地图，原地刷新视图...");
             let old_xmove = xmove;
             let old_ymove = ymove;
             let old_scale = scale;
-    
-            // 重新生成右侧的敌人列表表格
+
             missiondisplay(setmessage.srealce == 1); 
-    
-            // 恢复玩家原来的缩放和拖拽视角
+
             xmove = old_xmove;
             ymove = old_ymove;
             scale = old_scale;
-            
             drawmap();
         }
-    };
-    
-    })();
+    } catch(e) {
+        console.error("[Live Radar] !!! 更新雷达时发生致命错误 !!!", e);
+    }
+  };
+
+})();

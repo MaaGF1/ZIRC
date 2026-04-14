@@ -23,9 +23,10 @@ jobs:
         env:
           GFL_CONFIG_RAW: ${{ secrets.GFL_CONFIG }}
         run: |
-          python -c '
+          # Use python to safely calculate the array (e.g. ["0", "1"])
+          MATRIX_JSON=$(python -c '
           import os, json
-
+          
           config_raw = os.environ.get("GFL_CONFIG_RAW", "").strip()
           
           # Default to 1 instance
@@ -34,19 +35,23 @@ jobs:
           if config_raw:
               try:
                   configs = json.loads(config_raw)
-                  if isinstance(configs, list):
+                  # Ensure it is a valid list with elements, else fallback to length=1
+                  if isinstance(configs, list) and len(configs) > 0:
                       length = len(configs)
               except Exception:
                   pass
                   
-          # Generate pure integer array: [0] or [0, 1, 2]
-          matrix_arr = list(range(length))
-          matrix_json = json.dumps(matrix_arr)
-          print(f"Generated Index Matrix: {matrix_json}")
+          # Output string array without any spaces: ["0","1"]
+          print(json.dumps([str(i) for i in range(length)], separators=(",",":")))
+          ')
           
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write(f"matrix={matrix_json}\n")
-          '
+          echo "Generated Index Matrix: $MATRIX_JSON"
+          
+          # Write safely using EOF delimiter to completely bypass GHA character parsing issues
+          EOF_DELIM="EOF_MATRIX_MARKER"
+          echo "matrix<<$EOF_DELIM" >> "$GITHUB_OUTPUT"
+          echo "$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+          echo "$EOF_DELIM" >> "$GITHUB_OUTPUT"
 
   farm:
     needs: prepare

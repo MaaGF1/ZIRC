@@ -23,30 +23,25 @@ jobs:
         env:
           GFL_CONFIG_RAW: ${{ secrets.GFL_CONFIG }}
         run: |
-          python -c '
-          import os, json
-
-          config_raw = os.environ.get("GFL_CONFIG_RAW", "").strip()
+          # 1. Default length is 1
+          LENGTH=1
           
-          # Default to 1 instance
-          length = 1
+          # 2. Check if valid JSON array and extract its length using jq
+          if echo "$GFL_CONFIG_RAW" | jq -e 'type == "array"' >/dev/null 2>&1; then
+            LENGTH=$(echo "$GFL_CONFIG_RAW" | jq 'length')
+          fi
           
-          if config_raw:
-              try:
-                  configs = json.loads(config_raw)
-                  if isinstance(configs, list):
-                      length = len(configs)
-              except Exception:
-                  pass
-                  
-          # Generate pure integer array: [0] or [0, 1, 2]
-          matrix_arr = list(range(length))
-          matrix_json = json.dumps(matrix_arr)
-          print(f"Generated Index Matrix: {matrix_json}")
+          # 3. Generate compact integer array WITHOUT spaces (e.g., [0,1])
+          MATRIX_JSON=$(jq -n -c --argjson len "$LENGTH" '[range($len)]')
+          echo "Calculated Matrix: $MATRIX_JSON"
           
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write(f"matrix={matrix_json}\n")
-          '
+          # 4. Safely write to GITHUB_OUTPUT using EOF delimiter
+          EOF_DELIMITER=$(openssl rand -hex 8)
+          {
+            echo "matrix<<$EOF_DELIMITER"
+            echo "$MATRIX_JSON"
+            echo "$EOF_DELIMITER"
+          } >> "$GITHUB_OUTPUT"
 
   farm:
     needs: prepare

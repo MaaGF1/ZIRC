@@ -14,81 +14,39 @@ on:
 
 jobs:
   prepare:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Parse Secrets to Matrix
+      - name: Determine Matrix Length
         id: set-matrix
-        shell: pwsh
         env:
           GFL_CONFIG_RAW: ${{ secrets.GFL_CONFIG }}
-          GFL_SIGN_KEY_RAW: ${{ secrets.GFL_SIGN_KEY }}
         run: |
-          # 1. 动态生成一段 Python 脚本并落盘
-          $pythonScript = @"
-          import os, json, sys
+          python -c '
+          import os, json
 
-          config_raw = os.environ.get('GFL_CONFIG_RAW', '').strip()
-          sign_raw = os.environ.get('GFL_SIGN_KEY_RAW', '').strip()
-
-          if not config_raw or not sign_raw:
-              print('[-] Error: Missing GFL_CONFIG or GFL_SIGN_KEY secrets.')
-              sys.exit(1)
-
-          # Parse Config (Support Dict or List)
-          try:
-              configs = json.loads(config_raw)
-              if not isinstance(configs, list):
-                  configs = [configs]
-          except Exception as e:
-              print(f'[-] FATAL: Failed to parse GFL_CONFIG. {e}')
-              sys.exit(1)
-
-          # Parse Sign Key (Support String or List)
-          try:
-              signs = json.loads(sign_raw)
-              if not isinstance(signs, list):
-                  signs = [str(signs)]
-          except Exception:
-              # Treat as raw string if not valid JSON
-              signs = [sign_raw]
-
-          # Build Matrix Array
-          matrix_arr = []
-          for i in range(len(configs)):
-              sign_val = signs[i] if i < len(signs) else signs[-1]
-              matrix_arr.append({
-                  'index': i,
-                  # 强制移除所有的空格和换行符，防止 GHA 解析崩溃
-                  'config_str': json.dumps(configs[i], separators=(',', ':')),
-                  'sign_key': sign_val
-              })
-
-          # 转换为单行 JSON 字符串
-          matrix_json = json.dumps(matrix_arr, separators=(',', ':'))
-          print(f"Generated Matrix: {matrix_json}")
+          config_raw = os.environ.get("GFL_CONFIG_RAW", "").strip()
           
-          # 将最终的 JSON 写入临时文件，交给外部 PowerShell 读取
-          with open('matrix_out.txt', 'w', encoding='utf-8') as f:
-              f.write(matrix_json)
-          "@
+          # Default to 1 instance
+          length = 1
           
-          # 保存并执行 Python
-          Set-Content -Path parse.py -Value $pythonScript -Encoding utf8
-          python parse.py
+          if config_raw:
+              try:
+                  configs = json.loads(config_raw)
+                  if isinstance(configs, list):
+                      length = len(configs)
+              except Exception:
+                  pass
+                  
+          # Generate pure integer array: [0] or [0, 1, 2]
+          matrix_arr = list(range(length))
+          matrix_json = json.dumps(matrix_arr)
+          print(f"Generated Index Matrix: {matrix_json}")
           
-          if ($LASTEXITCODE -ne 0) {
-              Write-Error "Python parsing failed."
-              exit 1
-          }
-          
-          # 2. 从临时文件读取结果，使用最安全的方式写入 GITHUB_OUTPUT
-          $matrixJson = Get-Content -Path matrix_out.txt -Raw
-          $matrixJson = $matrixJson.Trim()
-          
-          Write-Host "Writing to GITHUB_OUTPUT..."
-          "matrix=$matrixJson" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"matrix={matrix_json}\n")
+          '
 
   farm:
     needs: prepare
@@ -96,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        account: ${{ fromJson(needs.prepare.outputs.matrix) }}
+        account_index: ${{ fromJson(needs.prepare.outputs.matrix) }}
     
     steps:
       - name: Checkout Repository
@@ -114,11 +72,11 @@ jobs:
 
       - name: Run GFL Agent
         env:
-          # 直接提取 JSON 中的对象传递给 Python
-          GFL_CONFIG: ${{ matrix.account.config_str }}
-          GFL_SIGN_KEY: ${{ matrix.account.sign_key }}
+          # Directly passing Secrets to circumvent GHA Output limits
+          GFL_CONFIG: ${{ secrets.GFL_CONFIG }}
+          GFL_SIGN_KEY: ${{ secrets.GFL_SIGN_KEY }}
           GFL_MISSION_TYPE: ${{ github.event.inputs.mission_type }}
-          GFL_ACCOUNT_INDEX: ${{ matrix.account.index }}
+          GFL_ACCOUNT_INDEX: ${{ matrix.account_index }}
           PYTHONUNBUFFERED: "1"
         run: |
           python src/gha/agent.py
@@ -128,22 +86,22 @@ jobs:
         shell: pwsh
         run: |
           if (Test-Path "respawn.flag") {
-            echo "1" > "respawn_${{ matrix.account.index }}.flag"
-            Write-Host "Respawn flag detected for account ${{ matrix.account.index }}."
+            echo "1" > "respawn_${{ matrix.account_index }}.flag"
+            Write-Host "Respawn flag detected for account ${{ matrix.account_index }}."
           }
 
       - name: Upload Respawn Flag
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: respawn-flag-${{ matrix.account.index }}
-          path: respawn_${{ matrix.account.index }}.flag
+          name: respawn-flag-${{ matrix.account_index }}
+          path: respawn_${{ matrix.account_index }}.flag
           if-no-files-found: ignore
 
   trigger_next:
     needs: farm
     if: always()
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Download all respawn flags
         uses: actions/download-artifact@v4
@@ -154,13 +112,11 @@ jobs:
       - name: Trigger Next Workflow
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
-        shell: pwsh
         run: |
-          # 检查是否有任何带有 flag 的文件产生
-          if (Test-Path "respawn_*.flag") {
-            Write-Host "Respawn flag(s) found. Triggering next job..."
+          if ls respawn_*.flag 1> /dev/null 2>&1; then
+            echo "Respawn flag(s) found. Triggering next job..."
             gh workflow run "GFL Auto Farm Workflow" -f mission_type="${{ github.event.inputs.mission_type }}"
-            Write-Host "Next job triggered successfully."
-          } else {
-            Write-Host "No respawn flags found. All jobs completed or failed fatally."
-          }
+            echo "Next job triggered successfully."
+          else
+            echo "No respawn flags found. All jobs completed or failed fatally."
+          fi

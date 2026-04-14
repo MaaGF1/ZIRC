@@ -30,17 +30,37 @@ class GFLAgent:
         self.macro_count = 0
         self.error_count = 0
         
-        # Load Configs from Environment
-        config_str = os.environ.get("GFL_CONFIG", "{}").strip()
+        # 1. Fetch raw Environment Variables
+        self.account_idx = int(os.environ.get("GFL_ACCOUNT_INDEX", "0"))
+        self.mission_type = os.environ.get("GFL_MISSION_TYPE", "f2p")
+        
+        config_raw = os.environ.get("GFL_CONFIG", "{}").strip()
+        sign_raw = os.environ.get("GFL_SIGN_KEY", "").strip()
+
+        # 2. Parse Configs safely
         try:
-            self.config = json.loads(config_str)
+            parsed_configs = json.loads(config_raw)
+            # Normalize to list if single dict is provided
+            if not isinstance(parsed_configs, list):
+                parsed_configs = [parsed_configs]
+                
+            self.config = parsed_configs[self.account_idx]
         except Exception as e:
             print(f"[-] FATAL: Failed to parse GFL_CONFIG JSON. Exception: {e}")
             sys.exit(1)
             
-        self.sign_key = os.environ.get("GFL_SIGN_KEY", "").strip().strip('"').strip("'")
-        self.mission_type = os.environ.get("GFL_MISSION_TYPE", "f2p")
-        self.account_idx = os.environ.get("GFL_ACCOUNT_INDEX", "0")
+        # 3. Parse Sign Keys safely
+        try:
+            parsed_signs = json.loads(sign_raw)
+            if not isinstance(parsed_signs, list):
+                parsed_signs = [str(parsed_signs)]
+        except Exception:
+            # Fallback for plain text signature string
+            parsed_signs = [sign_raw]
+            
+        # Extract matching sign key. If array is too short, reuse the last provided sign
+        raw_sign = parsed_signs[self.account_idx] if self.account_idx < len(parsed_signs) else parsed_signs[-1]
+        self.sign_key = raw_sign.strip().strip('"').strip("'")
         
         uid = str(self.config.get("USER_UID", "")).strip()
         server_key = self.config.get("SERVER_KEY", "M4A1")

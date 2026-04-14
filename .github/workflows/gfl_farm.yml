@@ -14,24 +14,26 @@ on:
 
 jobs:
   prepare:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Parse Secrets to Matrix
         id: set-matrix
+        shell: pwsh
         env:
           GFL_CONFIG_RAW: ${{ secrets.GFL_CONFIG }}
           GFL_SIGN_KEY_RAW: ${{ secrets.GFL_SIGN_KEY }}
         run: |
-          cat << 'EOF' > parse_matrix.py
-          import os, json, sys, uuid
+          # 1. 动态生成一段 Python 脚本并落盘
+          $pythonScript = @"
+          import os, json, sys
 
-          config_raw = os.environ.get("GFL_CONFIG_RAW", "").strip()
-          sign_raw = os.environ.get("GFL_SIGN_KEY_RAW", "").strip()
+          config_raw = os.environ.get('GFL_CONFIG_RAW', '').strip()
+          sign_raw = os.environ.get('GFL_SIGN_KEY_RAW', '').strip()
 
           if not config_raw or not sign_raw:
-              print("[-] Error: Missing GFL_CONFIG or GFL_SIGN_KEY secrets.")
+              print('[-] Error: Missing GFL_CONFIG or GFL_SIGN_KEY secrets.')
               sys.exit(1)
 
           # Parse Config (Support Dict or List)
@@ -40,7 +42,7 @@ jobs:
               if not isinstance(configs, list):
                   configs = [configs]
           except Exception as e:
-              print(f"[-] FATAL: Failed to parse GFL_CONFIG. {e}")
+              print(f'[-] FATAL: Failed to parse GFL_CONFIG. {e}')
               sys.exit(1)
 
           # Parse Sign Key (Support String or List)
@@ -55,26 +57,38 @@ jobs:
           # Build Matrix Array
           matrix_arr = []
           for i in range(len(configs)):
-              # If signs array is shorter than configs, fallback to the last sign key
               sign_val = signs[i] if i < len(signs) else signs[-1]
               matrix_arr.append({
-                  "index": i,
-                  "config_str": json.dumps(configs[i]),
-                  "sign_key": sign_val
+                  'index': i,
+                  # 强制移除所有的空格和换行符，防止 GHA 解析崩溃
+                  'config_str': json.dumps(configs[i], separators=(',', ':')),
+                  'sign_key': sign_val
               })
 
-          matrix_json = json.dumps(matrix_arr)
+          # 转换为单行 JSON 字符串
+          matrix_json = json.dumps(matrix_arr, separators=(',', ':'))
           print(f"Generated Matrix: {matrix_json}")
           
-          # Safely write to GITHUB_OUTPUT using EOF delimiter for complex JSON
-          eof_marker = f"EOF-{uuid.uuid4().hex}"
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write(f"matrix<<{eof_marker}\n")
-              f.write(f"{matrix_json}\n")
-              f.write(f"{eof_marker}\n")
-          EOF
+          # 将最终的 JSON 写入临时文件，交给外部 PowerShell 读取
+          with open('matrix_out.txt', 'w', encoding='utf-8') as f:
+              f.write(matrix_json)
+          "@
           
-          python parse_matrix.py
+          # 保存并执行 Python
+          Set-Content -Path parse.py -Value $pythonScript -Encoding utf8
+          python parse.py
+          
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Python parsing failed."
+              exit 1
+          }
+          
+          # 2. 从临时文件读取结果，使用最安全的方式写入 GITHUB_OUTPUT
+          $matrixJson = Get-Content -Path matrix_out.txt -Raw
+          $matrixJson = $matrixJson.Trim()
+          
+          Write-Host "Writing to GITHUB_OUTPUT..."
+          "matrix=$matrixJson" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
   farm:
     needs: prepare
@@ -96,11 +110,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Install the local version of gflzirc (and other lib from pyproject.toml)
           pip install ./src/core
 
       - name: Run GFL Agent
         env:
+          # 直接提取 JSON 中的对象传递给 Python
           GFL_CONFIG: ${{ matrix.account.config_str }}
           GFL_SIGN_KEY: ${{ matrix.account.sign_key }}
           GFL_MISSION_TYPE: ${{ github.event.inputs.mission_type }}
@@ -129,7 +143,7 @@ jobs:
   trigger_next:
     needs: farm
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Download all respawn flags
         uses: actions/download-artifact@v4
@@ -140,11 +154,13 @@ jobs:
       - name: Trigger Next Workflow
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
+        shell: pwsh
         run: |
-          if ls respawn_*.flag 1> /dev/null 2>&1; then
-            echo "Respawn flag(s) found. Triggering next job..."
+          # 检查是否有任何带有 flag 的文件产生
+          if (Test-Path "respawn_*.flag") {
+            Write-Host "Respawn flag(s) found. Triggering next job..."
             gh workflow run "GFL Auto Farm Workflow" -f mission_type="${{ github.event.inputs.mission_type }}"
-            echo "Next job triggered successfully."
-          else
-            echo "No respawn flags found. All jobs completed or failed fatally."
-          fi
+            Write-Host "Next job triggered successfully."
+          } else {
+            Write-Host "No respawn flags found. All jobs completed or failed fatally."
+          }

@@ -123,7 +123,7 @@ jobs:
         run: |
           if ls respawn_*.flag 1> /dev/null 2>&1; then
             echo "Respawn flag(s) found. Triggering next job..."
-            gh workflow run "GFL Auto Farm Workflow" -f mission_type="${{ github.event.inputs.mission_type }}"
+            gh workflow run "GFL Auto Farm Workflow" -R ${{ github.repository }} -f mission_type="${{ github.event.inputs.mission_type }}"
             echo "Next job triggered successfully."
           else
             echo "No respawn flags found. All jobs completed or failed fatally."

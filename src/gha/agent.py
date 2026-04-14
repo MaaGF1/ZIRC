@@ -20,7 +20,9 @@ from gflzirc import (
 from missions import MISSION_HANDLERS
 
 # Constants
-MAX_RUNTIME_SEC = 5 * 3600 + 30 * 60  # 5 hours 30 mins
+# MAX_RUNTIME_SEC = 5 * 3600 + 30 * 60  # 5 hours 30 mins
+
+MAX_RUNTIME_SEC = 60  # 60 debug
 MAX_CONSECUTIVE_ERRORS = 5
 
 class GFLAgent:

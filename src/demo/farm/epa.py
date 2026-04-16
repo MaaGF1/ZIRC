@@ -14,17 +14,17 @@ from gflzirc import (
 )
 
 CONFIG = {
-# --- Authentication & Connection ---
+# === Authentication & Connection ===
     "USER_UID": "_InputYourID_",
     "SIGN_KEY": DEFAULT_SIGN,
     "BASE_URL": SERVERS["M4A1"],
     "PROXY_PORT": 8080,
 
-# --- Farm Loop Settings ---
+# === Farm Loop Settings ===
     "MACRO_LOOPS": 200,
-    "MISSIONS_PER_RETIRE": 5,
+    "MISSIONS_PER_RETIRE": 10,
 
-# --- Mission Specific Config ---
+# === Mission Specific Config ===
     # EPA: EX1
     "MISSION_ID": 145,
     "START_SPOT": 97061,
@@ -33,14 +33,14 @@ CONFIG = {
     # Target Device Hash 
     "USER_DEVICE": "705e6cc2f7bcc635accfcbac7df9bf86cd6f0e05",
 
-# --- Team Config ---
+# === Team Config ===
     # Echelon ID
     "TEAM_ID": 1,
     
     # Target Fairy UID (Set to 0 or None if no fairy is equipped)
     "FAIRY_ID": 3502455,
     
-    # Target Echelon Guns UID and starting life
+    # Target Echelon Guns UID and starting life(HP)
     "GUNS": [
         {"id": 515087570, "life": 444},
         {"id": 515094662, "life": 1130},
@@ -88,6 +88,26 @@ def check_battle_drop(resp_data: dict, spot_id: int) -> list:
             collected.append(gun_uid)
     return collected
 
+def check_battle_exp(resp_data: dict, spot_id: int) -> bool:
+    """Parses gun_exp from response. Returns True if any gun hit MAX level (0 EXP)."""
+    gun_exp_list = resp_data.get("gun_exp", [])
+    cap_reached = False
+    
+    if gun_exp_list:
+        exp_details = []
+        for item in gun_exp_list:
+            gun_uid = str(item.get("gun_with_user_id", "unknown"))
+            exp_val = str(item.get("exp", "0"))
+            exp_details.append("%s: +%s" % (gun_uid[-4:], exp_val))  # Show last 4 digits of UID for clean logs
+            
+            if exp_val == "0":
+                print("    [!] WARNING: T-Doll %s has reached MAX level (0 EXP)!" % gun_uid)
+                cap_reached = True
+                
+        print("    [+] Node %d EXP | %s" % (spot_id, " | ".join(exp_details)))
+        
+    return cap_reached
+
 def check_win_drop(resp_data: dict) -> list:
     collected = []
     win_result = resp_data.get("mission_win_result", {})
@@ -109,6 +129,8 @@ def get_mvp_generator():
         idx = (idx + 1) % len(guns)
 
 def farm_mission_epa(client: GFLClient, team_id: int, mvp_gen):
+    global stop_macro_flag, stop_micro_flag
+    
     mission_id = CONFIG["MISSION_ID"]
     start_spot = CONFIG["START_SPOT"]
     route = CONFIG["ROUTE"]
@@ -121,7 +143,7 @@ def farm_mission_epa(client: GFLClient, team_id: int, mvp_gen):
             for s in resp["spot_act_info"]:
                 current_spots_state[str(s.get("spot_id"))] = int(s.get("seed", 0))
 
-    # --- 1. CombInfo & Start Mission ---
+    # === 1. CombInfo & Start Mission ===
     print("[>] Requesting Combination Info...")
     if check_step_error(client.send_request(API_MISSION_COMBINFO, {"mission_id": mission_id}), "combInfo"): 
         return None
@@ -138,8 +160,7 @@ def farm_mission_epa(client: GFLClient, team_id: int, mvp_gen):
     if check_step_error(start_resp, "startMission"): return None
     update_seeds(start_resp)
 
-    # --- 2. Supply Team ---
-
+    # === 2. Supply Team (Uncomment if needed) ===
     # print("[>] Supplying Team %d at Node %d..." % (team_id, start_spot))
     # supply_payload = {
     #     "mission_id": mission_id,
@@ -149,7 +170,7 @@ def farm_mission_epa(client: GFLClient, team_id: int, mvp_gen):
     # }
     # if check_step_error(client.send_request(API_MISSION_SUPPLY, supply_payload), "supplyTeam"): return None
 
-    # --- 3. Route Execution ---
+    # === 3. Route Execution ===
     curr_spot = start_spot
     for step, next_spot in enumerate(route, 1):
         print("[>] Step %d: Moving %d -> %d..." % (step, curr_spot, next_spot))
@@ -203,12 +224,20 @@ def farm_mission_epa(client: GFLClient, team_id: int, mvp_gen):
 
         battle_resp = client.send_request(API_MISSION_BATTLE_FINISH, battle_payload)
         if check_step_error(battle_resp, "battleFinish(%d)" % next_spot): return None
+        
+        # Parse Drops
         dropped_uids.extend(check_battle_drop(battle_resp, next_spot))
+        
+        # --- Parse EXP and check for MAX level ---
+        if check_battle_exp(battle_resp, next_spot):
+            stop_macro_flag = True
+            stop_micro_flag = True
+            print("    [*] Auto-stop triggered to prevent EXP waste. Will safely stop after this run.")
 
         curr_spot = next_spot
         time.sleep(0.5)
 
-    # --- 4. Mission End Sequence ---
+    # === 4. Mission End Sequence ===
     print("[>] Ending Turn and calculating Win Condition...")
     if check_step_error(client.send_request(API_MISSION_END_TURN, {}), "endTurn"): return None
     time.sleep(0.2)
@@ -248,7 +277,7 @@ def farm_worker():
     print("=== GFL Protocol Auto-Farming Started (EPA) ===")
     for macro in range(1, CONFIG["MACRO_LOOPS"] + 1):
         if stop_macro_flag: break
-        print("\n--- MACRO BATCH %d / %d ---" % (macro, CONFIG['MACRO_LOOPS']))
+        print("\n=== MACRO BATCH %d / %d ===" % (macro, CONFIG['MACRO_LOOPS']))
         
         batch_guns = []
         for micro in range(1, CONFIG["MISSIONS_PER_RETIRE"] + 1):

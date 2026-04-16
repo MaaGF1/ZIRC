@@ -15,25 +15,28 @@ API_MISSION_SUPPLY = "Mission/supplyTeam"
 API_MISSION_BATTLE_FINISH = "Mission/battleFinish"
 
 CONFIG = {
-    # --- Authentication & Connection ---
+# --- Authentication & Connection ---
     "USER_UID": "_InputYourID_",
     "SIGN_KEY": DEFAULT_SIGN,
     "BASE_URL": SERVERS["M4A1"],
     "PROXY_PORT": 8080,
 
-    # --- Farm Loop Settings ---
+# --- Farm Loop Settings ---
     "MACRO_LOOPS": 200,
     "MISSIONS_PER_RETIRE": 5,
-    
-    # --- EPA Specific Config ---
-    # EPA: EX-1
+
+# --- EPA(EX-1) Specific Config ---
+    # EPA:EX1 Static
     "MISSION_ID": 145,
-    "TEAM_ID": 1,
     "START_SPOT": 97061,
     "ROUTE": [97039, 97040, 97041, 97036, 97031],
     
     # Target Device Hash 
     "USER_DEVICE": "705e6cc2f7bcc635accfcbac7df9bf86cd6f0e05",
+
+# --- Team Config ---
+    # Echelon ID
+    "TEAM_ID": 1,
     
     # Target Fairy UID (Set to 0 or None if no fairy is equipped)
     "FAIRY_ID": 3502455,

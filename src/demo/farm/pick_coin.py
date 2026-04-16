@@ -1,3 +1,5 @@
+# src/demo/farm/pick_coin.py
+
 import sys
 import time
 import json

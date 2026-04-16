@@ -9,12 +9,9 @@ from gflzirc import (
     API_MISSION_COMBINFO, API_MISSION_START,
     API_MISSION_TEAM_MOVE, API_MISSION_END_TURN,
     API_MISSION_START_ENEMY_TURN, API_MISSION_END_ENEMY_TURN,
-    API_MISSION_START_TURN, API_MISSION_ABORT, API_GUN_RETIRE
+    API_MISSION_START_TURN, API_MISSION_ABORT, API_GUN_RETIRE,
+    API_MISSION_SUPPLY, API_MISSION_BATTLE_FINISH,
 )
-
-# --- Local Specific APIs ---
-API_MISSION_SUPPLY = "Mission/supplyTeam"
-API_MISSION_BATTLE_FINISH = "Mission/battleFinish"
 
 CONFIG = {
 # --- Authentication & Connection ---
@@ -27,8 +24,8 @@ CONFIG = {
     "MACRO_LOOPS": 200,
     "MISSIONS_PER_RETIRE": 5,
 
-# --- EPA(EX-1) Specific Config ---
-    # EPA:EX1 Static
+# --- Mission Specific Config ---
+    # EPA: EX1
     "MISSION_ID": 145,
     "START_SPOT": 97061,
     "ROUTE": [97039, 97040, 97041, 97036, 97031],

@@ -26,6 +26,8 @@ API_MISSION_ALLY_MYSIDE_MOVE = "Mission/allyMySideMove"
 API_INDEX_GUIDE = "Index/guide"
 API_GUN_RETIRE = "Gun/retireGun"
 API_DAILY_RESET_MAP = "Daily/resetMap"
+API_MISSION_SUPPLY = "Mission/supplyTeam"
+API_MISSION_BATTLE_FINISH = "Mission/battleFinish"
 
 # Common Mission Guide Courses
 GUIDE_COURSE_11880 = [

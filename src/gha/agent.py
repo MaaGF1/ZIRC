@@ -16,8 +16,10 @@ from gflzirc import (
     GFLClient, SERVERS, API_GUN_RETIRE, API_MISSION_ABORT
 )
 
-# Import our modular mission handlers
+# Local Modules
 from missions import MISSION_HANDLERS
+from request import IndexRequest
+from parser import IndexToEpaParser
 
 # Constants
 MAX_RUNTIME_SEC = 5 * 3600 + 30 * 60  # 5 hours 30 mins
@@ -34,10 +36,8 @@ class GFLAgent:
         self.account_idx = int(os.environ.get("GFL_ACCOUNT_INDEX", "0"))
         self.mission_type = os.environ.get("GFL_MISSION_TYPE", "f2p")
         
-        is_epa = self.mission_type.startswith("epa")
-        config_env_key = "GFL_EPA_CONFIG" if is_epa else "GFL_CONFIG"
-        config_raw = os.environ.get(config_env_key, "{}").strip()
-        
+        # Unified Config (Removed GFL_EPA_CONFIG logic)
+        config_raw = os.environ.get("GFL_CONFIG", "{}").strip()
         sign_raw = os.environ.get("GFL_SIGN_KEY", "").strip()
         device_raw = os.environ.get("GFL_USER_DEVICE", "").strip()
 
@@ -50,7 +50,7 @@ class GFLAgent:
                 
             self.config = parsed_configs[self.account_idx]
         except Exception as e:
-            print(f"[-] FATAL: Failed to parse {config_env_key} JSON. Exception: {e}")
+            print(f"[-] FATAL: Failed to parse GFL_CONFIG JSON. Exception: {e}")
             sys.exit(1)
             
         # 3. Parse Array Secrets Safely (Sign Key & Device)
@@ -66,9 +66,45 @@ class GFLAgent:
         if not handler_class:
             print(f"[-] FATAL: Unknown mission type '{self.mission_type}'.")
             sys.exit(1)
+            
+        # Initialize Client early so requests can use it
+        if not self.sign_key or not uid or len(self.sign_key) < 12:
+            print("[-] FATAL: Missing or Invalid UID / SIGN_KEY.")
+            sys.exit(1)
+        if not self.base_url:
+            print(f"[-] FATAL: Invalid SERVER_KEY: {server_key}.")
+            sys.exit(1)
+            
+        self.client = GFLClient(uid, self.sign_key, self.base_url)
+        
+        # --- DYNAMIC DATA INJECTION ---
+        is_epa = self.mission_type.startswith("epa")
+        if is_epa:
+            epa_teams = self.config.get("EPA_TEAMS", [])
+            if not epa_teams:
+                print("[-] FATAL: 'EPA_TEAMS' array is missing or empty in GFL_CONFIG.")
+                sys.exit(1)
+                
+            raw_index = IndexRequest(self).fetch()
+            if not raw_index:
+                print("[-] FATAL: Failed to fetch Index data required for EPA.")
+                sys.exit(1)
+                
+            parsed_teams = IndexToEpaParser(epa_teams).parse(raw_index)
+            if not parsed_teams:
+                print("[-] FATAL: No valid echelons found from the specified EPA_TEAMS.")
+                sys.exit(1)
+                
+            # Inject dynamic TEAMS and override retire limits
+            self.config["TEAMS"] = parsed_teams
+            if "EPA_PER_RETIRE" in self.config:
+                self.config["MISSIONS_PER_RETIRE"] = self.config["EPA_PER_RETIRE"]
+        # ------------------------------
+        
+        # Initialize Mission Handler AFTER config injection
         self.mission_handler = handler_class(self)
         
-        # === CONFIGURATION AUDIT ===
+        # === AUDIT LOG ===
         print(f"\n================ ACCOUNT [{self.account_idx}] AUDIT ================")
         print(f"[*] Mission Type : {self.mission_type.upper()}")
         
@@ -78,27 +114,15 @@ class GFLAgent:
         if len(self.sign_key) > 12:
             masked_sign = self.sign_key[:8] + "*" * (len(self.sign_key)-12) + self.sign_key[-4:]
             print(f"[*] SIGN_KEY     : {masked_sign} (Length: {len(self.sign_key)})")
-        else:
-            print(f"[*] SIGN_KEY     : INVALID_OR_TOO_SHORT")
             
         print(f"[*] SERVER_KEY   : {server_key}")
         print(f"[*] BASE_URL     : {self.base_url}")
         
         if is_epa:
-            teams = self.config.get("TEAMS", [])
-            print(f"[*] EPA Teams    : {len(teams)} Echelons Configured")
+            print(f"[*] EPA Teams    : {len(self.config['TEAMS'])} Echelons Injected")
             print(f"[*] USER_DEVICE  : {self.user_device[:8]}... (Length: {len(self.user_device)})")
             
         print("=====================================================\n")
-
-        if not self.sign_key or not uid or len(self.sign_key) < 12:
-            print("[-] FATAL: Missing or Invalid UID / SIGN_KEY.")
-            sys.exit(1)
-        if not self.base_url:
-            print(f"[-] FATAL: Invalid SERVER_KEY: {server_key}.")
-            sys.exit(1)
-            
-        self.client = GFLClient(uid, self.sign_key, self.base_url)
 
     def _extract_array_secret(self, raw_str: str, target_idx: int) -> str:
         if not raw_str: return ""
@@ -113,9 +137,7 @@ class GFLAgent:
 
     def write_summary(self, status="Running"):
         summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
-        if not summary_path:
-            return
-            
+        if not summary_path: return
         elapsed = int(time.time() - self.start_time)
         hours, rem = divmod(elapsed, 3600)
         mins, secs = divmod(rem, 60)
@@ -123,53 +145,33 @@ class GFLAgent:
         
         content = (
             f"### GFL Auto-Farm Report: Account [{self.account_idx}] ({self.mission_type.upper()})\n"
-            f"| Metric | Value |\n"
-            f"| ------ | ----- |\n"
-            f"| **Status** | {status} |\n"
-            f"| **Runtime** | {time_str} |\n"
-            f"| **Macros Completed** | {self.macro_count} |\n"
-            f"| **Total Dolls Dropped** | {self.total_dolls} |\n"
-            f"| **Timestamp** | {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')} |\n"
-            f"---\n"
+            f"| Metric | Value |\n| ------ | ----- |\n| **Status** | {status} |\n| **Runtime** | {time_str} |\n"
+            f"| **Macros Completed** | {self.macro_count} |\n| **Total Dolls Dropped** | {self.total_dolls} |\n"
+            f"| **Timestamp** | {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')} |\n---\n"
         )
-        with open(summary_path, "w") as f:
-            f.write(content)
+        with open(summary_path, "w") as f: f.write(content)
 
     def safe_request(self, api_endpoint: str, payload: dict, step_name: str, max_retries=3):
         for attempt in range(1, max_retries + 1):
             try:
                 resp = self.client.send_request(api_endpoint, payload)
-                if resp is not None:
-                    return resp
+                if resp is not None: return resp
             except Exception as e:
                 print(f"[-] {step_name}: Exception -> {e}. (Attempt {attempt}/{max_retries})")
-            
-            if attempt < max_retries:
-                time.sleep(3)
-                
+            if attempt < max_retries: time.sleep(3)
         return {"error_local": "Max retries reached or empty server response."}
 
     def check_step_error(self, resp, step_name: str) -> bool:
-        # 只检查 isinstance(dict) 时的 error_local 和 error
         if resp is None:
-            self.error_count += 1
-            return True
-            
+            self.error_count += 1; return True
         if isinstance(resp, dict):
             if "error_local" in resp:
                 print(f"[-] {step_name} Local Error: {resp['error_local']}")
-                if 'raw' in resp:
-                    print(f"[DEBUG] Raw Server Payload: {resp['raw']}")
-                self.error_count += 1
-                return True
+                self.error_count += 1; return True
             if "error" in resp:
                 print(f"[-] {step_name} Server Error: {resp['error']}")
-                self.error_count += 1
-                return True
-        
-        # 只要没有明确抛出错误，就重置错误计数器并放行
-        self.error_count = 0
-        return False
+                self.error_count += 1; return True
+        self.error_count = 0; return False
 
     def check_drop_result(self, response_data) -> list:
         collected_guns = []
@@ -194,17 +196,14 @@ class GFLAgent:
                 reward_key = keys[target_idx]
                 if reward_key not in ["trigger_para", "mission_win_step_control_ids", "spot_act_info"]:
                     print(f"[+] Random Node Drop Captured -> {reward_key} : {resp_data[reward_key]}")
-        except ValueError:
-            pass
+        except ValueError: pass
 
     def retire_guns(self, gun_uids: list):
         if not gun_uids: return
         print(f"[*] Submitting {len(gun_uids)} T-Dolls for Auto-Retire...")
         resp = self.safe_request(API_GUN_RETIRE, gun_uids, "retireGuns")
-        if isinstance(resp, dict) and resp.get("success"): 
-            print("[+] Auto-Retire Successful!")
-        else: 
-            print(f"[-] Retire Failed: {resp}")
+        if isinstance(resp, dict) and resp.get("success"): print("[+] Auto-Retire Successful!")
+        else: print(f"[-] Retire Failed: {resp}")
 
     def run(self):
         print(f"=== GHA Auto-Farming Started: {self.mission_type.upper()} [Acct: {self.account_idx}] ===")
@@ -249,8 +248,7 @@ class GFLAgent:
             elapsed = time.time() - self.start_time
             if elapsed > MAX_RUNTIME_SEC:
                 print(f"\n[!] Time limit reached ({elapsed}s). Preparing to respawn.")
-                with open("respawn.flag", "w") as f:
-                    f.write("1")
+                with open("respawn.flag", "w") as f: f.write("1")
                 self.write_summary(status="Timeout Reached - Spawning Next Job")
                 sys.exit(0)
                 

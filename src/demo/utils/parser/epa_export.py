@@ -1,4 +1,5 @@
 # tools/exporter
+# Export GFL_EPA_CONFIG from response json of Index/index.
 
 import os
 import json

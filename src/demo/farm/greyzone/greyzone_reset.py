@@ -1,4 +1,4 @@
-# src/demo/farm/greyzone_reset.py
+# src/demo/farm/greyzone/greyzone_reset.py
 
 import sys
 import time

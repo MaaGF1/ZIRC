@@ -1,4 +1,4 @@
-# src/demo/farm/pick_coin.py
+# src/demo/farm/resource/f2p.py
 
 import sys
 import time
@@ -8,8 +8,9 @@ from gflzirc import (
     GFLClient, GFLProxy, set_windows_proxy,
     SERVERS, STATIC_KEY, DEFAULT_SIGN,
     API_MISSION_COMBINFO, API_MISSION_START, API_INDEX_GUIDE,
-    API_MISSION_TEAM_MOVE, API_MISSION_ABORT, API_GUN_RETIRE,
-    GUIDE_COURSE_10352
+    API_MISSION_END_TURN, API_MISSION_START_ENEMY_TURN,
+    API_MISSION_END_ENEMY_TURN, API_MISSION_START_TURN,
+    API_MISSION_ABORT, API_GUN_RETIRE, GUIDE_COURSE_11880
 )
 
 CONFIG = {
@@ -17,7 +18,7 @@ CONFIG = {
     "SIGN_KEY": DEFAULT_SIGN,
     "MACRO_LOOPS": 200,
     "MISSIONS_PER_RETIRE": 50,
-    "TEAM_ID": 1,
+    "SQUAD_ID": 106360,
     "BASE_URL": SERVERS["M4A1"],
     "PROXY_PORT": 8080
 }
@@ -48,59 +49,47 @@ def check_step_error(resp: dict, step_name: str) -> bool:
         return True
     return False
 
-def parse_random_node_drop(resp_data: dict):
-    keys = list(resp_data.keys())
-    try:
-        target_idx = keys.index("building_defender_change") - 1
-        if target_idx >= 0:
-            reward_key = keys[target_idx]
-            if reward_key not in ["trigger_para", "mission_win_step_control_ids", "spot_act_info"]:
-                reward_val = resp_data[reward_key]
-                print(f"[+] Random Node Drop Captured -> {reward_key} : {reward_val}")
-    except ValueError:
-        pass
+def check_drop_result(response_data: dict) -> list:
+    collected_guns = []
+    win_result = response_data.get("mission_win_result", {})
+    if not win_result: return collected_guns
+        
+    reward_guns = win_result.get("reward_gun", [])
+    if reward_guns:
+        for gun in reward_guns:
+            gun_id = gun.get('gun_id')
+            gun_uid = int(gun.get('gun_with_user_id'))
+            print(f"[+] Got T-Doll! Gun ID: {gun_id} | UID: {gun_uid} | Time: {time.strftime('%H:%M:%S')}")
+            collected_guns.append(gun_uid)
+    return collected_guns
 
-def farm_mission_10352(client: GFLClient, team_id: int):
-    mission_id = 10352
+def farm_mission_11880(client: GFLClient, squad_id: int):
+    mission_id = 11880
 
     if check_step_error(client.send_request(API_MISSION_COMBINFO, {"mission_id": mission_id}), "combinationInfo"): return None
     
     start_payload = {
-        "mission_id": mission_id, 
-        "spots": [{"spot_id": 13280, "team_id": team_id}],
-        "squad_spots": [], 
-        "sangvis_spots": [], 
-        "vehicle_spots": [], 
-        "ally_spots": [], 
-        "mission_ally_spots": [],
+        "mission_id": mission_id, "spots": [],
+        "squad_spots": [{"spot_id": 901926, "squad_with_user_id": squad_id, "battleskill_switch": 1}],
+        "sangvis_spots": [], "vehicle_spots": [], "ally_spots": [], "mission_ally_spots": [],
         "ally_id": int(time.time())
     }
+    
     if check_step_error(client.send_request(API_MISSION_START, start_payload), "startMission"): return None
+    if check_step_error(client.send_request(API_INDEX_GUIDE, {"guide": json.dumps({"course": GUIDE_COURSE_11880}, separators=(',', ':'))}), "guide"): return None
     
-    if check_step_error(client.send_request(API_INDEX_GUIDE, {"guide": json.dumps({"course": GUIDE_COURSE_10352}, separators=(',', ':'))}), "guide"): return None
-    time.sleep(0.2)
-
-    move1_payload = {
-        "person_type": 1, "person_id": team_id,
-        "from_spot_id": 13280, "to_spot_id": 13277, "move_type": 1
-    }
-    if check_step_error(client.send_request(API_MISSION_TEAM_MOVE, move1_payload), "teamMove1"): return None
-    time.sleep(0.2)
-
-    move2_payload = {
-        "person_type": 1, "person_id": team_id,
-        "from_spot_id": 13277, "to_spot_id": 13278, "move_type": 1
-    }
-    move2_resp = client.send_request(API_MISSION_TEAM_MOVE, move2_payload)
-    if check_step_error(move2_resp, "teamMove2"): return None
-    
-    parse_random_node_drop(move2_resp)
-    time.sleep(0.2)
-
-    client.send_request(API_MISSION_ABORT, {"mission_id": mission_id})
     time.sleep(0.5)
+    if check_step_error(client.send_request(API_MISSION_END_TURN, {}), "endTurn"): return None
+    time.sleep(0.2)
+    if check_step_error(client.send_request(API_MISSION_START_ENEMY_TURN, {}), "startEnemyTurn"): return None
+    time.sleep(0.2)
+    if check_step_error(client.send_request(API_MISSION_END_ENEMY_TURN, {}), "endEnemyTurn"): return None
+    time.sleep(0.2)
     
-    return []
+    final_resp = client.send_request(API_MISSION_START_TURN, {})
+    if check_step_error(final_resp, "startTurn"): return None
+    
+    return check_drop_result(final_resp)
 
 def retire_guns(client: GFLClient, gun_uids: list):
     if not gun_uids: return
@@ -119,7 +108,7 @@ def farm_worker():
 
     client = GFLClient(CONFIG["USER_UID"], CONFIG["SIGN_KEY"], CONFIG["BASE_URL"])
 
-    print("=== GFL Protocol Auto-Farming Started (Mission 10352) ===")
+    print("=== GFL Protocol Auto-Farming Started ===")
     for macro in range(1, CONFIG["MACRO_LOOPS"] + 1):
         if stop_macro_flag: break
         print(f"\n--- MACRO BATCH {macro} / {CONFIG['MACRO_LOOPS']} ---")
@@ -127,15 +116,16 @@ def farm_worker():
         batch_guns = []
         for micro in range(1, CONFIG["MISSIONS_PER_RETIRE"] + 1):
             if stop_micro_flag or stop_macro_flag: break
-            dropped = farm_mission_10352(client, CONFIG["TEAM_ID"])
+            dropped = farm_mission_11880(client, CONFIG["SQUAD_ID"])
             if dropped is None:
-                client.send_request(API_MISSION_ABORT, {"mission_id": 10352})
+                client.send_request(API_MISSION_ABORT, {"mission_id": 11880})
                 time.sleep(3)
                 continue
             batch_guns.extend(dropped)
+            time.sleep(1)
             
         retire_guns(client, batch_guns)
-        time.sleep(1)
+        time.sleep(2)
         if stop_micro_flag: break
             
     print("\n[*] Farming runs ended.")
@@ -154,7 +144,7 @@ if __name__ == '__main__':
     print_menu()
     while True:
         try:
-            cmd = input("GFL-COIN> ").strip()
+            cmd = input("GFL-F2P> ").strip()
             if not cmd: continue
             cmd_prefix = cmd.split()[0]
             

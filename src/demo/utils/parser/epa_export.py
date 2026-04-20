@@ -1,4 +1,5 @@
-# tools/exporter
+# src/demo/utils/parser/epa_export.py
+
 # Export GFL_EPA_CONFIG from response json of Index/index.
 
 import os

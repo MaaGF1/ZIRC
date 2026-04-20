@@ -1,4 +1,4 @@
-# src/demo/farm/pick_coin.py
+# src/demo/farm/resource/pick_coin.py
 
 import sys
 import time

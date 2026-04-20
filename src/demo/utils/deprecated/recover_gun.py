@@ -1,4 +1,4 @@
-# src/demo/utils/recover_gun.py
+# src/demo/utils/deprecated/recover_gun.py
 
 # Note: 
 # This script cannot "create" a T-Doll out of 'void'; 

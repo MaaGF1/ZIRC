@@ -6,10 +6,9 @@ import os
 import json
 from gflzirc import (
     GFLClient, GFLProxy, set_windows_proxy,
-    SERVERS, STATIC_KEY, DEFAULT_SIGN
+    SERVERS, STATIC_KEY, DEFAULT_SIGN,
+    API_INDEX_INDEX
 )
-
-API_INDEX = "Index/index"
 
 CONFIG = {
     "USER_UID": "_InputYourID_",
@@ -62,7 +61,7 @@ def request_index_worker():
         "furniture_data": False
     }
     
-    response = client.send_request(API_INDEX, payload)
+    response = client.send_request(API_INDEX_INDEX, payload)
     
     # 1. Handle local library errors
     if isinstance(response, dict) and "error_local" in response:

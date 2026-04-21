@@ -3,10 +3,13 @@
 import time
 from .base import BaseRequest
 
+from gflzirc import (
+    API_INDEX_INDEX
+)
+
 class IndexRequest(BaseRequest):
     def __init__(self, agent):
         super().__init__(agent)
-        self.api_endpoint = "Index/index"
 
     def fetch(self) -> dict:
         print(f"\n[>] Fetching Commander Index Data from server...")
@@ -15,7 +18,7 @@ class IndexRequest(BaseRequest):
             "furniture_data": False
         }
         
-        resp = self.agent.safe_request(self.api_endpoint, payload, "fetchIndex")
+        resp = self.agent.safe_request(API_INDEX_INDEX, payload, "fetchIndex")
         
         if self.agent.check_step_error(resp, "fetchIndex"):
             return None

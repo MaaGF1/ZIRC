@@ -1,3 +1,5 @@
+<!-- README.md -->
+
 <p align="center">
   <img src="docs/pic/zirc.jpg" width="160" height="160" alt="LOGO">
 </p>
@@ -25,4 +27,7 @@ In short, this repo's directory tree can be listed as:
 ## 2. Reading List
 
 1. [Proof of Concept Lists](docs/00_poc_list.md), delineates the specific functionalities encapsulated within the `poc/` directory.
-2. [Interpretation of gflzirc](docs/01_gflzirc.md), shown the gflzirc's architecture and core functions.
+2. [Implementation of Poc via Minhook](docs/01_trimmer.md), TODO.
+3. [Interpretation of gflzirc](docs/01_gflzirc.md), shown the gflzirc's architecture and core functions.
+4. [Sample of gflzirc](docs/03_demo.md), TODO.
+5. [GHA's Design](docs/04_gha.md), TODO.

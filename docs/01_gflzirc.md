@@ -1,2 +1,0 @@
-# Interpretation of gflzirc
-

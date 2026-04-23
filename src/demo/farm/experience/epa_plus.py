@@ -80,7 +80,7 @@ CONFIG = {
     "ENABLE_FILTER_PROTECTION": True,
 
     # Target Device Hash 自己抓
-    "USER_DEVICE": "085aac71afd295d5a2e97d90a35326ebac8ca174",
+    "USER_DEVICE": "1145141919810",
 
     # === Team Config ===
     # Echelon ID

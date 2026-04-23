@@ -79,6 +79,8 @@ CONFIG = {
     "STOP_AFTER_RETIRE_NO_SPACE_TIMES": 2,
     "ENABLE_FILTER_PROTECTION": True,
 
+    # 下面的 TEAM_ID / FAIRY_ID / GUNS 仅为占位。
+    # 实际运行时建议通过抓取并解析 Index/index 自动填充。
     # Target Device Hash 自己抓
     "USER_DEVICE": "1145141919810",
 
@@ -88,14 +90,14 @@ CONFIG = {
     "TEAM_ID": 1,
 
     # Target Fairy UID (Set to 0 or None if no fairy is equipped)
-    "FAIRY_ID": 978259,
+    "FAIRY_ID": 159357,
 
       "GUNS": [
-        {"id": 515087570, "life": 444},
-        {"id": 515094662, "life": 1130},
-        {"id": 515106822, "life": 420},
-        {"id": 515149565, "life": 300},
-        {"id": 528437819, "life": 248}
+        {"id": 11233, "life": 444},
+        {"id": 44566, "life": 1130},
+        {"id": 77899, "life": 420},
+        {"id": 336699, "life": 300},
+        {"id": 114477, "life": 248}
     ]
 }
 

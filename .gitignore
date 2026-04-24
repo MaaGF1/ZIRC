@@ -13,3 +13,6 @@ src/build
 
 # Scons
 .sconsign.dblite
+
+# rescue
+src/demo/farm/rescue/index_debug.json

@@ -38,7 +38,7 @@ CONFIG = {
 # === Authentication & Connection ===
     "USER_UID": "_InputYourID_",
     "SIGN_KEY": DEFAULT_SIGN,
-    "BASE_URL": SERVERS["SOP"],
+    "BASE_URL": SERVERS["M4A1"],
     "PROXY_PORT": 12335,
 
 # === Farm Loop Settings ===

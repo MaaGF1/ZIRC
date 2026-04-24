@@ -80,7 +80,7 @@ CONFIG = {
     "ENABLE_FILTER_PROTECTION": True,
 
     # 下面的 TEAM_ID / FAIRY_ID / GUNS 仅为占位。
-    # 实际运行时建议通过抓取并解析 Index/index 自动填充。
+    # 实际运行时通过抓取并解析 Index/index 自动填充。
     "USER_DEVICE": "1145141919810",
 
     # === Team Config ===
@@ -90,13 +90,14 @@ CONFIG = {
 
     # Target Fairy UID (Set to 0 or None if no fairy is equipped)
     "FAIRY_ID": 159357,
+    "FAIRY": None,
 
       "GUNS": [
-        {"id": 336699, "life": 444},
-        {"id": 225588, "life": 1130},
-        {"id": 114477, "life": 420},
-        {"id": 224466, "life": 300},
-        {"id": 226644, "life": 248}
+        {"id": 115599, "life": 444},
+        {"id": 335577, "life": 1130},
+        {"id": 225588, "life": 420},
+        {"id": 336699, "life": 300},
+        {"id": 114477, "life": 248}
     ]
 }
 
@@ -492,6 +493,24 @@ RUN_STATS = {
     "start_time": None,
     "end_time": None,
     "target_counts": {},
+    "current_macro": 0,
+    "current_micro": 0,
+    "current_step": 0,
+    "current_team_no": 1,
+    "macro_drop_names": [],
+    "last_micro_exp_lines": [],
+    "panel_enabled": True,
+    "recent_logs": [],
+    "drop_marquee_offset": 0,
+    "drop_marquee_last_key": "",
+}
+
+PANEL_LINES_LAST = 0
+PANEL_ACTIVE = False
+
+TEAM_PROGRESS_STATE = {
+    "current_active_team_id": None,
+    "current_active_started_at": None,
 }
 
 
@@ -666,6 +685,7 @@ def get_current_team_config():
     return {
         "team_id": CONFIG["TEAM_ID"],
         "fairy_id": CONFIG["FAIRY_ID"],
+        "fairy": CONFIG.get("FAIRY"),
         "guns": CONFIG["GUNS"],
     }
 
@@ -688,6 +708,11 @@ def advance_to_next_training_team():
 def reset_training_progress():
     TRAIN_COMPLETED_TEAM_INDICES.clear()
     CONFIG["CURRENT_TRAIN_TEAM_INDEX"] = 0
+    TEAM_PROGRESS_STATE["current_active_team_id"] = None
+    TEAM_PROGRESS_STATE["current_active_started_at"] = None
+    for team_cfg in CAPTURED_TEAM_CONFIGS:
+        team_cfg["runtime_seconds"] = 0.0
+        team_cfg["completed"] = False
 
 
 def mark_current_training_team_completed():
@@ -699,25 +724,35 @@ def get_active_training_team_indices():
     return [i for i in range(len(CAPTURED_TEAM_CONFIGS)) if i not in TRAIN_COMPLETED_TEAM_INDICES]
 
 
+
 def switch_to_next_available_training_team(reason: str = ""):
     global TEAM_SWITCH_PENDING, stop_macro_flag, stop_micro_flag
     if CONFIG.get("MODE_NAME") != "team":
         return
+
+    current_idx = CONFIG.get("CURRENT_TRAIN_TEAM_INDEX", 0)
+    current_cfg = CAPTURED_TEAM_CONFIGS[current_idx] if 0 <= current_idx < len(CAPTURED_TEAM_CONFIGS) else None
+    pause_current_team_runtime()
+
+    if current_cfg and current_idx in TRAIN_COMPLETED_TEAM_INDICES and not current_cfg.get("completed", False):
+        current_cfg["completed"] = True
+        elapsed = get_team_runtime_seconds(current_cfg)
+        panel_safe_print(colorize("[梯队完成] 第 %d 队练级完成，用时：%s" % (current_idx + 1, format_duration(elapsed)), "success"))
 
     active_indices = get_active_training_team_indices()
     if not active_indices:
         stop_macro_flag = True
         stop_micro_flag = True
         TEAM_SWITCH_PENDING = False
-        print("[*] 所有已配置练级梯队均已完成，程序将安全停止。")
+        panel_safe_print(colorize("[全部完成] 所有已配置练级梯队已完成，程序将安全停止。", "success"))
         return
 
-    current_idx = CONFIG.get("CURRENT_TRAIN_TEAM_INDEX", 0)
     if current_idx not in active_indices:
         CONFIG["CURRENT_TRAIN_TEAM_INDEX"] = active_indices[0]
         TEAM_SWITCH_PENDING = False
+        activate_team_runtime(CAPTURED_TEAM_CONFIGS[CONFIG["CURRENT_TRAIN_TEAM_INDEX"]]["team_id"])
         if reason:
-            print("[*] %s，切换到梯队：%d / %d" % (
+            panel_safe_print("[梯队切换] %s，当前梯队：%d / %d" % (
                 reason,
                 CONFIG["CURRENT_TRAIN_TEAM_INDEX"] + 1,
                 len(CAPTURED_TEAM_CONFIGS),
@@ -728,8 +763,9 @@ def switch_to_next_available_training_team(reason: str = ""):
     next_idx = active_indices[(pos + 1) % len(active_indices)]
     CONFIG["CURRENT_TRAIN_TEAM_INDEX"] = next_idx
     TEAM_SWITCH_PENDING = False
+    activate_team_runtime(CAPTURED_TEAM_CONFIGS[next_idx]["team_id"])
     if reason:
-        print("[*] %s，切换到梯队：%d / %d" % (
+        panel_safe_print("[梯队切换] %s，当前梯队：%d / %d" % (
             reason,
             next_idx + 1,
             len(CAPTURED_TEAM_CONFIGS),
@@ -745,10 +781,13 @@ def build_team_configs_from_index(payload: dict):
 
     team_map = {}
 
-    # Collect fairies by team_id, ignore unequipped team_id=0
-    # epa_export.py confirms fairy_with_user_info is usually a dict: { "fairy_uid": { ... } }
     if isinstance(fairy_data, dict):
-        fairy_iter = fairy_data.values()
+        # 有的 Index/index 里 fairy_with_user_info 是“单个妖精对象”；
+        # 也有的版本是 {uid: {...}} 这样的映射。
+        if any(k in fairy_data for k in ("team_id", "fairy_id", "fairy_lv", "fairy_exp", "id", "fairy_with_user_id")):
+            fairy_iter = [fairy_data]
+        else:
+            fairy_iter = [v for v in fairy_data.values() if isinstance(v, dict)]
     elif isinstance(fairy_data, list):
         fairy_iter = fairy_data
     else:
@@ -765,16 +804,35 @@ def build_team_configs_from_index(payload: dict):
         if team_id < 1 or team_id > 14:
             continue
         fairy_uid = fairy.get("id") or fairy.get("fairy_with_user_id")
+        fairy_type_id = fairy.get("fairy_id", 0)
         try:
             fairy_uid = int(fairy_uid)
         except Exception:
             fairy_uid = 0
+        try:
+            fairy_type_id = int(fairy_type_id)
+        except Exception:
+            fairy_type_id = 0
 
-        team_map.setdefault(team_id, {"team_id": team_id, "fairy_id": 0, "guns": []})
+        team_map.setdefault(team_id, {"team_id": team_id, "fairy_id": 0, "guns": [], "fairy": None})
         if fairy_uid > 0:
             team_map[team_id]["fairy_id"] = fairy_uid
+            team_map[team_id]["fairy"] = {
+                "id": fairy_uid,
+                "fairy_id": fairy_type_id,
+                "level": int(
+                    fairy.get("fairy_lv",
+                    fairy.get("level",
+                    fairy.get("lv", 1))) or 1
+                ),
+                "exp": int(
+                    fairy.get("fairy_exp",
+                    fairy.get("exp",
+                    fairy.get("now_exp", 0))) or 0
+                ),
+                "team_id": team_id,
+            }
 
-    # Collect guns by team_id, ignore unequipped team_id=0
     if not isinstance(gun_list, list):
         gun_list = []
 
@@ -789,22 +847,31 @@ def build_team_configs_from_index(payload: dict):
         if team_id < 1 or team_id > 14:
             continue
 
-        gun_id = gun.get("id") or gun.get("gun_id")
+        gun_uid = gun.get("id") or gun.get("gun_with_user_id")
+        gun_type_id = gun.get("gun_id", 0)
         life = gun.get("life")
         try:
-            gun_id = int(gun_id)
+            gun_uid = int(gun_uid)
+            gun_type_id = int(gun_type_id or 0)
             life = int(life)
         except Exception:
             continue
 
-        team_map.setdefault(team_id, {"team_id": team_id, "fairy_id": 0, "guns": []})
-        team_map[team_id]["guns"].append({"id": gun_id, "life": life})
+        team_map.setdefault(team_id, {"team_id": team_id, "fairy_id": 0, "guns": [], "fairy": None})
+        team_map[team_id]["guns"].append({
+            "id": gun_uid,
+            "gun_id": gun_type_id,
+            "life": life,
+            "level": int(gun.get("gun_level", gun.get("level", 1)) or 1),
+            "exp": int(gun.get("gun_exp", gun.get("exp", 0)) or 0),
+            "team_id": team_id,
+        })
 
-    # Keep only effective squads: have a fairy and at least one T-Doll
     teams = []
     for team_id in sorted(team_map.keys()):
         team_cfg = team_map[team_id]
         if team_cfg["fairy_id"] and team_cfg["guns"]:
+            init_team_progress_runtime_fields(team_cfg)
             teams.append(team_cfg)
 
     return teams
@@ -830,7 +897,10 @@ def try_update_auto_capture_from_index_payload(payload: dict) -> bool:
             CAPTURED_TEAM_CONFIGS.append({
                 "team_id": team_cfg["team_id"],
                 "fairy_id": team_cfg["fairy_id"],
+                "fairy": copy.deepcopy(team_cfg.get("fairy")),
                 "guns": copy.deepcopy(team_cfg["guns"]),
+                "runtime_seconds": 0.0,
+                "completed": False,
             })
         if CAPTURED_TEAM_CONFIGS:
             CONFIG["TEAM_ID"] = CAPTURED_TEAM_CONFIGS[0]["team_id"]
@@ -842,7 +912,10 @@ def try_update_auto_capture_from_index_payload(payload: dict) -> bool:
         CAPTURED_TEAM_CONFIGS.append({
             "team_id": first_team["team_id"],
             "fairy_id": first_team["fairy_id"],
+            "fairy": copy.deepcopy(first_team.get("fairy")),
             "guns": copy.deepcopy(first_team["guns"]),
+            "runtime_seconds": 0.0,
+            "completed": False,
         })
         CONFIG["TEAM_ID"] = first_team["team_id"]
         CONFIG["FAIRY_ID"] = first_team["fairy_id"]
@@ -1149,36 +1222,33 @@ def print_target_menu(difficulty: str, stage: str):
 
 
 def print_ready_to_run_hint():
-    print("[*] 已完成全部选择，请先进行运行前确认。")
+    print("[*] 选择已完成，请确认后开始运行。")
 
 
 
 def print_filter_protection_menu():
-    print("\n=========== 过滤保护设置 ===========")
-    print("请选择是否开启过滤保护：")
-    print("  -protecton  : 开启过滤保护（默认，别名：on / po）")
-    print("  -protectoff : 关闭过滤保护（别名：off / pf）")
-    print("------------------------------------")
-    print("提示：练级模式下关闭后可避免目标掉落长期占仓导致流程中断")
-    print("提示：输入 -protecton / -protectoff，也可输入 on / off")
-    print("====================================")
+    print("\n=========== 过滤保护 ===========")
+    print("  -protecton  : 开启（默认）")
+    print("  -protectoff : 关闭")
+    print("--------------------------------")
+    print("提示：练级模式下关闭后，可减少目标掉落占仓导致的中断。")
+    print("================================")
 
 
 def print_run_confirm_menu():
     print("\n=========== 运行前确认 ===========")
-    print("当前选择为：%s %s -> %s" % (
+    print("关卡：%s %s -> %s" % (
         CONFIG["SELECTED_DIFFICULTY"],
         CONFIG["SELECTED_STAGE"],
         CONFIG["SELECTED_TARGET_LABEL"],
     ))
-    print("编队模式：%s" % ("打捞单人模式" if CONFIG.get("SINGLE_GUN_MODE") else "练级五人模式"))
+    print("模式：%s" % ("打捞单人模式" if CONFIG.get("SINGLE_GUN_MODE") else "练级五人模式"))
     if CONFIG.get("MODE_NAME") == "team":
         schedule_label = "整队满级后切换" if CONFIG.get("TRAIN_SCHEDULE_MODE") == "full" else "均等练级轮转"
-        print("练级调度：%s" % schedule_label)
-    print("满级停机：%s" % ("是" if CONFIG.get("STOP_ON_MAX_LEVEL") else "否"))
+        print("调度：%s" % schedule_label)
+    print("满级停机：%s" % ("开启" if CONFIG.get("STOP_ON_MAX_LEVEL") else "关闭"))
     print("----------------------------------")
-    print("提示：输入 -y 确认本次打捞配置")
-    print("提示：输入 -back 或 b 返回上一级菜单重新选择")
+    print("输入 -y 确认，输入 -back 返回")
     print("==================================\n")
 
 
@@ -1226,6 +1296,16 @@ def reset_run_stats():
     RUN_STATS["end_time"] = None
     RUN_STATS["target_counts"] = {}
     RUN_STATS["target_type"] = "gun"
+    RUN_STATS["current_macro"] = 0
+    RUN_STATS["current_micro"] = 0
+    RUN_STATS["current_step"] = 0
+    RUN_STATS["current_team_no"] = 1
+    RUN_STATS["macro_drop_names"] = []
+    RUN_STATS["last_micro_exp_lines"] = []
+    RUN_STATS["panel_enabled"] = True
+    RUN_STATS["recent_logs"] = []
+    RUN_STATS["drop_marquee_offset"] = 0
+    RUN_STATS["drop_marquee_last_key"] = ""
 
 
 
@@ -1267,6 +1347,261 @@ def record_target_drop(item_id, drop_type="gun"):
             item["count"] += 1
 
 
+
+
+def get_terminal_width(default=120):
+    try:
+        import shutil
+        return max(60, shutil.get_terminal_size(fallback=(default, 30)).columns)
+    except Exception:
+        return default
+
+
+def strip_ansi(text):
+    import re
+    return re.sub(r"\x1b\[[0-9;]*m", "", str(text))
+
+
+def trim_ansi_line(text, max_width):
+    s = str(text)
+    if len(strip_ansi(s)) <= max_width:
+        return s
+    plain = strip_ansi(s)
+    keep = max(10, max_width - 3)
+    return plain[:keep] + "..."
+
+
+def build_drop_marquee_segment(items, visible_width):
+    if not items:
+        return "无"
+
+    parts = [format_drop_name_for_display(x) for x in items]
+    plain_parts = [strip_ansi(x) for x in parts]
+    joined_plain = "   ".join(plain_parts)
+    if len(joined_plain) <= visible_width:
+        return "   ".join(parts)
+
+    key = "|".join(plain_parts)
+    if RUN_STATS.get("drop_marquee_last_key") != key:
+        RUN_STATS["drop_marquee_last_key"] = key
+        RUN_STATS["drop_marquee_offset"] = 0
+
+    count = len(parts)
+    offset = RUN_STATS.get("drop_marquee_offset", 0) % max(1, count)
+    RUN_STATS["drop_marquee_offset"] = (offset + 1) % max(1, count)
+
+    ordered = parts[offset:] + parts[:offset]
+    rendered = []
+    used = 0
+    for idx, part in enumerate(ordered):
+        plain = strip_ansi(part)
+        sep = "   " if idx > 0 else ""
+        extra = len(sep) + len(plain)
+        if rendered and used + extra > visible_width:
+            break
+        if not rendered and len(plain) > visible_width:
+            return trim_ansi_line(part, visible_width)
+        if sep:
+            rendered.append(sep)
+            used += len(sep)
+        rendered.append(part)
+        used += len(plain)
+
+    if not rendered:
+        return trim_ansi_line(ordered[0], visible_width)
+    return "".join(rendered)
+
+
+
+GUN_EXP_1_TO_100 = {
+    1:100,2:200,3:300,4:400,5:500,6:600,7:700,8:800,9:900,10:1000,
+    11:1100,12:1200,13:1300,14:1400,15:1500,16:1600,17:1700,18:1800,19:1900,20:2000,
+    21:2100,22:2200,23:2300,24:2400,25:2500,26:2600,27:2800,28:3100,29:3400,30:4200,
+    31:4600,32:5000,33:5400,34:5800,35:6300,36:6700,37:7200,38:7700,39:8200,40:8800,
+    41:9300,42:9900,43:10500,44:11100,45:11800,46:12500,47:13100,48:13900,49:14600,50:15400,
+    51:16100,52:16900,53:17800,54:18600,55:19500,56:20400,57:21300,58:22300,59:23300,60:24300,
+    61:25300,62:26300,63:27400,64:28500,65:29600,66:30800,67:32000,68:33200,69:34400,70:45100,
+    71:46800,72:48600,73:50400,74:52200,75:54000,76:55900,77:57900,78:59800,79:61800,80:63900,
+    81:66000,82:68100,83:70300,84:72600,85:74800,86:77100,87:79500,88:81900,89:84300,90:112600,
+    91:116100,92:119500,93:123100,94:126700,95:130400,96:134100,97:137900,98:141800,99:145700,
+}
+GUN_EXP_100_TO_120 = {
+    100:100000,101:120000,102:140000,103:160000,104:180000,
+    105:200000,106:220000,107:240000,108:280000,109:360000,
+    110:480000,111:640000,112:900000,113:1200000,114:1600000,
+    115:2200000,116:3000000,117:4000000,118:5000000,119:6000000,
+}
+FAIRY_EXP_1_TO_100 = {
+    1:300,2:600,3:900,4:1200,5:1500,6:1800,7:2100,8:2400,9:2700,10:3000,
+    11:3300,12:3600,13:3900,14:4200,15:4500,16:4800,17:5100,18:5500,19:6000,20:6500,
+    21:7100,22:8000,23:9000,24:10000,25:11000,26:12200,27:13400,28:14700,29:16000,30:17500,
+    31:18900,32:20500,33:22200,34:23900,35:25700,36:27600,37:29500,38:31600,39:33700,40:35900,
+    41:38200,42:40500,43:43000,44:45500,45:48200,46:50900,47:53700,48:56600,49:59600,50:62700,
+    51:65900,52:69200,53:72600,54:76000,55:79600,56:83300,57:87000,58:90900,59:94900,60:99000,
+    61:103100,62:107400,63:111800,64:116300,65:120900,66:125600,67:130400,68:135300,69:140400,70:145500,
+    71:150800,72:156100,73:161600,74:167200,75:172900,76:178700,77:184700,78:190700,79:196900,80:203200,
+    81:209600,82:216100,83:222800,84:229600,85:236500,86:243500,87:250600,88:257900,89:265300,90:272800,
+    91:280400,92:288200,93:296100,94:304100,95:312300,96:320600,97:329000,98:337500,99:357000,
+}
+
+def sum_exp_range(table, start_level, end_level_exclusive):
+    total = 0
+    for lv in range(start_level, end_level_exclusive):
+        total += int(table.get(lv, 0))
+    return total
+
+def gun_total_exp_for_level(level, intra_exp=0):
+    try:
+        level = int(level)
+    except Exception:
+        level = 1
+    try:
+        intra_exp = int(intra_exp)
+    except Exception:
+        intra_exp = 0
+    total = 0
+    upper = min(level, 100)
+    total += sum_exp_range(GUN_EXP_1_TO_100, 1, upper)
+    if level > 100:
+        total += sum_exp_range(GUN_EXP_100_TO_120, 100, min(level, 120))
+    return total + max(0, intra_exp)
+
+def fairy_total_exp_for_level(level, intra_exp=0):
+    try:
+        level = int(level)
+    except Exception:
+        level = 1
+    try:
+        intra_exp = int(intra_exp)
+    except Exception:
+        intra_exp = 0
+    total = sum_exp_range(FAIRY_EXP_1_TO_100, 1, min(level, 100))
+    return total + max(0, intra_exp)
+
+def infer_gun_target_level(gun):
+    # Best-effort: if current level already passed a mind-update cap, preserve that cap family.
+    level = int(gun.get("level", gun.get("gun_level", 1)) or 1)
+    explicit = gun.get("target_level") or gun.get("max_level")
+    if explicit:
+        try:
+            explicit = int(explicit)
+            if explicit in (100,110,115,120):
+                return explicit
+        except Exception:
+            pass
+    if level > 115:
+        return 120
+    if level > 110:
+        return 115
+    if level > 100:
+        return 110
+    return 100
+
+def infer_fairy_target_level(fairy):
+    return 100
+
+def init_team_progress_runtime_fields(team_cfg):
+    for gun in team_cfg.get("guns", []):
+        level = int(gun.get("level", gun.get("gun_level", 1)) or 1)
+        exp = int(gun.get("exp", gun.get("gun_exp", 0)) or 0)
+        target_level = infer_gun_target_level(gun)
+        gun["level"] = level
+        gun["exp"] = exp
+        gun["target_level"] = target_level
+        gun["base_total_exp"] = gun_total_exp_for_level(level, exp)
+        gun["runtime_gained_exp"] = int(gun.get("runtime_gained_exp", 0) or 0)
+        gun["target_total_exp"] = gun_total_exp_for_level(target_level, 0)
+    fairy = team_cfg.get("fairy")
+    if isinstance(fairy, dict):
+        level = int(fairy.get("level", fairy.get("fairy_lv", 1)) or 1)
+        exp = int(fairy.get("exp", fairy.get("fairy_exp", 0)) or 0)
+        fairy["level"] = level
+        fairy["exp"] = exp
+        fairy["target_level"] = infer_fairy_target_level(fairy)
+        fairy["base_total_exp"] = fairy_total_exp_for_level(level, exp)
+        fairy["runtime_gained_exp"] = int(fairy.get("runtime_gained_exp", 0) or 0)
+        fairy["target_total_exp"] = fairy_total_exp_for_level(fairy["target_level"], 0)
+    team_cfg.setdefault("runtime_seconds", 0.0)
+    team_cfg.setdefault("completed", False)
+
+def initialize_all_team_progress():
+    for team_cfg in CAPTURED_TEAM_CONFIGS:
+        init_team_progress_runtime_fields(team_cfg)
+    if not CAPTURED_TEAM_CONFIGS:
+        init_team_progress_runtime_fields({"guns": CONFIG.get("GUNS", []), "fairy": CONFIG.get("FAIRY")})
+
+def pause_current_team_runtime():
+    team_id = TEAM_PROGRESS_STATE.get("current_active_team_id")
+    started_at = TEAM_PROGRESS_STATE.get("current_active_started_at")
+    if not team_id or not started_at:
+        return
+    cfg = get_team_config_by_team_id(team_id)
+    if cfg is not None:
+        cfg["runtime_seconds"] = float(cfg.get("runtime_seconds", 0.0)) + max(0.0, time.time() - started_at)
+    TEAM_PROGRESS_STATE["current_active_started_at"] = None
+    TEAM_PROGRESS_STATE["current_active_team_id"] = None
+
+def activate_team_runtime(team_id):
+    pause_current_team_runtime()
+    TEAM_PROGRESS_STATE["current_active_team_id"] = team_id
+    TEAM_PROGRESS_STATE["current_active_started_at"] = time.time()
+
+def get_team_config_by_team_id(team_id):
+    for team_cfg in CAPTURED_TEAM_CONFIGS:
+        if int(team_cfg.get("team_id", 0)) == int(team_id):
+            return team_cfg
+    if int(CONFIG.get("TEAM_ID", 0) or 0) == int(team_id):
+        return {"team_id": CONFIG.get("TEAM_ID"), "guns": CONFIG.get("GUNS", []), "fairy": CONFIG.get("FAIRY")}
+    return None
+
+def get_team_runtime_seconds(team_cfg):
+    total = float(team_cfg.get("runtime_seconds", 0.0))
+    if TEAM_PROGRESS_STATE.get("current_active_team_id") == int(team_cfg.get("team_id", 0) or 0):
+        started = TEAM_PROGRESS_STATE.get("current_active_started_at")
+        if started:
+            total += max(0.0, time.time() - started)
+    return total
+
+def get_team_member_progress(team_cfg):
+    guns = team_cfg.get("guns", [])
+    current_total = sum(min(int(g.get("target_total_exp",0)), int(g.get("base_total_exp",0)) + int(g.get("runtime_gained_exp",0))) for g in guns)
+    base_total = sum(int(g.get("base_total_exp",0)) for g in guns)
+    target_total = sum(int(g.get("target_total_exp",0)) for g in guns)
+    gained_total = max(0, current_total - base_total)
+    percent = (current_total / target_total * 100.0) if target_total > 0 else 0.0
+    return current_total, target_total, gained_total, percent
+
+def get_team_fairy_progress(team_cfg):
+    fairy = team_cfg.get("fairy")
+    if not isinstance(fairy, dict):
+        return 0, 0, 0.0
+    current_total = min(int(fairy.get("target_total_exp",0)), int(fairy.get("base_total_exp",0)) + int(fairy.get("runtime_gained_exp",0)))
+    target_total = int(fairy.get("target_total_exp",0))
+    percent = (current_total / target_total * 100.0) if target_total > 0 else 0.0
+    return current_total, target_total, percent
+
+def estimate_team_eta_seconds(team_cfg):
+    current_total, target_total, gained_total, _ = get_team_member_progress(team_cfg)
+    runtime_seconds = get_team_runtime_seconds(team_cfg)
+    remaining = max(0, target_total - current_total)
+    if gained_total <= 0 or runtime_seconds <= 1:
+        return None
+    exp_per_sec = gained_total / runtime_seconds
+    if exp_per_sec <= 0:
+        return None
+    return remaining / exp_per_sec
+
+def format_percent(value):
+    return "%.2f%%" % float(value)
+
+def format_clock_time(ts):
+    if ts is None:
+        return "-"
+    try:
+        return time.strftime("%H:%M:%S", time.localtime(ts))
+    except Exception:
+        return "-"
+
 def format_duration(seconds):
     seconds = int(max(0, seconds))
     h = seconds // 3600
@@ -1278,6 +1613,217 @@ def format_duration(seconds):
         return f"{m}分{s}秒"
     return f"{s}秒"
 
+def enable_console_ansi():
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.GetStdHandle(-11)
+        mode = ctypes.c_uint32()
+        if kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+            kernel32.SetConsoleMode(handle, mode.value | 0x0004)
+    except Exception:
+        pass
+
+
+
+ANSI = {
+    "reset": "\033[0m",
+    "panel_border": "\033[96m",
+    "panel_label": "\033[97m",
+    "target": "\033[93m",
+    "success": "\033[92m",
+    "warn": "\033[91m",
+    "dim": "\033[90m",
+}
+
+GUN_ID_NAME_CACHE = None
+
+def colorize(text, color_key=None):
+    s = str(text)
+    if not color_key or color_key not in ANSI:
+        return s
+    return ANSI[color_key] + s + ANSI["reset"]
+
+
+def get_gun_id_name_map():
+    global GUN_ID_NAME_CACHE
+    if GUN_ID_NAME_CACHE is not None:
+        return GUN_ID_NAME_CACHE
+
+    mapping = {}
+    catalog = load_gun_catalog()
+    if not catalog:
+        GUN_ID_NAME_CACHE = mapping
+        return mapping
+
+    for gun in catalog:
+        try:
+            gid = int(gun.get("id"))
+        except Exception:
+            continue
+        name = gun.get("en_name") or gun.get("code") or gun.get("name") or str(gid)
+        if isinstance(name, str) and name.startswith("gun-"):
+            name = gun.get("code") or gun.get("en_name") or name
+        mapping[gid] = str(name)
+    GUN_ID_NAME_CACHE = mapping
+    return mapping
+
+
+def resolve_gun_name_by_id(gun_id):
+    try:
+        gun_id = int(gun_id)
+    except Exception:
+        return str(gun_id)
+    return get_gun_id_name_map().get(gun_id, str(gun_id))
+
+
+def get_target_name_set():
+    return set(split_target_label(CONFIG.get("SELECTED_TARGET_LABEL", "")))
+
+
+def is_target_gun_name(name: str) -> bool:
+    if not name:
+        return False
+    n = normalize_gun_name(name)
+    for target in get_target_name_set():
+        if n == normalize_gun_name(target):
+            return True
+        alias = GUN_NAME_ALIAS.get(target)
+        if alias and n == normalize_gun_name(alias):
+            return True
+        if normalize_gun_name(target) in n or n in normalize_gun_name(target):
+            return True
+    return False
+
+
+def format_drop_name_for_display(name: str):
+    if is_target_gun_name(name):
+        return colorize(name, "target")
+    return str(name)
+
+def _safe_panel_text(value):
+    try:
+        return str(value)
+    except Exception:
+        return ""
+
+
+
+def build_runtime_panel_lines():
+    if not RUN_STATS.get("panel_enabled", True):
+        return []
+
+    term_width = get_terminal_width(120)
+    inner_width = max(40, term_width - 2)
+
+    mode_label = "练级五人模式" if CONFIG.get("MODE_NAME") == "team" else "打捞单人模式"
+    stage_label = "%s %s -> %s" % (
+        CONFIG.get("SELECTED_DIFFICULTY") or "-",
+        CONFIG.get("SELECTED_STAGE") or "-",
+        CONFIG.get("SELECTED_TARGET_LABEL") or "-",
+    )
+    elapsed = 0
+    if RUN_STATS.get("start_time") is not None:
+        elapsed = time.time() - RUN_STATS["start_time"]
+
+    drop_text = "无"
+    if RUN_STATS.get("macro_drop_names"):
+        drop_text = build_drop_marquee_segment(RUN_STATS["macro_drop_names"], max(20, inner_width - 12))
+
+    exp_text = "无"
+    if RUN_STATS.get("last_micro_exp_lines"):
+        exp_text = " | ".join(RUN_STATS["last_micro_exp_lines"])
+
+    current_cfg = get_current_team_config()
+    member_cur, member_target, member_gained, member_pct = get_team_member_progress(current_cfg)
+    fairy_cur, fairy_target, fairy_pct = get_team_fairy_progress(current_cfg)
+    team_runtime = get_team_runtime_seconds(current_cfg)
+    eta_seconds = estimate_team_eta_seconds(current_cfg)
+    eta_text = "-"
+    eta_clock = "-"
+    if eta_seconds is not None:
+        eta_text = format_duration(eta_seconds)
+        eta_clock = format_clock_time(time.time() + eta_seconds)
+
+    if CONFIG.get("MODE_NAME") == "team":
+        team_label = "%d / %d" % (CONFIG.get("CURRENT_TRAIN_TEAM_INDEX", 0) + 1, max(1, len(CAPTURED_TEAM_CONFIGS)))
+        macro_text = "当前 MACRO：%s / 直到全部梯队满级" % RUN_STATS.get("current_macro", 0)
+    else:
+        team_label = "1"
+        macro_text = "当前 MACRO：%s / 直到手动停止或触发停止条件" % RUN_STATS.get("current_macro", 0)
+
+    raw_lines = [
+        colorize("============= EPA 运行状态 =============", "panel_border"),
+        "%s%s" % (colorize("模式：", "panel_label"), mode_label),
+        "%s%s" % (colorize("关卡：", "panel_label"), stage_label),
+        "%s%s" % (colorize("当前梯队：", "panel_label"), team_label),
+        colorize(macro_text, "panel_label"),
+        "%s%s / %s | %s%s / 5" % (
+            colorize("当前 MICRO：", "panel_label"),
+            RUN_STATS.get("current_micro", 0),
+            CONFIG.get("MISSIONS_PER_RETIRE", 8),
+            colorize("当前 Step：", "panel_label"),
+            RUN_STATS.get("current_step", 0),
+        ),
+        "%s%s" % (colorize("本轮掉落：", "panel_label"), drop_text),
+        "%s%s" % (colorize("最近一轮经验：", "panel_label"), exp_text),
+        "%s%s (%s / %s)" % (colorize("人形进度：", "panel_label"), format_percent(member_pct), f"{member_cur:,}", f"{member_target:,}"),
+        "%s%s (%s / %s)" % (colorize("妖精进度：", "panel_label"), format_percent(fairy_pct), f"{fairy_cur:,}", f"{fairy_target:,}"),
+        "%s%s" % (colorize("本梯队已运行：", "panel_label"), format_duration(team_runtime)),
+        "%s%s 后（%s）" % (colorize("预计完成：", "panel_label"), eta_text, eta_clock),
+        "%s%s" % (colorize("总运行时间：", "panel_label"), format_duration(elapsed)),
+        colorize("停止：-q 当前 Macro 后停 / -Q 当前 Micro 后停", "dim"),
+        colorize("=" * min(inner_width, 37), "panel_border"),
+    ]
+    lines = [trim_ansi_line(line, inner_width) for line in raw_lines]
+    return lines
+
+
+def clear_runtime_panel():
+    try:
+        sys.stdout.write("\033[2J\033[H")
+        sys.stdout.flush()
+    except Exception:
+        try:
+            os.system("cls" if os.name == "nt" else "clear")
+        except Exception:
+            pass
+
+
+def refresh_runtime_panel():
+    lines = build_runtime_panel_lines()
+    if not lines:
+        return
+    clear_runtime_panel()
+    recent_logs = RUN_STATS.get("recent_logs", [])[-22:]
+    if recent_logs:
+        for line in recent_logs:
+            print(line)
+        print()
+    for line in lines:
+        print(line)
+
+
+def panel_safe_print(*args, **kwargs):
+    if not RUN_STATS.get("panel_enabled", True):
+        print(*args, **kwargs)
+        return
+
+    sep = kwargs.get("sep", " ")
+    end = kwargs.get("end", "\n")
+    msg = sep.join(str(a) for a in args)
+    if end != "\n":
+        msg = msg + end
+    lines = msg.splitlines() or [msg]
+    buf = RUN_STATS.setdefault("recent_logs", [])
+    buf.extend(lines)
+    max_logs = 10
+    if len(buf) > max_logs:
+        RUN_STATS["recent_logs"] = buf[-max_logs:]
+    refresh_runtime_panel()
+
 
 def print_run_summary():
     if RUN_STATS["start_time"] is None or RUN_STATS["end_time"] is None:
@@ -1285,27 +1831,25 @@ def print_run_summary():
 
     duration = RUN_STATS["end_time"] - RUN_STATS["start_time"]
     print("\n=========== 本次运行统计 ===========")
-    print("运行时长：%s" % format_duration(duration))
+    print("运行总时长：%s" % format_duration(duration))
     title = "目标装备掉落" if RUN_STATS.get("target_type") == "equip" else "目标人形掉落"
     if RUN_STATS["target_counts"]:
         print("%s：" % title)
         for name, item in RUN_STATS["target_counts"].items():
-            print("  %s：%d" % (name, item["count"]))
+            print("  %-12s %d" % (name + "：", item["count"]))
     else:
-        print("%s：当前未配置" % title)
-    print("====================================\n")
+        print("%s：未配置" % title)
+    print("================================\n")
 
 
 def print_gun_mode_menu():
-    print("\n=========== 编队模式选择 ===========")
-    print("请选择运行模式：")
-    print("  -team   : 练级模式，使用五人编队；满级后轮转下一个梯队（默认）")
-    print("  -single : 打捞模式，使用单人编队（仅使用梯队1）")
-    print("------------------------------------")
-    print("提示：请选择好编队模式后，再按照要求进入游戏并配置好编队")
-    print("提示：直接按回车将使用默认配置（-team）")
-    print("提示：只能输入 -team 或 -single")
-    print("====================================\n")
+    print("\n=========== 编队模式 ===========")
+    print("  -team   : 练级五人模式（默认）")
+    print("  -single : 打捞单人模式（仅使用梯队1）")
+    print("--------------------------------")
+    print("提示：先在游戏内配好编队，再开始抓取。")
+    print("提示：回车默认选择 -team")
+    print("================================\n")
 
 
 def reset_selection_menu():
@@ -1333,7 +1877,7 @@ def validate_captured_team_for_mode() -> bool:
             print("[!] 请前往游戏编队界面，将梯队1调整为仅 1 名人形后，再重新输入 -a 抓取。")
             print("[*] 提示：程序会保留你当前选择的 single 模式。调整好梯队1后，可直接再次输入 -a。")
             return False
-        print("[*] single 模式校验通过：当前仅使用梯队1，且人数为 1。")
+        print("[*] single 模式校验通过。")
     return True
 
 
@@ -1349,7 +1893,7 @@ def handle_selection_input(cmd: str) -> bool:
             cmd = "-protecton"
         if cmd == "-back":
             MENU_STATE["awaiting_filter_protection"] = False
-            print("[*] 已返回上一层。")
+            print("[*] 已返回上一级。")
             stage_data = get_stage_data(CONFIG.get("SELECTED_DIFFICULTY"), CONFIG.get("SELECTED_STAGE"))
             if stage_data:
                 print_target_menu(CONFIG["SELECTED_DIFFICULTY"], CONFIG["SELECTED_STAGE"])
@@ -1381,7 +1925,7 @@ def handle_selection_input(cmd: str) -> bool:
                 print("[*] 已返回过滤保护设置菜单。")
                 print_filter_protection_menu()
             else:
-                print("[*] 已返回上一层。")
+                print("[*] 已返回上一级。")
                 stage_data = get_stage_data(CONFIG.get("SELECTED_DIFFICULTY"), CONFIG.get("SELECTED_STAGE"))
                 if stage_data:
                     print_target_menu(CONFIG["SELECTED_DIFFICULTY"], CONFIG["SELECTED_STAGE"])
@@ -1406,19 +1950,19 @@ def handle_selection_input(cmd: str) -> bool:
         if cmd == "-back":
             MENU_STATE["awaiting_run_confirm"] = False
             MENU_STATE["awaiting_stop_on_max"] = True
-            print("[*] 已返回满级停机设置菜单。")
+            print("[*] 已返回满级停机设置。")
             print_stop_on_max_menu()
             return True
         if cmd == "-y":
             MENU_STATE["awaiting_run_confirm"] = False
-            print("[+] 已确认本次打捞配置。")
-            print("[+] 已完成关卡参数装载。")
+            print("[+] 配置已确认。")
+            
             print("[+] 当前模式：%s" % ("打捞单人模式" if CONFIG.get("SINGLE_GUN_MODE") else "练级五人模式"))
             if CONFIG.get("MODE_NAME") == "team":
                 schedule_label = "整队满级后切换" if CONFIG.get("TRAIN_SCHEDULE_MODE") == "full" else "均等练级轮转"
-                print("[+] 练级梯队总数：%d（默认从梯队一开始轮转）" % len(CAPTURED_TEAM_CONFIGS))
+                
                 print("[+] 练级调度模式：%s" % schedule_label)
-                print("[+] 过滤保护：%s" % ("开启" if CONFIG.get("ENABLE_FILTER_PROTECTION", True) else "关闭"))
+                
                 if CONFIG.get("SELECTED_DIFFICULTY") == "夜战":
                     print("[!] 提示：夜战暂时没有自动拆解功能，不建议去夜战关卡练级。")
             print("[+] 满级停机设置：%s" % ("开启" if CONFIG.get("STOP_ON_MAX_LEVEL") else "关闭"))
@@ -1427,7 +1971,7 @@ def handle_selection_input(cmd: str) -> bool:
             if CONFIG.get("SELECTED_DIFFICULTY") == "夜战":
                 print("[!] 说明：夜战关卡当前仅支持自动打捞，暂不支持自动拆解。")
                 print("[!] 当前版本夜战仅保留掉落统计与关卡流程。")
-            print("[*] 请继续输入 -r 运行程序。")
+            print("[*] 输入 -r 开始运行。")
             return True
         return False
 
@@ -1571,10 +2115,11 @@ def check_battle_drop(resp_data: dict, spot_id: int) -> list:
         for gun in bg:
             gun_id = int(gun.get("gun_id"))
             gun_uid = int(gun.get("gun_with_user_id"))
-            print("    [+] 战斗掉落（节点 %d）！Gun ID: %s | UID: %d" %
-                  (spot_id, gun_id, gun_uid))
+            # 详细掉落已汇总到状态面板，本处不再逐条打印。
+            refresh_runtime_panel()
             DROPPED_UID_TO_GUN_ID[gun_uid] = gun_id
             record_target_drop(gun_id, "gun")
+            RUN_STATS["macro_drop_names"].append(resolve_gun_name_by_id(gun_id))
             collected.append(gun_uid)
     return collected
 
@@ -1586,12 +2131,88 @@ def check_battle_equip_drop(resp_data: dict, spot_id: int):
         for equip in be:
             equip_id = int(equip.get("equip_id"))
             equip_uid = int(equip.get("id"))
-            print("    [+] 战斗装备掉落（节点 %d）！Equip ID: %s | UID: %d" %
-                  (spot_id, equip_id, equip_uid))
+            refresh_runtime_panel()
             DROPPED_UID_TO_EQUIP_ID[equip_uid] = equip_id
             record_target_drop(equip_id, "equip")
             collected.append({"equip_id": equip_id, "equip_uid": equip_uid})
     return collected
+
+
+
+def extract_fairy_exp_gain_from_resp(resp_data: dict) -> int:
+    """
+    尝试从 battleFinish / startTurn 返回中提取当前妖精本次获得的经验增量。
+    这里只统计妖精本体经验，不统计 quality_exp / mod_exp。
+    """
+    current_cfg = get_current_team_config()
+    fairy = current_cfg.get("fairy")
+    if not isinstance(fairy, dict):
+        return 0
+
+    fairy_uid = str(fairy.get("id", ""))
+    fairy_type_id = str(fairy.get("fairy_id", ""))
+
+    candidates = []
+
+    def walk(node):
+        if isinstance(node, dict):
+            exp_key = None
+            for k in ("fairy_exp", "fairyExp", "fairyexp"):
+                if k in node:
+                    exp_key = k
+                    break
+
+            if exp_key is not None:
+                try:
+                    exp_val = int(node.get(exp_key) or 0)
+                except Exception:
+                    exp_val = 0
+
+                uid_match = False
+                if fairy_uid:
+                    for id_key in ("id", "fairy_with_user_id", "fairy_uid"):
+                        if str(node.get(id_key, "")) == fairy_uid:
+                            uid_match = True
+                            break
+
+                type_match = False
+                if fairy_type_id:
+                    for id_key in ("fairy_id", "type_id"):
+                        if str(node.get(id_key, "")) == fairy_type_id:
+                            type_match = True
+                            break
+
+                has_identity = any(k in node for k in ("id", "fairy_with_user_id", "fairy_uid", "fairy_id", "type_id"))
+                if exp_val > 0 and (uid_match or type_match or not has_identity):
+                    candidates.append(exp_val)
+
+            for v in node.values():
+                walk(v)
+
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    walk(resp_data)
+
+    if not candidates:
+        return 0
+
+    return max(candidates)
+
+
+def apply_fairy_exp_gain_from_resp(resp_data: dict):
+    current_cfg = get_current_team_config()
+    fairy = current_cfg.get("fairy")
+    if not isinstance(fairy, dict):
+        return 0
+
+    gained = extract_fairy_exp_gain_from_resp(resp_data)
+    if gained > 0:
+        fairy["runtime_gained_exp"] = int(fairy.get("runtime_gained_exp", 0) or 0) + gained
+        refresh_runtime_panel()
+    return gained
+
 
 
 def check_battle_exp(resp_data: dict, spot_id: int):
@@ -1603,19 +2224,28 @@ def check_battle_exp(resp_data: dict, spot_id: int):
     if gun_exp_list:
         exp_details = []
         zero_flags = []
+        current_cfg = get_current_team_config()
+        gun_map = {str(g.get("id")): g for g in current_cfg.get("guns", [])}
+
         for item in gun_exp_list:
             gun_uid = str(item.get("gun_with_user_id", "unknown"))
             exp_val = str(item.get("exp", "0"))
+            exp_int = int(exp_val) if str(exp_val).isdigit() else 0
             exp_details.append("%s: +%s" % (gun_uid[-4:], exp_val))
+
+            if gun_uid in gun_map and exp_int > 0:
+                gun_map[gun_uid]["runtime_gained_exp"] = int(gun_map[gun_uid].get("runtime_gained_exp", 0)) + exp_int
 
             is_zero = (exp_val == "0")
             zero_flags.append(is_zero)
             if is_zero:
-                print("    [!] 警告：人形 %s 已达到满级（EXP 为 0）！" % gun_uid)
+                panel_safe_print("    [!] 警告：人形 %s 已达到满级（EXP 为 0）！" % gun_uid)
                 any_zero = True
 
         all_zero = all(zero_flags) if zero_flags else False
-        print("    [+] 节点 %d EXP | %s" % (spot_id, " | ".join(exp_details)))
+        RUN_STATS["last_micro_exp_lines"] = exp_details
+        apply_fairy_exp_gain_from_resp(resp_data)
+        refresh_runtime_panel()
 
     return any_zero, all_zero
 
@@ -1628,10 +2258,10 @@ def check_win_drop(resp_data: dict) -> list:
         for gun in rg:
             gun_id = int(gun.get("gun_id"))
             gun_uid = int(gun.get("gun_with_user_id"))
-            print("    [+] 关卡结算掉落！Gun ID: %s | UID: %d" %
-                  (gun_id, gun_uid))
+            refresh_runtime_panel()
             DROPPED_UID_TO_GUN_ID[gun_uid] = gun_id
             record_target_drop(gun_id, "gun")
+            RUN_STATS["macro_drop_names"].append(resolve_gun_name_by_id(gun_id))
             collected.append(gun_uid)
     return collected
 
@@ -1644,8 +2274,7 @@ def check_win_equip_drop(resp_data: dict):
         for equip in re_list:
             equip_id = int(equip.get("equip_id"))
             equip_uid = int(equip.get("id"))
-            print("    [+] 关卡结算装备掉落！Equip ID: %s | UID: %d" %
-                  (equip_id, equip_uid))
+            refresh_runtime_panel()
             DROPPED_UID_TO_EQUIP_ID[equip_uid] = equip_id
             record_target_drop(equip_id, "equip")
             collected.append({"equip_id": equip_id, "equip_uid": equip_uid})
@@ -1711,11 +2340,11 @@ def farm_mission_epa(client: GFLClient, team_id: int, mvp_gen):
             for s in resp["spot_act_info"]:
                 current_spots_state[str(s.get("spot_id"))] = int(s.get("seed", 0))
 
-    print("[>] 正在请求组合信息……")
+    refresh_runtime_panel()
     if check_step_error(client.send_request(API_MISSION_COMBINFO, {"mission_id": mission_id}), "combInfo"):
         return None
 
-    print("[>] 正在开始关卡 %d……" % mission_id)
+    refresh_runtime_panel()
     start_payload = {
         "mission_id": mission_id,
         "spots": [{"spot_id": start_spot, "team_id": team_id}],
@@ -1730,7 +2359,9 @@ def farm_mission_epa(client: GFLClient, team_id: int, mvp_gen):
 
     curr_spot = start_spot
     for step, next_spot in enumerate(route, 1):
-        print("[>] Step %d: Moving %d -> %d..." % (step, curr_spot, next_spot))
+        RUN_STATS["current_step"] = step
+        refresh_runtime_panel()
+        refresh_runtime_panel()
         move_payload = {
             "person_type": 1, "person_id": team_id,
             "from_spot_id": curr_spot, "to_spot_id": next_spot, "move_type": 1
@@ -1744,7 +2375,7 @@ def farm_mission_epa(client: GFLClient, team_id: int, mvp_gen):
 
         seed = current_spots_state.get(str(next_spot), 0)
         current_mvp = next(mvp_gen)
-        print("[>] Battle at Node %d (Seed: %d, MVP: %d)..." % (next_spot, seed, current_mvp))
+        refresh_runtime_panel()
 
         selected_template = CONFIG.get("SELECTED_BATTLE_TEMPLATE")
 
@@ -1847,7 +2478,7 @@ def farm_mission_epa(client: GFLClient, team_id: int, mvp_gen):
         curr_spot = next_spot
         time.sleep(0.5)
 
-    print("[>] 正在结束回合并计算胜利条件……")
+    refresh_runtime_panel()
     if check_step_error(client.send_request(API_MISSION_END_TURN, {}), "endTurn"):
         return None
     time.sleep(0.2)
@@ -1862,6 +2493,7 @@ def farm_mission_epa(client: GFLClient, team_id: int, mvp_gen):
     if check_step_error(win_resp, "startTurn"):
         return None
 
+    apply_fairy_exp_gain_from_resp(win_resp)
     dropped_uids.extend(check_win_drop(win_resp))
     win_equip_drops = check_win_equip_drop(win_resp)
     dropped_equip_uids.extend([x["equip_uid"] for x in win_equip_drops])
@@ -1945,20 +2577,36 @@ def farm_worker():
     reset_run_stats()
     RUN_STATS["start_time"] = time.time()
     init_run_target_counts()
+    initialize_all_team_progress()
 
     if CONFIG.get("MODE_NAME") == "team":
         schedule_label = "整队满级后切换" if CONFIG.get("TRAIN_SCHEDULE_MODE") == "full" else "均等练级轮转"
-        print("[*] 当前为练级模式，将默认从梯队一开始轮转，共 %d 个梯队。" % len(CAPTURED_TEAM_CONFIGS))
-        print("[*] 当前练级调度：%s" % schedule_label)
+        print("[*] 练级模式已启用，共 %d 个梯队参与轮转。" % len(CAPTURED_TEAM_CONFIGS))
+        print("[*] 练级调度：%s" % schedule_label)
+        print("[*] 将持续运行到全部梯队满级或你手动停止。")
         reset_training_progress()
+        if CAPTURED_TEAM_CONFIGS:
+            activate_team_runtime(CAPTURED_TEAM_CONFIGS[0]["team_id"])
     else:
-        print("[*] 当前为打捞模式，使用单人编队。")
+        print("[*] 打捞模式已启用。")
+        print("[*] 将持续运行到你手动停止或触发其他停止条件。")
+        activate_team_runtime(get_current_team_id())
     print("=== GFL Protocol Auto-Farming Started (EPA) ===")
-    for macro in range(1, CONFIG["MACRO_LOOPS"] + 1):
+    panel_safe_print(colorize("[*] 已启用固定运行状态面板：上方为最近日志，下方为固定状态面板。", "success"))
+    macro = 1
+    while True:
         if stop_macro_flag:
             break
-        print("\n=== MACRO BATCH %d / %d ===" % (macro, CONFIG['MACRO_LOOPS']))
 
+        if CONFIG.get("MODE_NAME") == "team":
+            panel_safe_print("=== MACRO %d / 直到全部梯队满级 ===" % macro)
+        else:
+            panel_safe_print("=== MACRO %d / 直到手动停止或触发停止条件 ===" % macro)
+
+        RUN_STATS["current_macro"] = macro
+        RUN_STATS["current_team_no"] = (CONFIG.get("CURRENT_TRAIN_TEAM_INDEX", 0) + 1) if CONFIG.get("MODE_NAME") == "team" else get_current_team_id()
+        RUN_STATS["macro_drop_names"] = []
+        RUN_STATS["last_micro_exp_lines"] = []
         batch_guns = []
         batch_equips = []
         night_retire_attempted_after_failure = False
@@ -1966,7 +2614,9 @@ def farm_worker():
             if stop_micro_flag or stop_macro_flag:
                 break
 
-            print("\n[*] 开始第 %d / %d 次 Micro 轮次……" % (micro, CONFIG["MISSIONS_PER_RETIRE"]))
+            RUN_STATS["current_micro"] = micro
+            RUN_STATS["current_step"] = 0
+            refresh_runtime_panel()
             dropped = farm_mission_epa(client, get_current_team_id(), mvp_gen)
 
             if dropped is None:
@@ -1976,7 +2626,7 @@ def farm_worker():
 
                 if CONFIG.get("SELECTED_DIFFICULTY") == "夜战":
                     print("[!] 夜战当前仅支持自动打捞，不支持自动拆解。")
-                    print("[!] 若因仓库问题无法继续，请手动检查装备仓库空位后再重新运行。")
+                    print("[!] 若因仓库问题无法继续，请检查装备仓库空位后再重新运行。")
                     stop_macro_flag = True
                     stop_micro_flag = True
                     break
@@ -2002,21 +2652,41 @@ def farm_worker():
 
         if CONFIG.get("SELECTED_DIFFICULTY") == "夜战":
             if batch_equips:
-                print("[*] 夜战模式：当前仅支持自动打捞，本轮不执行装备拆解。")
+                print("[*] 夜战模式：本轮不执行装备拆解。")
         else:
             retire_guns(client, batch_guns)
+
+        drop_summary = "无"
+        if RUN_STATS.get("macro_drop_names"):
+            shown = [format_drop_name_for_display(x) for x in RUN_STATS["macro_drop_names"][:8]]
+            drop_summary = ", ".join(shown)
+            if len(RUN_STATS["macro_drop_names"]) > 8:
+                drop_summary += colorize(" ...", "dim")
+        elapsed_now = 0
+        if RUN_STATS.get("start_time") is not None:
+            elapsed_now = time.time() - RUN_STATS["start_time"]
+        panel_safe_print("[MACRO %d] 梯队 %s | 掉落：%s | 用时：%s" % (
+            macro,
+            RUN_STATS.get("current_team_no", 1),
+            drop_summary,
+            format_duration(elapsed_now),
+        ))
+
         time.sleep(2)
         if stop_micro_flag:
             break
 
+        macro += 1
+
     RUN_STATS["end_time"] = time.time()
-    print("\n[*] 打捞运行结束。")
+    panel_safe_print(colorize("\n[*] 本次运行结束。", "success"))
     print_run_summary()
     worker_mode, current_worker_thread = None, None
     reopen_stage_selection_menu()
 
 
 if __name__ == '__main__':
+    enable_console_ansi()
     print_main_menu()
     while True:
         try:
@@ -2042,7 +2712,7 @@ if __name__ == '__main__':
                 if not CONFIG.get("INDEX_FETCH_READY", False) and not proxy_instance:
                     if CONFIG.get("MODE_SELECTED_EARLY") and CONFIG.get("MODE_NAME") in ("team", "single"):
                         mode_cmd = "-team" if CONFIG.get("MODE_NAME") == "team" else "-single"
-                        print("[*] 已保留上次选择的模式：%s" % ("练级模式" if mode_cmd == "-team" else "打捞模式"))
+                        print("[*] 已保留上次选择：%s" % ("练级模式" if mode_cmd == "-team" else "打捞模式"))
                     else:
                         print_gun_mode_menu()
                         mode_cmd = normalize_menu_input(input("GFL-EPA(模式)> ").strip())
@@ -2067,15 +2737,13 @@ if __name__ == '__main__':
                             continue
                         if schedule_cmd == "-equal":
                             CONFIG["TRAIN_SCHEDULE_MODE"] = "equal"
-                            print("[*] 已选择均等练级：可以理解为每队轮流练一遍，再继续下一轮。")
+                            print("[*] 已选择均等练级。")
                         else:
                             CONFIG["TRAIN_SCHEDULE_MODE"] = "full"
-                            print("[*] 已选择整队练满：可以理解为先练满这一队，再换下一队。")
+                            print("[*] 已选择整队练满。")
 
-                        print("[*] 梯队数量说明：输入的数量表示从第一梯队开始，往后总共要练多少个梯队。")
-                        print("[*] 例如输入 3，则表示练级梯队为：第1队、第2队、第3队。")
-                        print("[*] 提示：直接按回车将使用默认配置（1）。")
-                        print("[*] 提示：输入 -back 或 b 可返回练级调度选择。")
+                        print("[*] 梯队数量：表示从第1队开始，总共练多少个梯队。")
+                        print("[*] 例如输入 3，则练第1、2、3队。回车默认 1。")
                         count_str = input("GFL-EPA(梯队数量, 默认1)> ").strip()
                         if count_str in ("-back", "b"):
                             print("[*] 已返回练级调度选择。")
@@ -2090,7 +2758,7 @@ if __name__ == '__main__':
                         CONFIG["AUTO_CAPTURE_EXPECTED_COUNT"] = team_count
                         reset_captured_team_configs()
                         reset_training_progress()
-                        print("[*] 已选择练级模式，将默认从梯队一开始轮转，共需解析 %d 个梯队。" % team_count)
+                        print("[*] 已选择练级模式，共需解析 %d 个梯队。" % team_count)
                     else:
                         CONFIG["MODE_NAME"] = "single"
                         CONFIG["SINGLE_GUN_MODE"] = True
@@ -2098,8 +2766,8 @@ if __name__ == '__main__':
                         CONFIG["TRAIN_TEAM_COUNT"] = 1
                         CONFIG["AUTO_CAPTURE_EXPECTED_COUNT"] = 1
                         reset_captured_team_configs()
-                        print("[*] 已选择打捞模式，将解析单人梯队配置。")
-                        print("[*] 提示：single 模式仅使用梯队1，请在游戏内将梯队1配置为单人编队后再抓取。")
+                        print("[*] 已选择打捞模式。")
+                        print("[*] 提示：single 模式仅使用梯队1，请先将梯队1配置为单人编队。")
 
                     reset_auto_capture_state()
                     CONFIG["AUTO_MONITOR_MODE"] = True

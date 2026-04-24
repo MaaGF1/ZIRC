@@ -3,15 +3,23 @@ import select
 import re
 import json
 import threading
-import winreg
-import ctypes
 import urllib.parse
 from .crypto import gf_authcode
+
+# Cross-platform
+try:
+    import winreg
+    import ctypes
+    HAS_WINREG = True
+except ImportError:
+    HAS_WINREG = False
 
 INTERNET_OPTION_REFRESH = 37
 INTERNET_OPTION_SETTINGS_CHANGED = 39
 
 def refresh_windows_proxy():
+    if not HAS_WINREG:
+        return
     try:
         internet_set_option = ctypes.windll.wininet.InternetSetOptionW
         internet_set_option(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
@@ -20,6 +28,8 @@ def refresh_windows_proxy():
         pass
 
 def set_windows_proxy(enable: bool, proxy_addr="127.0.0.1:8080"):
+    if not HAS_WINREG:
+        return False
     try:
         reg_path = r"Software\Microsoft\Windows\CurrentVersion\Internet Settings"
         hKey = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, winreg.KEY_WRITE)

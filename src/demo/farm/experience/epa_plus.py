@@ -38,6 +38,7 @@ CONFIG = {
 # === Authentication & Connection ===
     "USER_UID": "_InputYourID_",
     "SIGN_KEY": DEFAULT_SIGN,
+    "SERVER_NAME": "SOP",
     "BASE_URL": SERVERS["SOP"],
     "PROXY_PORT": 12335,
 
@@ -81,7 +82,7 @@ CONFIG = {
     "STOP_AFTER_RETIRE_NO_SPACE_TIMES": 2,
     "ENABLE_FILTER_PROTECTION": True,
 
-    # 实际运行时通过抓取并解析 Index/index 自动填充。
+    # 实际运行时无需使用此config，仅作占位作用，如果需要获取请自行运行monitor.py来获取并输入。
     "USER_DEVICE": "1145141919810",
 
     # === Team Config ===
@@ -282,7 +283,10 @@ EMERGENCY_STAGE_DATA = {
     },
     "A-6": {
         "MISSION_ID": 150,
-        "START_SPOTS": {"-1": 97221, "-2": 97221, "-3": 97221, "-4": 97239, "-5": 97239, "-6": 97239},
+        # 紧急 A-6 的路线节点为 97199~97228。
+        # 按前几个紧急关卡的编号规律，部署点应为路线后方的 97231 / 97229，
+        # 不是路线内部节点 97221，也不是夜战/其他区域节点 97239。
+        "START_SPOTS": {"-1": 97231, "-2": 97231, "-3": 97231, "-4": 97229, "-5": 97229, "-6": 97229},
         "OPTIONS": {
             "-1": {"label": "CMR-30&英萨斯", "route": [97199, 97200, 97201, 97202, 97203]},
             "-2": {"label": "VP9&Zas M76", "route": [97204, 97205, 97206, 97207, 97208]},
@@ -545,13 +549,17 @@ GUN_NAME_ALIAS = {
     "卢萨": "Lusa",
     "英萨斯": "INSAS",
     "刘氏步枪": "Liu",
-    "德林加": "De Lisle",
+    "德林加": "Derringer",
     "菲德洛夫": "Fedorov",
     "沙维奇99型": "Savage99",
     "芮诺": "Reno",
     "斯特林": "Sterling",
     "韦伯利": "Webley",
-    "CPS-12": "DP12",
+    # DP-12 为 gun_id 282；CPS-12 也叫 Six12，gun_id 278。
+    "DP-12": "DP12",
+    "DP12": "DP12",
+    "CPS-12": "Six12",
+    "Six12": "Six12",
     "CF05": "CF-05",
     "FN-57": "Five-seveN",
     "AK 5": "Ak 5",
@@ -563,6 +571,9 @@ GUN_NAME_ALIAS = {
     "TF-Q": "TF Q",
     "6P62": "6P62",
     "Ak 5": "AK 5",
+    "STG-940": "StG-940",
+    "StG940": "StG-940",
+    "stg940": "StG-940",
 }
 
 GUN_ID_OVERRIDE = {
@@ -571,6 +582,20 @@ GUN_ID_OVERRIDE = {
     "AK 5": 187,
     "雷电": 202,
     "SCW": 169,
+    # DP-12 的 gun_id = 282。
+    "DP-12": 282,
+    "DP12": 282,
+    # CPS-12 也叫 Six12，gun_id = 278。
+    "CPS-12": 278,
+    "Six12": 278,
+    # 德林加在资料表中为 Derringer，gun_id = 332。
+    "德林加": 332,
+    "Derringer": 332,
+    # StG-940 在资料表中 en_name=StG-940, code=stg940, gun_id=314。
+    "StG-940": 314,
+    "STG-940": 314,
+    "StG940": 314,
+    "stg940": 314,
     # 03式在资料表中为 Type03，gun_id = 239。
     "03式": 239,
     "Type03": 239,
@@ -1571,6 +1596,54 @@ def fairy_total_exp_for_level(level, intra_exp=0):
     total = sum_exp_range(FAIRY_EXP_1_TO_100, 1, min(level, 100))
     return total + max(0, intra_exp)
 
+def fairy_next_level_required_exp(level):
+    try:
+        level = int(level)
+    except Exception:
+        return 0
+    if 1 <= level < 100:
+        return int(FAIRY_EXP_1_TO_100.get(level, 0) or 0)
+    return 0
+
+
+def fairy_base_total_exp_from_index(level, raw_exp):
+    """
+    Index/index 里的 fairy_exp 可能是“累计总经验”，也可能是“当前等级内经验”。
+    妖精等级已知时，累计总经验必须落在：
+        当前等级累计下限 <= fairy_exp < 下一等级累计下限
+    如果 raw_exp 超出该等级可能范围，不直接拿来当累计值，避免 92 级妖精被算成 100%。
+    """
+    try:
+        level = int(level)
+    except Exception:
+        level = 1
+    try:
+        raw_exp = int(raw_exp)
+    except Exception:
+        raw_exp = 0
+
+    total_1_to_100 = sum_exp_range(FAIRY_EXP_1_TO_100, 1, 100)
+    level = max(1, min(level, 100))
+    level_floor = sum_exp_range(FAIRY_EXP_1_TO_100, 1, level)
+
+    if level >= 100:
+        return total_1_to_100
+
+    next_need = fairy_next_level_required_exp(level)
+    next_floor = min(total_1_to_100, level_floor + next_need)
+
+    # 形态一：fairy_exp 是累计总经验。
+    if level_floor <= raw_exp < next_floor:
+        return raw_exp
+
+    # 形态二：fairy_exp 是当前等级内经验。
+    if 0 <= raw_exp <= next_need:
+        return level_floor + raw_exp
+
+    # 超出当前等级可能范围时，保守使用当前等级下限，避免异常满进度。
+    return level_floor
+
+
 def infer_gun_target_level(gun):
     # Best-effort: if current level already passed a mind-update cap, preserve that cap family.
     level = int(gun.get("level", gun.get("gun_level", 1)) or 1)
@@ -1611,9 +1684,10 @@ def init_team_progress_runtime_fields(team_cfg):
         fairy["level"] = level
         fairy["exp"] = exp
         fairy["target_level"] = infer_fairy_target_level(fairy)
-        fairy["base_total_exp"] = fairy_total_exp_for_level(level, exp)
+        fairy["base_total_exp"] = fairy_base_total_exp_from_index(level, exp)
         fairy["runtime_gained_exp"] = int(fairy.get("runtime_gained_exp", 0) or 0)
         fairy["target_total_exp"] = fairy_total_exp_for_level(fairy["target_level"], 0)
+        fairy["last_total_exp_seen"] = int(fairy.get("last_total_exp_seen", fairy["base_total_exp"]) or fairy["base_total_exp"])
     team_cfg.setdefault("runtime_seconds", 0.0)
     team_cfg.setdefault("completed", False)
     team_cfg.setdefault("maxed_member_uids", set())
@@ -1804,6 +1878,24 @@ def get_target_name_set():
 def is_target_gun_name(name: str) -> bool:
     if not name:
         return False
+
+    # 不使用子串匹配，避免 G3 被 SSG3000 误判为目标。
+    # 优先按 gun_id 判断，其次按名称/别名精确匹配。
+    try:
+        drop_id = resolve_gun_id_by_name(name)
+    except Exception:
+        drop_id = None
+
+    target_ids = set()
+    for item in RUN_STATS.get("target_counts", {}).values():
+        try:
+            target_ids.add(int(item.get("item_id")))
+        except Exception:
+            pass
+
+    if drop_id is not None and int(drop_id) in target_ids:
+        return True
+
     n = normalize_gun_name(name)
     for target in get_target_name_set():
         if n == normalize_gun_name(target):
@@ -1811,8 +1903,7 @@ def is_target_gun_name(name: str) -> bool:
         alias = GUN_NAME_ALIAS.get(target)
         if alias and n == normalize_gun_name(alias):
             return True
-        if normalize_gun_name(target) in n or n in normalize_gun_name(target):
-            return True
+
     return False
 
 
@@ -1842,6 +1933,7 @@ def build_runtime_panel_lines():
         CONFIG.get("SELECTED_STAGE") or "-",
         CONFIG.get("SELECTED_TARGET_LABEL") or "-",
     )
+    server_label = CONFIG.get("SERVER_NAME", "SOP")
     elapsed = 0
     if RUN_STATS.get("start_time") is not None:
         elapsed = time.time() - RUN_STATS["start_time"]
@@ -1874,7 +1966,7 @@ def build_runtime_panel_lines():
 
     raw_lines = [
         colorize("============= EPA 运行状态 =============", "panel_border"),
-        "%s%s" % (colorize("模式：", "panel_label"), mode_label),
+        "%s%s    %s%s" % (colorize("服务器：", "panel_label"), server_label, colorize("模式：", "panel_label"), mode_label),
         "%s%s" % (colorize("关卡：", "panel_label"), stage_label),
         "%s%s" % (colorize("当前梯队：", "panel_label"), team_label),
         colorize(macro_text, "panel_label"),
@@ -1959,6 +2051,73 @@ def print_run_summary():
     else:
         print("%s：未配置" % title)
     print("================================\n")
+
+
+SERVER_MENU_OPTIONS = {
+    "-1": "SOP",
+    "-2": "RO635",
+    "-3": "M4A1",
+    "-4": "M16",
+    "-5": "AR-15",
+}
+
+SERVER_KEY_ALIASES = {
+    "SOP": ["SOP"],
+    "RO635": ["RO635"],
+    "M4A1": ["M4A1"],
+    "M16": ["M16"],
+    "AR-15": ["AR-15", "AR15"],
+}
+
+
+def print_server_menu():
+    print("\n=========== 服务器选择 ===========")
+    print("请选择服务器：")
+    print("  -1 : SOP（默认）")
+    print("  -2 : RO635")
+    print("  -3 : M4A1")
+    print("  -4 : M16")
+    print("  -5 : AR-15")
+    print("----------------------------------")
+    print("提示：可输入编号或服务器名，直接回车默认 SOP")
+    print("==================================\n")
+
+
+def normalize_server_input(cmd: str):
+    cmd = str(cmd or "").strip()
+    if not cmd:
+        return "SOP"
+    cmd_norm = cmd.upper().replace("_", "-")
+    if cmd_norm in ("1", "-1", "SOP"):
+        return "SOP"
+    if cmd_norm in ("2", "-2", "RO635"):
+        return "RO635"
+    if cmd_norm in ("3", "-3", "M4A1"):
+        return "M4A1"
+    if cmd_norm in ("4", "-4", "M16"):
+        return "M16"
+    if cmd_norm in ("5", "-5", "AR15", "AR-15"):
+        return "AR-15"
+    return None
+
+
+def apply_server_selection(server_name: str) -> bool:
+    server_name = normalize_server_input(server_name)
+    if not server_name:
+        return False
+
+    candidates = SERVER_KEY_ALIASES.get(server_name, [server_name])
+    for key in candidates:
+        if key in SERVERS:
+            CONFIG["SERVER_NAME"] = server_name
+            CONFIG["BASE_URL"] = SERVERS[key]
+            print("[+] 已选择服务器：%s" % server_name)
+            return True
+
+    print("[!] 当前 gflzirc 未找到服务器配置：%s" % server_name)
+    print("[!] 可用服务器键：%s" % ", ".join(sorted(str(k) for k in SERVERS.keys())))
+    return False
+
 
 
 def print_gun_mode_menu():
@@ -2367,11 +2526,41 @@ def apply_fairy_exp_gain_from_resp(resp_data: dict):
     if not isinstance(fairy, dict):
         return 0
 
-    gained = extract_fairy_exp_gain_from_resp(resp_data)
-    if gained > 0:
-        fairy["runtime_gained_exp"] = int(fairy.get("runtime_gained_exp", 0) or 0) + gained
+    raw_val = extract_fairy_exp_gain_from_resp(resp_data)
+    if raw_val <= 0:
+        return 0
+
+    base_total = int(fairy.get("base_total_exp", 0) or 0)
+    target_total = int(fairy.get("target_total_exp", 0) or 0)
+    current_runtime = int(fairy.get("runtime_gained_exp", 0) or 0)
+    current_total = min(target_total, base_total + current_runtime)
+
+    level = int(fairy.get("level", fairy.get("fairy_lv", 1)) or 1)
+    next_need = fairy_next_level_required_exp(level)
+
+    # 形态一：返回的是当前累计总经验。
+    # 只接受“比当前总量略高”的累计值，避免把 9,999,000 这类异常/上限值
+    # 每次都当作真实当前累计，导致 92 级妖精直接显示 100%。
+    if current_total <= raw_val <= target_total:
+        delta = raw_val - current_total
+        max_reasonable_jump = max(500000, next_need * 2)
+        if 0 < delta <= max_reasonable_jump:
+            fairy["runtime_gained_exp"] = current_runtime + delta
+            fairy["last_total_exp_seen"] = raw_val
+            refresh_runtime_panel()
+            return delta
+        if delta == 0:
+            return 0
+
+    # 形态二：返回的是本次获得经验。
+    # 妖精单次战斗经验不应巨大；过大的值更可能是累计/异常字段，直接忽略。
+    max_reasonable_delta = max(50000, next_need)
+    if raw_val <= max_reasonable_delta:
+        fairy["runtime_gained_exp"] = current_runtime + raw_val
         refresh_runtime_panel()
-    return gained
+        return raw_val
+
+    return 0
 
 
 
@@ -2886,6 +3075,12 @@ if __name__ == '__main__':
 
                 # Phase 1: start proxy and capture UID/SIGN
                 if not CONFIG.get("INDEX_FETCH_READY", False) and not proxy_instance:
+                    print_server_menu()
+                    server_cmd = input("GFL-EPA(服务器, 默认SOP)> ").strip()
+                    if not apply_server_selection(server_cmd):
+                        print("[!] 服务器选择无效，请重新输入 -a 后选择服务器。")
+                        continue
+
                     if CONFIG.get("MODE_SELECTED_EARLY") and CONFIG.get("MODE_NAME") in ("team", "single"):
                         mode_cmd = "-team" if CONFIG.get("MODE_NAME") == "team" else "-single"
                         print("[*] 已保留上次选择：%s" % ("练级模式" if mode_cmd == "-team" else "打捞模式"))
@@ -2953,6 +3148,7 @@ if __name__ == '__main__':
                     set_windows_proxy(True, "127.0.0.1:%d" % CONFIG['PROXY_PORT'])
                     worker_mode = 'a'
                     print("[*] 一体化代理已启动，端口 %d。Windows 代理已设置。" % CONFIG['PROXY_PORT'])
+                    print("[*] 当前服务器：%s" % CONFIG.get("SERVER_NAME", "SOP"))
                     print("[*] 登录后会先自动获取 UID / SIGN。")
                     print("[*] 未使用 8080 端口，当前代理端口为 %d。" % CONFIG['PROXY_PORT'])
                     print("[*] 获取 UID/SIGN 后，请等待游戏完全进入指挥官主界面。")

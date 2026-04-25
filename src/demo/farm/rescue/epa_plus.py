@@ -38,7 +38,8 @@ CONFIG = {
 # === Authentication & Connection ===
     "USER_UID": "_InputYourID_",
     "SIGN_KEY": DEFAULT_SIGN,
-    "BASE_URL": SERVERS["M4A1"],
+    "SERVER_NAME": "SOP",
+    "BASE_URL": SERVERS["SOP"],
     "PROXY_PORT": 12335,
 
 # === Farm Loop Settings ===
@@ -66,6 +67,8 @@ CONFIG = {
     "TRAIN_SCHEDULE_MODE": "full",   # full=当前梯队练到全满再切下一个, equal=均等练级轮转
     "CURRENT_TRAIN_TEAM_INDEX": 0,
     "STOP_ON_MAX_LEVEL": True,
+    # single 打捞模式：当当前目标人形至少各掉落 1 个后自动停止。
+    "STOP_AFTER_EACH_TARGET_DROPPED": False,
     "AUTO_MONITOR_MODE": False,
     "AUTO_CAPTURE_EXPECTED_COUNT": 1,
     "INDEX_FETCH_READY": False,
@@ -79,8 +82,7 @@ CONFIG = {
     "STOP_AFTER_RETIRE_NO_SPACE_TIMES": 2,
     "ENABLE_FILTER_PROTECTION": True,
 
-    # 下面的 TEAM_ID / FAIRY_ID / GUNS 仅为占位。
-    # 实际运行时通过抓取并解析 Index/index 自动填充。
+    # 实际运行时无需使用此config，仅作占位作用，如果需要获取请自行运行monitor.py来获取并输入。
     "USER_DEVICE": "1145141919810",
 
     # === Team Config ===
@@ -281,7 +283,10 @@ EMERGENCY_STAGE_DATA = {
     },
     "A-6": {
         "MISSION_ID": 150,
-        "START_SPOTS": {"-1": 97221, "-2": 97221, "-3": 97221, "-4": 97239, "-5": 97239, "-6": 97239},
+        # 紧急 A-6 的路线节点为 97199~97228。
+        # 按前几个紧急关卡的编号规律，部署点应为路线后方的 97231 / 97229，
+        # 不是路线内部节点 97221，也不是夜战/其他区域节点 97239。
+        "START_SPOTS": {"-1": 97231, "-2": 97231, "-3": 97231, "-4": 97229, "-5": 97229, "-6": 97229},
         "OPTIONS": {
             "-1": {"label": "CMR-30&英萨斯", "route": [97199, 97200, 97201, 97202, 97203]},
             "-2": {"label": "VP9&Zas M76", "route": [97204, 97205, 97206, 97207, 97208]},
@@ -463,6 +468,7 @@ MENU_STATE = {
     "stage": None,
     "awaiting_gun_mode": False,
     "awaiting_stop_on_max": False,
+    "awaiting_target_drop_stop": False,
     "awaiting_filter_protection": False,
     "awaiting_run_confirm": False,
 }
@@ -529,10 +535,10 @@ GUN_NAME_ALIAS = {
     "Cx4 风暴": "Cx4Storm",
     "八一式马": "Type81R",
     "蟒蛇": "Python",
-    "猎豹M1": "CheetahM1",
+    "猎豹M1": "Gepard M1",
     "62式": "Type62",
     "刘易斯": "Lewis",
-    "03式": "03type",
+    "03式": "Type03",
     "马盖尔": "Magal",
     "沙漠之鹰": "Desert Eagle",
     "侦察者": "Scout",
@@ -543,13 +549,17 @@ GUN_NAME_ALIAS = {
     "卢萨": "Lusa",
     "英萨斯": "INSAS",
     "刘氏步枪": "Liu",
-    "德林加": "De Lisle",
+    "德林加": "Derringer",
     "菲德洛夫": "Fedorov",
     "沙维奇99型": "Savage99",
     "芮诺": "Reno",
     "斯特林": "Sterling",
     "韦伯利": "Webley",
-    "CPS-12": "DP12",
+    # DP-12 为 gun_id 282；CPS-12 也叫 Six12，gun_id 278。
+    "DP-12": "DP12",
+    "DP12": "DP12",
+    "CPS-12": "Six12",
+    "Six12": "Six12",
     "CF05": "CF-05",
     "FN-57": "Five-seveN",
     "AK 5": "Ak 5",
@@ -561,6 +571,9 @@ GUN_NAME_ALIAS = {
     "TF-Q": "TF Q",
     "6P62": "6P62",
     "Ak 5": "AK 5",
+    "STG-940": "StG-940",
+    "StG940": "StG-940",
+    "stg940": "StG-940",
 }
 
 GUN_ID_OVERRIDE = {
@@ -569,6 +582,29 @@ GUN_ID_OVERRIDE = {
     "AK 5": 187,
     "雷电": 202,
     "SCW": 169,
+    # DP-12 的 gun_id = 282。
+    "DP-12": 282,
+    "DP12": 282,
+    # CPS-12 也叫 Six12，gun_id = 278。
+    "CPS-12": 278,
+    "Six12": 278,
+    # 德林加在资料表中为 Derringer，gun_id = 332。
+    "德林加": 332,
+    "Derringer": 332,
+    # StG-940 在资料表中 en_name=StG-940, code=stg940, gun_id=314。
+    "StG-940": 314,
+    "STG-940": 314,
+    "StG940": 314,
+    "stg940": 314,
+    # 03式在资料表中为 Type03，gun_id = 239。
+    "03式": 239,
+    "Type03": 239,
+    "03type": 239,
+    # 猎豹M1在资料表中英文名为 Gepard M1，之前写成 CheetahM1 会导致目标保护失败。
+    "猎豹M1": 201,
+    "Gepard M1": 201,
+    "GepardM1": 201,
+    "CheetahM1": 201,
 }
 
 def load_gun_catalog():
@@ -678,10 +714,12 @@ def reset_captured_team_configs():
 
 
 def get_current_team_config():
-    if CONFIG.get("MODE_NAME") == "team" and CAPTURED_TEAM_CONFIGS:
-        idx = CONFIG.get("CURRENT_TRAIN_TEAM_INDEX", 0)
-        idx = max(0, min(idx, len(CAPTURED_TEAM_CONFIGS) - 1))
-        return CAPTURED_TEAM_CONFIGS[idx]
+    if CAPTURED_TEAM_CONFIGS:
+        if CONFIG.get("MODE_NAME") == "team":
+            idx = CONFIG.get("CURRENT_TRAIN_TEAM_INDEX", 0)
+            idx = max(0, min(idx, len(CAPTURED_TEAM_CONFIGS) - 1))
+            return CAPTURED_TEAM_CONFIGS[idx]
+        return CAPTURED_TEAM_CONFIGS[0]
     return {
         "team_id": CONFIG["TEAM_ID"],
         "fairy_id": CONFIG["FAIRY_ID"],
@@ -713,6 +751,8 @@ def reset_training_progress():
     for team_cfg in CAPTURED_TEAM_CONFIGS:
         team_cfg["runtime_seconds"] = 0.0
         team_cfg["completed"] = False
+        team_cfg["maxed_member_uids"] = set()
+        team_cfg["warned_max_member_uids"] = set()
 
 
 def mark_current_training_team_completed():
@@ -905,6 +945,7 @@ def try_update_auto_capture_from_index_payload(payload: dict) -> bool:
         if CAPTURED_TEAM_CONFIGS:
             CONFIG["TEAM_ID"] = CAPTURED_TEAM_CONFIGS[0]["team_id"]
             CONFIG["FAIRY_ID"] = CAPTURED_TEAM_CONFIGS[0]["fairy_id"]
+            CONFIG["FAIRY"] = copy.deepcopy(CAPTURED_TEAM_CONFIGS[0].get("fairy"))
             CONFIG["GUNS"] = copy.deepcopy(CAPTURED_TEAM_CONFIGS[0]["guns"])
         CONFIG["AUTO_CAPTURE_EXPECTED_COUNT"] = len(CAPTURED_TEAM_CONFIGS)
     else:
@@ -919,6 +960,7 @@ def try_update_auto_capture_from_index_payload(payload: dict) -> bool:
         })
         CONFIG["TEAM_ID"] = first_team["team_id"]
         CONFIG["FAIRY_ID"] = first_team["fairy_id"]
+        CONFIG["FAIRY"] = copy.deepcopy(first_team.get("fairy"))
         CONFIG["GUNS"] = copy.deepcopy(first_team["guns"])
         CONFIG["AUTO_CAPTURE_EXPECTED_COUNT"] = 1
 
@@ -1247,6 +1289,8 @@ def print_run_confirm_menu():
         schedule_label = "整队满级后切换" if CONFIG.get("TRAIN_SCHEDULE_MODE") == "full" else "均等练级轮转"
         print("调度：%s" % schedule_label)
     print("满级停机：%s" % ("开启" if CONFIG.get("STOP_ON_MAX_LEVEL") else "关闭"))
+    if CONFIG.get("MODE_NAME") == "single" and CONFIG.get("SELECTED_DIFFICULTY") != "夜战":
+        print("目标达成停机：%s" % ("开启" if CONFIG.get("STOP_AFTER_EACH_TARGET_DROPPED") else "关闭"))
     print("----------------------------------")
     print("输入 -y 确认，输入 -back 返回")
     print("==================================\n")
@@ -1259,6 +1303,18 @@ def print_stop_on_max_menu():
     print("  -keepmax : 不停止程序")
     print("------------------------------------")
     print("提示：只能输入 -stopmax 或 -keepmax")
+    print("====================================\n")
+
+
+
+def print_target_drop_stop_menu():
+    print("\n=========== 目标达成停机 ===========")
+    print("请选择目标人形至少各掉落 1 个后的行为：")
+    print("  -stopdrop : 停止打捞")
+    print("  -keepdrop : 继续打捞（默认）")
+    print("------------------------------------")
+    print("说明：仅对打捞单人模式的人形目标生效。")
+    print("提示：输入 -stopdrop / -keepdrop，回车默认 -keepdrop")
     print("====================================\n")
 
 
@@ -1345,6 +1401,30 @@ def record_target_drop(item_id, drop_type="gun"):
     for name, item in RUN_STATS["target_counts"].items():
         if item["item_id"] == item_id:
             item["count"] += 1
+
+
+
+
+def has_each_target_dropped_once():
+    if not RUN_STATS.get("target_counts"):
+        return False
+    return all(int(item.get("count", 0)) >= 1 for item in RUN_STATS["target_counts"].values())
+
+
+def get_target_drop_progress_text():
+    if not RUN_STATS.get("target_counts"):
+        return "未配置"
+    return "，".join("%s×%d" % (name, int(item.get("count", 0))) for name, item in RUN_STATS["target_counts"].items())
+
+
+def should_stop_after_each_target_dropped():
+    if not CONFIG.get("STOP_AFTER_EACH_TARGET_DROPPED", False):
+        return False
+    if CONFIG.get("MODE_NAME") != "single":
+        return False
+    if RUN_STATS.get("target_type") != "gun":
+        return False
+    return has_each_target_dropped_once()
 
 
 
@@ -1466,6 +1546,44 @@ def gun_total_exp_for_level(level, intra_exp=0):
         total += sum_exp_range(GUN_EXP_100_TO_120, 100, min(level, 120))
     return total + max(0, intra_exp)
 
+def gun_next_level_required_exp(level):
+    try:
+        level = int(level)
+    except Exception:
+        return 0
+    if 1 <= level < 100:
+        return int(GUN_EXP_1_TO_100.get(level, 0) or 0)
+    if 100 <= level < 120:
+        return int(GUN_EXP_100_TO_120.get(level, 0) or 0)
+    return 0
+
+
+def gun_base_total_exp_from_index(level, raw_exp):
+    """
+    Index/index 里的 gun_exp 在实际返回中更接近“累计总经验”，
+    而不是“当前等级内经验”。如果继续把它当作等级内经验相加，
+    99 级人形会被错误算到 100%。
+    这里做兼容：
+    - raw_exp 大于当前等级升下一级所需经验时，按累计总经验处理；
+    - 否则按当前等级内经验处理。
+    """
+    try:
+        level = int(level)
+    except Exception:
+        level = 1
+    try:
+        raw_exp = int(raw_exp)
+    except Exception:
+        raw_exp = 0
+
+    next_need = gun_next_level_required_exp(level)
+    total_1_to_100 = sum_exp_range(GUN_EXP_1_TO_100, 1, 100)
+    if raw_exp > next_need or raw_exp >= total_1_to_100:
+        return max(0, raw_exp)
+
+    return gun_total_exp_for_level(level, raw_exp)
+
+
 def fairy_total_exp_for_level(level, intra_exp=0):
     try:
         level = int(level)
@@ -1477,6 +1595,54 @@ def fairy_total_exp_for_level(level, intra_exp=0):
         intra_exp = 0
     total = sum_exp_range(FAIRY_EXP_1_TO_100, 1, min(level, 100))
     return total + max(0, intra_exp)
+
+def fairy_next_level_required_exp(level):
+    try:
+        level = int(level)
+    except Exception:
+        return 0
+    if 1 <= level < 100:
+        return int(FAIRY_EXP_1_TO_100.get(level, 0) or 0)
+    return 0
+
+
+def fairy_base_total_exp_from_index(level, raw_exp):
+    """
+    Index/index 里的 fairy_exp 可能是“累计总经验”，也可能是“当前等级内经验”。
+    妖精等级已知时，累计总经验必须落在：
+        当前等级累计下限 <= fairy_exp < 下一等级累计下限
+    如果 raw_exp 超出该等级可能范围，不直接拿来当累计值，避免 92 级妖精被算成 100%。
+    """
+    try:
+        level = int(level)
+    except Exception:
+        level = 1
+    try:
+        raw_exp = int(raw_exp)
+    except Exception:
+        raw_exp = 0
+
+    total_1_to_100 = sum_exp_range(FAIRY_EXP_1_TO_100, 1, 100)
+    level = max(1, min(level, 100))
+    level_floor = sum_exp_range(FAIRY_EXP_1_TO_100, 1, level)
+
+    if level >= 100:
+        return total_1_to_100
+
+    next_need = fairy_next_level_required_exp(level)
+    next_floor = min(total_1_to_100, level_floor + next_need)
+
+    # 形态一：fairy_exp 是累计总经验。
+    if level_floor <= raw_exp < next_floor:
+        return raw_exp
+
+    # 形态二：fairy_exp 是当前等级内经验。
+    if 0 <= raw_exp <= next_need:
+        return level_floor + raw_exp
+
+    # 超出当前等级可能范围时，保守使用当前等级下限，避免异常满进度。
+    return level_floor
+
 
 def infer_gun_target_level(gun):
     # Best-effort: if current level already passed a mind-update cap, preserve that cap family.
@@ -1508,7 +1674,7 @@ def init_team_progress_runtime_fields(team_cfg):
         gun["level"] = level
         gun["exp"] = exp
         gun["target_level"] = target_level
-        gun["base_total_exp"] = gun_total_exp_for_level(level, exp)
+        gun["base_total_exp"] = gun_base_total_exp_from_index(level, exp)
         gun["runtime_gained_exp"] = int(gun.get("runtime_gained_exp", 0) or 0)
         gun["target_total_exp"] = gun_total_exp_for_level(target_level, 0)
     fairy = team_cfg.get("fairy")
@@ -1518,11 +1684,14 @@ def init_team_progress_runtime_fields(team_cfg):
         fairy["level"] = level
         fairy["exp"] = exp
         fairy["target_level"] = infer_fairy_target_level(fairy)
-        fairy["base_total_exp"] = fairy_total_exp_for_level(level, exp)
+        fairy["base_total_exp"] = fairy_base_total_exp_from_index(level, exp)
         fairy["runtime_gained_exp"] = int(fairy.get("runtime_gained_exp", 0) or 0)
         fairy["target_total_exp"] = fairy_total_exp_for_level(fairy["target_level"], 0)
+        fairy["last_total_exp_seen"] = int(fairy.get("last_total_exp_seen", fairy["base_total_exp"]) or fairy["base_total_exp"])
     team_cfg.setdefault("runtime_seconds", 0.0)
     team_cfg.setdefault("completed", False)
+    team_cfg.setdefault("maxed_member_uids", set())
+    team_cfg.setdefault("warned_max_member_uids", set())
 
 def initialize_all_team_progress():
     for team_cfg in CAPTURED_TEAM_CONFIGS:
@@ -1564,9 +1733,32 @@ def get_team_runtime_seconds(team_cfg):
 
 def get_team_member_progress(team_cfg):
     guns = team_cfg.get("guns", [])
-    current_total = sum(min(int(g.get("target_total_exp",0)), int(g.get("base_total_exp",0)) + int(g.get("runtime_gained_exp",0))) for g in guns)
-    base_total = sum(int(g.get("base_total_exp",0)) for g in guns)
-    target_total = sum(int(g.get("target_total_exp",0)) for g in guns)
+    maxed_uids = set(str(x) for x in team_cfg.get("maxed_member_uids", set()))
+
+    current_total = 0
+    base_total = 0
+    target_total = 0
+
+    for g in guns:
+        target = int(g.get("target_total_exp", 0))
+        base = int(g.get("base_total_exp", 0))
+        gained = int(g.get("runtime_gained_exp", 0))
+        uid = str(g.get("id", ""))
+
+        base_total += base
+        target_total += target
+
+        cur = min(target, base + gained)
+
+        # 服务器返回 EXP=0 才是当前流程里最可靠的“该人形已满级”信号。
+        # 如果累计经验已经达到表格上限，但该 UID 仍然在获得 EXP，
+        # 说明表格进度已到理论上限，但实际还不能视为满级。
+        # 因此未收到 EXP=0 的成员最多显示到 target-1，避免整队提前显示 100%。
+        if uid not in maxed_uids and target > 0 and cur >= target:
+            cur = target - 1
+
+        current_total += max(0, cur)
+
     gained_total = max(0, current_total - base_total)
     percent = (current_total / target_total * 100.0) if target_total > 0 else 0.0
     return current_total, target_total, gained_total, percent
@@ -1686,6 +1878,24 @@ def get_target_name_set():
 def is_target_gun_name(name: str) -> bool:
     if not name:
         return False
+
+    # 不使用子串匹配，避免 G3 被 SSG3000 误判为目标。
+    # 优先按 gun_id 判断，其次按名称/别名精确匹配。
+    try:
+        drop_id = resolve_gun_id_by_name(name)
+    except Exception:
+        drop_id = None
+
+    target_ids = set()
+    for item in RUN_STATS.get("target_counts", {}).values():
+        try:
+            target_ids.add(int(item.get("item_id")))
+        except Exception:
+            pass
+
+    if drop_id is not None and int(drop_id) in target_ids:
+        return True
+
     n = normalize_gun_name(name)
     for target in get_target_name_set():
         if n == normalize_gun_name(target):
@@ -1693,8 +1903,7 @@ def is_target_gun_name(name: str) -> bool:
         alias = GUN_NAME_ALIAS.get(target)
         if alias and n == normalize_gun_name(alias):
             return True
-        if normalize_gun_name(target) in n or n in normalize_gun_name(target):
-            return True
+
     return False
 
 
@@ -1724,6 +1933,7 @@ def build_runtime_panel_lines():
         CONFIG.get("SELECTED_STAGE") or "-",
         CONFIG.get("SELECTED_TARGET_LABEL") or "-",
     )
+    server_label = CONFIG.get("SERVER_NAME", "SOP")
     elapsed = 0
     if RUN_STATS.get("start_time") is not None:
         elapsed = time.time() - RUN_STATS["start_time"]
@@ -1756,7 +1966,7 @@ def build_runtime_panel_lines():
 
     raw_lines = [
         colorize("============= EPA 运行状态 =============", "panel_border"),
-        "%s%s" % (colorize("模式：", "panel_label"), mode_label),
+        "%s%s    %s%s" % (colorize("服务器：", "panel_label"), server_label, colorize("模式：", "panel_label"), mode_label),
         "%s%s" % (colorize("关卡：", "panel_label"), stage_label),
         "%s%s" % (colorize("当前梯队：", "panel_label"), team_label),
         colorize(macro_text, "panel_label"),
@@ -1768,6 +1978,7 @@ def build_runtime_panel_lines():
             RUN_STATS.get("current_step", 0),
         ),
         "%s%s" % (colorize("本轮掉落：", "panel_label"), drop_text),
+        "%s%s" % (colorize("目标统计：", "panel_label"), get_target_drop_progress_text()),
         "%s%s" % (colorize("最近一轮经验：", "panel_label"), exp_text),
         "%s%s (%s / %s)" % (colorize("人形进度：", "panel_label"), format_percent(member_pct), f"{member_cur:,}", f"{member_target:,}"),
         "%s%s (%s / %s)" % (colorize("妖精进度：", "panel_label"), format_percent(fairy_pct), f"{fairy_cur:,}", f"{fairy_target:,}"),
@@ -1842,6 +2053,73 @@ def print_run_summary():
     print("================================\n")
 
 
+SERVER_MENU_OPTIONS = {
+    "-1": "SOP",
+    "-2": "RO635",
+    "-3": "M4A1",
+    "-4": "M16",
+    "-5": "AR-15",
+}
+
+SERVER_KEY_ALIASES = {
+    "SOP": ["SOP"],
+    "RO635": ["RO635"],
+    "M4A1": ["M4A1"],
+    "M16": ["M16"],
+    "AR-15": ["AR-15", "AR15"],
+}
+
+
+def print_server_menu():
+    print("\n=========== 服务器选择 ===========")
+    print("请选择服务器：")
+    print("  -1 : SOP（默认）")
+    print("  -2 : RO635")
+    print("  -3 : M4A1")
+    print("  -4 : M16")
+    print("  -5 : AR-15")
+    print("----------------------------------")
+    print("提示：可输入编号或服务器名，直接回车默认 SOP")
+    print("==================================\n")
+
+
+def normalize_server_input(cmd: str):
+    cmd = str(cmd or "").strip()
+    if not cmd:
+        return "SOP"
+    cmd_norm = cmd.upper().replace("_", "-")
+    if cmd_norm in ("1", "-1", "SOP"):
+        return "SOP"
+    if cmd_norm in ("2", "-2", "RO635"):
+        return "RO635"
+    if cmd_norm in ("3", "-3", "M4A1"):
+        return "M4A1"
+    if cmd_norm in ("4", "-4", "M16"):
+        return "M16"
+    if cmd_norm in ("5", "-5", "AR15", "AR-15"):
+        return "AR-15"
+    return None
+
+
+def apply_server_selection(server_name: str) -> bool:
+    server_name = normalize_server_input(server_name)
+    if not server_name:
+        return False
+
+    candidates = SERVER_KEY_ALIASES.get(server_name, [server_name])
+    for key in candidates:
+        if key in SERVERS:
+            CONFIG["SERVER_NAME"] = server_name
+            CONFIG["BASE_URL"] = SERVERS[key]
+            print("[+] 已选择服务器：%s" % server_name)
+            return True
+
+    print("[!] 当前 gflzirc 未找到服务器配置：%s" % server_name)
+    print("[!] 可用服务器键：%s" % ", ".join(sorted(str(k) for k in SERVERS.keys())))
+    return False
+
+
+
 def print_gun_mode_menu():
     print("\n=========== 编队模式 ===========")
     print("  -team   : 练级五人模式（默认）")
@@ -1857,6 +2135,7 @@ def reset_selection_menu():
     MENU_STATE["stage"] = None
     MENU_STATE["awaiting_gun_mode"] = False
     MENU_STATE["awaiting_stop_on_max"] = False
+    MENU_STATE["awaiting_target_drop_stop"] = False
     MENU_STATE["awaiting_filter_protection"] = False
     MENU_STATE["awaiting_run_confirm"] = False
 
@@ -1932,16 +2211,49 @@ def handle_selection_input(cmd: str) -> bool:
             return True
         if cmd == "-stopmax":
             MENU_STATE["awaiting_stop_on_max"] = False
-            MENU_STATE["awaiting_run_confirm"] = True
             CONFIG["STOP_ON_MAX_LEVEL"] = True
             print("[+] 已选择：检测到满级后停止程序。")
-            print_run_confirm_menu()
+            if CONFIG.get("MODE_NAME") == "single" and CONFIG.get("SELECTED_DIFFICULTY") != "夜战":
+                MENU_STATE["awaiting_target_drop_stop"] = True
+                print_target_drop_stop_menu()
+            else:
+                MENU_STATE["awaiting_run_confirm"] = True
+                print_run_confirm_menu()
             return True
         if cmd == "-keepmax":
             MENU_STATE["awaiting_stop_on_max"] = False
-            MENU_STATE["awaiting_run_confirm"] = True
             CONFIG["STOP_ON_MAX_LEVEL"] = False
             print("[+] 已选择：检测到满级后不停止程序。")
+            if CONFIG.get("MODE_NAME") == "single" and CONFIG.get("SELECTED_DIFFICULTY") != "夜战":
+                MENU_STATE["awaiting_target_drop_stop"] = True
+                print_target_drop_stop_menu()
+            else:
+                MENU_STATE["awaiting_run_confirm"] = True
+                print_run_confirm_menu()
+            return True
+        return False
+
+    if MENU_STATE["awaiting_target_drop_stop"]:
+        if not cmd:
+            cmd = "-keepdrop"
+        if cmd == "-back":
+            MENU_STATE["awaiting_target_drop_stop"] = False
+            MENU_STATE["awaiting_stop_on_max"] = True
+            print("[*] 已返回满级停机设置。")
+            print_stop_on_max_menu()
+            return True
+        if cmd == "-stopdrop":
+            MENU_STATE["awaiting_target_drop_stop"] = False
+            MENU_STATE["awaiting_run_confirm"] = True
+            CONFIG["STOP_AFTER_EACH_TARGET_DROPPED"] = True
+            print("[+] 已选择：目标人形至少各掉落 1 个后停止打捞。")
+            print_run_confirm_menu()
+            return True
+        if cmd == "-keepdrop":
+            MENU_STATE["awaiting_target_drop_stop"] = False
+            MENU_STATE["awaiting_run_confirm"] = True
+            CONFIG["STOP_AFTER_EACH_TARGET_DROPPED"] = False
+            print("[+] 已选择：目标达成后继续打捞。")
             print_run_confirm_menu()
             return True
         return False
@@ -1949,9 +2261,14 @@ def handle_selection_input(cmd: str) -> bool:
     if MENU_STATE["awaiting_run_confirm"]:
         if cmd == "-back":
             MENU_STATE["awaiting_run_confirm"] = False
-            MENU_STATE["awaiting_stop_on_max"] = True
-            print("[*] 已返回满级停机设置。")
-            print_stop_on_max_menu()
+            if CONFIG.get("MODE_NAME") == "single" and CONFIG.get("SELECTED_DIFFICULTY") != "夜战":
+                MENU_STATE["awaiting_target_drop_stop"] = True
+                print("[*] 已返回目标达成停机设置。")
+                print_target_drop_stop_menu()
+            else:
+                MENU_STATE["awaiting_stop_on_max"] = True
+                print("[*] 已返回满级停机设置。")
+                print_stop_on_max_menu()
             return True
         if cmd == "-y":
             MENU_STATE["awaiting_run_confirm"] = False
@@ -1966,6 +2283,8 @@ def handle_selection_input(cmd: str) -> bool:
                 if CONFIG.get("SELECTED_DIFFICULTY") == "夜战":
                     print("[!] 提示：夜战暂时没有自动拆解功能，不建议去夜战关卡练级。")
             print("[+] 满级停机设置：%s" % ("开启" if CONFIG.get("STOP_ON_MAX_LEVEL") else "关闭"))
+            if CONFIG.get("MODE_NAME") == "single" and CONFIG.get("SELECTED_DIFFICULTY") != "夜战":
+                print("[+] 目标达成停机：%s" % ("开启" if CONFIG.get("STOP_AFTER_EACH_TARGET_DROPPED") else "关闭"))
             protected_ids = sorted(get_selected_protected_gun_ids())
             print("[+] 自动拆解保护 gun_id：%s" % (protected_ids if protected_ids else "当前未配置"))
             if CONFIG.get("SELECTED_DIFFICULTY") == "夜战":
@@ -2207,11 +2526,41 @@ def apply_fairy_exp_gain_from_resp(resp_data: dict):
     if not isinstance(fairy, dict):
         return 0
 
-    gained = extract_fairy_exp_gain_from_resp(resp_data)
-    if gained > 0:
-        fairy["runtime_gained_exp"] = int(fairy.get("runtime_gained_exp", 0) or 0) + gained
+    raw_val = extract_fairy_exp_gain_from_resp(resp_data)
+    if raw_val <= 0:
+        return 0
+
+    base_total = int(fairy.get("base_total_exp", 0) or 0)
+    target_total = int(fairy.get("target_total_exp", 0) or 0)
+    current_runtime = int(fairy.get("runtime_gained_exp", 0) or 0)
+    current_total = min(target_total, base_total + current_runtime)
+
+    level = int(fairy.get("level", fairy.get("fairy_lv", 1)) or 1)
+    next_need = fairy_next_level_required_exp(level)
+
+    # 形态一：返回的是当前累计总经验。
+    # 只接受“比当前总量略高”的累计值，避免把 9,999,000 这类异常/上限值
+    # 每次都当作真实当前累计，导致 92 级妖精直接显示 100%。
+    if current_total <= raw_val <= target_total:
+        delta = raw_val - current_total
+        max_reasonable_jump = max(500000, next_need * 2)
+        if 0 < delta <= max_reasonable_jump:
+            fairy["runtime_gained_exp"] = current_runtime + delta
+            fairy["last_total_exp_seen"] = raw_val
+            refresh_runtime_panel()
+            return delta
+        if delta == 0:
+            return 0
+
+    # 形态二：返回的是本次获得经验。
+    # 妖精单次战斗经验不应巨大；过大的值更可能是累计/异常字段，直接忽略。
+    max_reasonable_delta = max(50000, next_need)
+    if raw_val <= max_reasonable_delta:
+        fairy["runtime_gained_exp"] = current_runtime + raw_val
         refresh_runtime_panel()
-    return gained
+        return raw_val
+
+    return 0
 
 
 
@@ -2233,13 +2582,21 @@ def check_battle_exp(resp_data: dict, spot_id: int):
             exp_int = int(exp_val) if str(exp_val).isdigit() else 0
             exp_details.append("%s: +%s" % (gun_uid[-4:], exp_val))
 
+            maxed_set = current_cfg.setdefault("maxed_member_uids", set())
+            warned_set = current_cfg.setdefault("warned_max_member_uids", set())
+
             if gun_uid in gun_map and exp_int > 0:
                 gun_map[gun_uid]["runtime_gained_exp"] = int(gun_map[gun_uid].get("runtime_gained_exp", 0)) + exp_int
+                # 如果仍能获得经验，则不把它视为满级。
+                maxed_set.discard(gun_uid)
 
             is_zero = (exp_val == "0")
             zero_flags.append(is_zero)
             if is_zero:
-                panel_safe_print("    [!] 警告：人形 %s 已达到满级（EXP 为 0）！" % gun_uid)
+                maxed_set.add(gun_uid)
+                if gun_uid not in warned_set:
+                    panel_safe_print("    [满级检测] 人形 %s EXP 为 0，已标记为满级。" % gun_uid)
+                    warned_set.add(gun_uid)
                 any_zero = True
 
         all_zero = all(zero_flags) if zero_flags else False
@@ -2589,6 +2946,8 @@ def farm_worker():
             activate_team_runtime(CAPTURED_TEAM_CONFIGS[0]["team_id"])
     else:
         print("[*] 打捞模式已启用。")
+        if CONFIG.get("STOP_AFTER_EACH_TARGET_DROPPED"):
+            print("[*] 目标达成停机已开启：目标人形至少各掉落 1 个后停止。")
         print("[*] 将持续运行到你手动停止或触发其他停止条件。")
         activate_team_runtime(get_current_team_id())
     print("=== GFL Protocol Auto-Farming Started (EPA) ===")
@@ -2632,6 +2991,12 @@ def farm_worker():
                     break
 
                 continue
+
+            if should_stop_after_each_target_dropped():
+                stop_macro_flag = True
+                stop_micro_flag = True
+                panel_safe_print(colorize("[目标达成] 当前目标人形已至少各掉落 1 个：%s，程序将安全停止。" % get_target_drop_progress_text(), "success"))
+                break
 
             batch_guns.extend(dropped.get("guns", []))
             if "batch_equips" not in locals():
@@ -2710,6 +3075,12 @@ if __name__ == '__main__':
 
                 # Phase 1: start proxy and capture UID/SIGN
                 if not CONFIG.get("INDEX_FETCH_READY", False) and not proxy_instance:
+                    print_server_menu()
+                    server_cmd = input("GFL-EPA(服务器, 默认SOP)> ").strip()
+                    if not apply_server_selection(server_cmd):
+                        print("[!] 服务器选择无效，请重新输入 -a 后选择服务器。")
+                        continue
+
                     if CONFIG.get("MODE_SELECTED_EARLY") and CONFIG.get("MODE_NAME") in ("team", "single"):
                         mode_cmd = "-team" if CONFIG.get("MODE_NAME") == "team" else "-single"
                         print("[*] 已保留上次选择：%s" % ("练级模式" if mode_cmd == "-team" else "打捞模式"))
@@ -2777,6 +3148,7 @@ if __name__ == '__main__':
                     set_windows_proxy(True, "127.0.0.1:%d" % CONFIG['PROXY_PORT'])
                     worker_mode = 'a'
                     print("[*] 一体化代理已启动，端口 %d。Windows 代理已设置。" % CONFIG['PROXY_PORT'])
+                    print("[*] 当前服务器：%s" % CONFIG.get("SERVER_NAME", "SOP"))
                     print("[*] 登录后会先自动获取 UID / SIGN。")
                     print("[*] 未使用 8080 端口，当前代理端口为 %d。" % CONFIG['PROXY_PORT'])
                     print("[*] 获取 UID/SIGN 后，请等待游戏完全进入指挥官主界面。")

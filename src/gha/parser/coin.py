@@ -16,10 +16,13 @@ class CoinParser(BaseParser):
             target_idx = keys.index("building_defender_change") - 1
             if target_idx >= 0:
                 reward_key = keys[target_idx]
-                if reward_key not in ["trigger_para", "mission_win_step_control_ids", "spot_act_info"]:
-                    reward_val = raw_data[reward_key]
-                    if isinstance(reward_val, dict) and "coin2" in reward_val:
-                        return int(reward_val["coin2"])
+                
+                if reward_key == "coin2":
+                    return int(raw_data[reward_key])
+                    
+                reward_val = raw_data[reward_key]
+                if isinstance(reward_val, dict) and "coin2" in reward_val:
+                    return int(reward_val["coin2"])
         except ValueError:
             pass
             

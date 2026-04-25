@@ -99,7 +99,8 @@ class PickAndTrainMission(BaseMission):
 
         # Pop the first candidate from the queue
         cand = self.train_queue.pop(0)
-        target_lv = cand["current_lv"] + 1
+        # Default to max
+        target_lv = 10
 
         print(f"[>] Training UID: {cand['gun_uid']} | Skill: {cand['skill_no']} | Lv.{cand['current_lv']} -> Lv.{target_lv} ...")
         
@@ -111,18 +112,11 @@ class PickAndTrainMission(BaseMission):
             "to_level": target_lv
         }
         
-        # Attempt to upgrade. We use a max_retries=1 here because if it fails, 
-        # it's highly likely due to insufficient resources or doll being busy.
+        # Attempt to upgrade directly to level 10. 
+        # Using max_retries=1 because a failure almost certainly means insufficient resources or busy status.
         resp = self.agent.safe_request(API_GUN_SKILL_UPGRADE, payload, "skillUpgrade", max_retries=1)
         
         if self.agent.check_step_error(resp, "skillUpgrade"):
-            print("[-] Skill upgrade failed (likely insufficient resources or doll busy). Candidate discarded.")
-            # We DO NOT put the candidate back. This prevents infinite failure loops.
+            print("[-] Skill upgrade to Lv.10 failed (likely insufficient resources or doll busy). Candidate discarded.")
             return
-            
-        print("[+] Skill upgraded successfully.")
-        
-        # If the skill still hasn't reached 10, push it back to the front of the queue
-        if target_lv < 10:
-            cand["current_lv"] = target_lv
-            self.train_queue.insert(0, cand)
+        print("[+] Skill upgraded to Lv.10 successfully!")

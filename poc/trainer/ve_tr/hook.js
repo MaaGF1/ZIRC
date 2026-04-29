@@ -1,7 +1,10 @@
 // hook.js
 
-var STOLEN_VEHICLE_PTR = null;
+// Note: Will crash due to different data structure
+
+var STOLEN_VEHICLE_TEAM_PTR = null;
 var SPOOF_ENABLED = false;
+var BASE_ADDR = null;
 
 function getModuleBase(name) {
     var mod = Process.findModuleByName(name);
@@ -11,61 +14,68 @@ function getModuleBase(name) {
 function getIl2cppClassName(objPtr) {
     if (objPtr.isNull()) return "null";
     try {
-        // objPtr -> klass -> name
         var klassPtr = objPtr.readPointer();
         var classNamePtr = klassPtr.add(0x10).readPointer();
         return classNamePtr.readUtf8String();
     } catch(e) {
-        return "Unknown(Memory Access Error)";
+        return "Unknown";
     }
 }
 
 function initHooks() {
     var gameAssembly = getModuleBase("GameAssembly.dll");
     if (!gameAssembly) return;
+    BASE_ADDR = gameAssembly;
 
-    // 1. 窃取载具指针的入口点 (当你在主界面打开格纳库或梯队列表时触发)
-    // 签名: void HomeTeamListBarController__InitWithVehicle (__this, Vehicle_o* ve, ...)
-    var addr_InitWithVehicle = gameAssembly.add(45283408); 
-    
-    // 2. 靶机输出队伍给战斗引擎的出口点
-    // 签名: GF_Battle_BaseTeam_o* TargetTrainGameData__get_Team (...)
     var addr_get_Team = gameAssembly.add(53264624);
+    var addr_VehicleTeam_ctor = gameAssembly.add(51317984);
 
-    send({ type: "info", payload: "Hooks initializing..." });
+    send({ type: "info", payload: "Attaching Precision Stealer & Call Trace..." });
 
-    // Hook 1: 窃取载具对象
+    // Hook: VehicleTeam
     try {
-        Interceptor.attach(addr_InitWithVehicle, {
+        Interceptor.attach(addr_VehicleTeam_ctor, {
             onEnter: function(args) {
-                var vehiclePtr = args[1];
-                if (!vehiclePtr.isNull()) {
-                    STOLEN_VEHICLE_PTR = vehiclePtr;
-                    var className = getIl2cppClassName(vehiclePtr);
-                    send({ type: "hook", payload: "[STEALER] Captured Vehicle Pointer: " + vehiclePtr + " | Class: " + className });
+                var ptr = args[0]; // THIS pointer of VehicleTeam
+                if (!ptr.isNull() && getIl2cppClassName(ptr) === "VehicleTeam") {
+                    STOLEN_VEHICLE_TEAM_PTR = ptr;
+                    send({ type: "hook", payload: "[STEALER] Captured VehicleTeam -> " + ptr });
                 }
             }
         });
-    } catch(e) { send({ type: "error", payload: "Failed hook InitWithVehicle: " + e }); }
+    } catch(e) {}
 
-    // Hook 2: 在靶机发车时掉包指针
+    // Hook: Train Target
     try {
         Interceptor.attach(addr_get_Team, {
             onLeave: function(retval) {
-                var originalClassName = getIl2cppClassName(retval);
-                send({ type: "hook", payload: "[TargetTrain] get_Team normally returns -> " + retval + " | Class: " + originalClassName });
+                if (!SPOOF_ENABLED) return;
 
-                if (SPOOF_ENABLED && STOLEN_VEHICLE_PTR !== null) {
-                    send({ type: "hook", payload: "[INJECT] Replacing return value with Stolen Vehicle -> " + STOLEN_VEHICLE_PTR });
-                    retval.replace(STOLEN_VEHICLE_PTR); // 偷天换日
-                } else if (SPOOF_ENABLED && STOLEN_VEHICLE_PTR === null) {
-                    send({ type: "error", payload: "[INJECT FAIL] Spoof enabled but no Vehicle pointer stolen yet!" });
+                var originalClassName = getIl2cppClassName(retval);
+                send({ type: "hook", payload: "[TargetTrain] get_Team returns -> " + retval + " | Class: " + originalClassName });
+
+                var backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE);
+                var traceMsg = "[TRACE] get_Team Called By:\n";
+                for (var i = 0; i < backtrace.length; i++) {
+                    var addr = backtrace[i];
+                    var offset = addr.sub(BASE_ADDR).toInt32(); 
+                    if (offset > 0 && offset < 0x0FFFFFFF) { 
+                        traceMsg += "  -> GameAssembly.dll + " + offset + "\n";
+                    }
+                }
+                send({ type: "info", payload: traceMsg });
+
+                if (STOLEN_VEHICLE_TEAM_PTR !== null) {
+                    send({ type: "hook", payload: "[INJECT] Replacing with -> " + STOLEN_VEHICLE_TEAM_PTR + " (VehicleTeam)" });
+                    retval.replace(STOLEN_VEHICLE_TEAM_PTR);
+                } else {
+                    send({ type: "error", payload: "[INJECT FAIL] VehicleTeam pointer is null!" });
                 }
             }
         });
     } catch(e) { send({ type: "error", payload: "Failed hook get_Team: " + e }); }
 
-    send({ type: "info", payload: "System Ready. Step 1: Open Vehicle Garage in game to capture pointer." });
+    send({ type: "info", payload: "System Ready. Step 1: Open Vehicle Garage/Formation." });
 }
 
 rpc.exports = {

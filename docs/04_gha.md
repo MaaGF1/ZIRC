@@ -194,3 +194,56 @@ You can farm multiple accounts simultaneously by passing arrays of configuration
 6. **Real-time Monitoring:** By clicking on the running Job, you can open the **Summary** page (top left corner or bottom of the log screen) at any time. It dynamically generates a Markdown table showing runtime, macros completed, and total dolls collected.
 7. **Infinite Idle:** After reaching the 5.5-hour soft timeout, the script will wrap up the current loop, retire dolls, and use the GitHub CLI to trigger a brand-new job in the background, achieving 24/7 unlimited farming.
 8. **Auto Stop:** To stop the workflow, simply log into the game on your device. This will automatically invalidate the current `SIGN_KEY`, causing the GHA script to hit a fatal error circuit breaker and terminate without respawning. Alternatively, manually cancel the queued workflow via the Actions UI.
+
+## 3. Details in Code
+
+In this chapter, we'll describe some details in source code of `src/gha`.
+
+### 3.1 `gent.py`
+
+In `agent.py`, firstly, we import `gflzirc` and dynamic import `winreg`, though have been exclude in `gflzirc/proxy.py` via:
+
+```py
+# Cross-platform
+try:
+    import winreg
+    import ctypes
+    HAS_WINREG = True
+except ImportError:
+    HAS_WINREG = False
+```
+
+Then we define some constant:
+
+```py
+# Constants
+MAX_RUNTIME_SEC = 5 * 3600 + 30 * 60  # 5 hours 30 mins
+MAX_CONSECUTIVE_ERRORS = 5
+```
+
+1. `MAX_RUNTIME_SEC` used to auto kill an retrigger GHA workflow;
+2. `MAX_CONSECUTIVE_ERRORS` allow to stop workflow when a certain number of times are accumulated.
+
+In class `GFLAgent`, we have such functions:
+
+1. `__init__()`, constructor:
+    - Fetch environment variables
+    - Request `index/Index` to get information of GFL accounts
+    - Dynamic replace config e.g. echelon, fairy etc.
+2. "Helper functions" for **workflow**:
+    - `_extract_array_secret`: get multi accounts' secrets;
+    - `write_summary`: output result of this time.
+3. "Basic functions" for **farm**:
+    - `safe_request`: send request to server;
+    - `check_step_error`: if server's response is error code;
+    - `check_drop_result`: return dropped T-Dolls' UID in `mission_win_result` (mission) or `reward_gun` (battle);
+    - `parse_random_node_drop`: print random nodes' result;
+    - `retire_guns`: retire T-Dolls.
+4. `run()`, farm loop:
+    - Run `self.mission_handler.prepare()` first;
+    - Then into nested loops:
+        * in `micro`, we run missions for `n` times;
+        * in `marco`, we retire T-Dolls and do some boundary check;
+    - Finally, end loop and write summary, workflow will auto trigger next one.
+
+TODO

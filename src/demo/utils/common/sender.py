@@ -1,4 +1,6 @@
-# src/demo/utils/supply.py
+# src/demo/utils/sender.py
+
+# Send payload to endpoint
 
 import sys
 import time
@@ -7,24 +9,17 @@ from gflzirc import (
     SERVERS, STATIC_KEY, DEFAULT_SIGN
 )
 
-API_SUPPLY_TEAM = "Mission/supplyTeam"
+API_ENDPOINT = "Mission/combinationInfo"
 
 CONFIG = {
-    "USER_UID": "_InputYourID_",
-    "SIGN_KEY": DEFAULT_SIGN,
-    "BASE_URL": SERVERS["RO635"],
+    "USER_UID": "4370354",
+    "SIGN_KEY": "5b5d00be3701246969a286033a315d99",
+    "BASE_URL": SERVERS["M4A1"],
     "PROXY_PORT": 8080
 }
 
-# Supply Payload
 TARGET_PAYLOAD = {
-    "mission_id": 11116,    # Mission ID
-    "target_type": 10,      # Supply Type
-    "target_id": 833,       # Team ID (like HoC, need capture)
-    "spot_id": 95237,       # A spot that must have resupply capabilities, whether you DO NOT need to be ON it.
-    "item_cost": {
-        "57": "20"          # For vehicle, this 20 means energy
-    }
+    "mission_id": 550501
 }
 
 proxy_instance = None
@@ -47,11 +42,15 @@ def send_payload_worker():
 
     client = GFLClient(CONFIG["USER_UID"], CONFIG["SIGN_KEY"], CONFIG["BASE_URL"])
     
-    print(f"\n[*] Sending Request to {API_SUPPLY_TEAM} ...")
-    print(f"[*] Payload Info: {TARGET_PAYLOAD}")
+    # Timestamp Replace: ally_id to time()
+    current_timestamp = int(time.time())
+    TARGET_PAYLOAD["ally_id"] = current_timestamp
+
+    print(f"\n[*] Sending Request to {API_ENDPOINT} ...")
+    print(f"[*] Payload Info (ally_id dynamically updated): {TARGET_PAYLOAD}")
     
-    # send supply payload
-    response = client.send_request(API_SUPPLY_TEAM, TARGET_PAYLOAD)
+    # Send payload
+    response = client.send_request(API_ENDPOINT, TARGET_PAYLOAD)
     
     if isinstance(response, dict) and "error_local" in response:
         print(f"[-] Local Error: {response['error_local']}")

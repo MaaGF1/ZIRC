@@ -9,17 +9,19 @@ from gflzirc import (
     SERVERS, STATIC_KEY, DEFAULT_SIGN
 )
 
-API_ENDPOINT = "Mission/combinationInfo"
+API_ENDPOINT = "Equip/retire"
 
 CONFIG = {
-    "USER_UID": "4370354",
-    "SIGN_KEY": "5b5d00be3701246969a286033a315d99",
+    "USER_UID": "_InputYourID_",
+    "SIGN_KEY": DEFAULT_SIGN,
     "BASE_URL": SERVERS["M4A1"],
     "PROXY_PORT": 8080
 }
 
 TARGET_PAYLOAD = {
-    "mission_id": 550501
+    "equips": [
+        119720565,
+    ]
 }
 
 proxy_instance = None
@@ -43,8 +45,8 @@ def send_payload_worker():
     client = GFLClient(CONFIG["USER_UID"], CONFIG["SIGN_KEY"], CONFIG["BASE_URL"])
     
     # Timestamp Replace: ally_id to time()
-    current_timestamp = int(time.time())
-    TARGET_PAYLOAD["ally_id"] = current_timestamp
+    # current_timestamp = int(time.time())
+    # TARGET_PAYLOAD["ally_id"] = current_timestamp
 
     print(f"\n[*] Sending Request to {API_ENDPOINT} ...")
     print(f"[*] Payload Info (ally_id dynamically updated): {TARGET_PAYLOAD}")

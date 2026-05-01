@@ -13,6 +13,17 @@ from gflzirc import (
     API_MISSION_SUPPLY, API_MISSION_BATTLE_FINISH,
 )
 
+'''
+{
+    "equips": [
+        119711751,
+        119711720
+    ]
+}
+'''
+API_RETIRE_EQUIP = "Equip/retire"
+
+
 CONFIG = {
 # === Authentication & Connection ===
     "USER_UID": "_InputYourID_",
@@ -25,10 +36,10 @@ CONFIG = {
     "MISSIONS_PER_RETIRE": 10,
 
 # === Mission Specific Config ===
-    # EPA: EX1
-    "MISSION_ID": 145,
-    "START_SPOT": 97061,
-    "ROUTE": [97039, 97040, 97041, 97036, 97031],
+    # EPA: N1
+    "MISSION_ID": 151,
+    "START_SPOT": 97253,
+    "ROUTE": [97248, 97249, 97250, 97251, 97252],
     
     # Target Device Hash 
     "USER_DEVICE": "705e6cc2f7bcc635accfcbac7df9bf86cd6f0e05",
@@ -38,15 +49,14 @@ CONFIG = {
     "TEAM_ID": 1,
     
     # Target Fairy UID (Set to 0 or None if no fairy is equipped)
-    "FAIRY_ID": 3502455,
+    "FAIRY_ID": 3566859,
     
     # Target Echelon Guns UID and starting life(HP)
     "GUNS": [
-        {"id": 515087570, "life": 444},
-        {"id": 515094662, "life": 1130},
-        {"id": 515106822, "life": 420},
-        {"id": 515149565, "life": 300},
-        {"id": 528437819, "life": 248}
+        {
+            "id": 515093632,
+            "life": 895
+        }
     ]
 }
 
@@ -78,14 +88,14 @@ def check_step_error(resp: dict, step_name: str) -> bool:
 
 def check_battle_drop(resp_data: dict, spot_id: int) -> list:
     collected = []
-    bg = resp_data.get("battle_get_gun", [])
+    bg = resp_data.get("battle_get_equip", [])
     if bg:
         for gun in bg:
-            gun_id = gun.get("gun_id")
-            gun_uid = int(gun.get("gun_with_user_id"))
-            print("    [+] Battle Drop (Node %d)! Gun ID: %s | UID: %d" % 
-                  (spot_id, gun_id, gun_uid))
-            collected.append(gun_uid)
+            equip_id = gun.get("equip_id")
+            equip_uid = int(gun.get("id"))
+            print("    [+] Battle Drop (Node %d)! Equip ID: %s | UID: %d" % 
+                  (spot_id, equip_id, equip_uid))
+            collected.append(equip_uid)
     return collected
 
 def check_battle_exp(resp_data: dict, spot_id: int) -> bool:
@@ -112,13 +122,13 @@ def check_win_drop(resp_data: dict) -> list:
     collected = []
     win_result = resp_data.get("mission_win_result", {})
     if win_result:
-        rg = win_result.get("reward_gun", [])
+        rg = win_result.get("reward_equip", [])
         for gun in rg:
-            gun_id = gun.get("gun_id")
-            gun_uid = int(gun.get("gun_with_user_id"))
-            print("    [+] Mission Win Drop! Gun ID: %s | UID: %d" % 
-                  (gun_id, gun_uid))
-            collected.append(gun_uid)
+            equip_id = gun.get("equip_id")
+            equip_uid = int(gun.get("id"))
+            print("    [+] Mission Win Drop! Equip ID: %s | UID: %d" % 
+                  (equip_id, equip_uid))
+            collected.append(equip_uid)
     return collected
 
 def get_mvp_generator():
@@ -253,11 +263,17 @@ def farm_mission_epa(client: GFLClient, team_id: int, mvp_gen):
 
     return dropped_uids
 
-def retire_guns(client: GFLClient, gun_uids: list):
-    if not gun_uids: 
+def equip_equips(client: GFLClient, equip_uids: list):
+    if not equip_uids: 
         return
-    print("[*] Submitting %d T-Dolls for Auto-Retire..." % len(gun_uids))
-    resp = client.send_request(API_GUN_RETIRE, gun_uids)
+    print("[*] Submitting %d Equips for Auto-Retire..." % len(equip_uids))
+    print(equip_uids)
+    
+    retire_payload = {
+        "equips": equip_uids
+    }
+
+    resp = client.send_request(API_RETIRE_EQUIP, retire_payload)
     if resp.get("success"): 
         print("[+] Auto-Retire Successful!")
     else: 
@@ -295,7 +311,7 @@ def farm_worker():
             batch_guns.extend(dropped)
             time.sleep(1)
             
-        retire_guns(client, batch_guns)
+        equip_equips(client, batch_guns)
         time.sleep(2)
         if stop_micro_flag: break
             

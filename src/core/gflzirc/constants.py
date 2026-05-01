@@ -34,6 +34,8 @@ API_INDEX_GUIDE = "Index/guide"
 # Gun
 API_GUN_RETIRE = "Gun/retireGun"
 API_GUN_SKILL_UPGRADE = "Gun/skillUpgrade"
+# Equip
+API_RETIRE_EQUIP = "Equip/retire"
 # Daily
 API_DAILY_RESET_MAP = "Daily/resetMap"
 

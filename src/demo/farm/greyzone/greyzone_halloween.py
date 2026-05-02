@@ -155,9 +155,8 @@ class MapParser:
 # Class Hierarchy: MissionRunner
 # ==========================================
 class MissionRunner:
-    def __init__(self, client: GFLClient, team_id: int, mission_id: int, map_spot_id: int):
+    def __init__(self, client: GFLClient, mission_id: int, map_spot_id: int):
         self.client = client
-        self.team_id = team_id
         self.mission_id = mission_id
         self.map_spot_id = map_spot_id
         
@@ -233,7 +232,7 @@ class MissionRunnerMove(MissionRunner):
         for step, next_spot in enumerate(self.route, 1):
             print("[>] Step %d: Moving %d -> %d..." % (step, curr_spot, next_spot))
             move_payload = {
-                "person_type": 3, "person_id": self.team_id,
+                "person_type": 3, "person_id": 1,
                 "from_spot_id": curr_spot, "to_spot_id": next_spot, "move_type": 1
             }
             if check_step_error(self.client.send_request(API_MISSION_TEAM_MOVE, move_payload), "teamMove"):
@@ -320,7 +319,7 @@ class MissionRunnerBattle(MissionRunner):
         for step, next_spot in enumerate(self.route, 1):
             print("[>] Step %d: Moving %d -> %d..." % (step, curr_spot, next_spot))
             move_payload = {
-                "person_type": 3, "person_id": self.team_id,
+                "person_type": 3, "person_id": 1,
                 "from_spot_id": curr_spot, "to_spot_id": next_spot, "move_type": 1
             }
             move_resp = self.client.send_request(API_MISSION_TEAM_MOVE, move_payload)
@@ -466,9 +465,9 @@ def halloween_farm_worker():
                 
             m_type = MISSION_CONFIGS[m_id].get("type")
             if m_type == "MOVE":
-                runner = MissionRunnerMove(client, CONFIG["TEAM_ID"], m_id, s_id)
+                runner = MissionRunnerMove(client, m_id, s_id)
             elif m_type == "BATTLE":
-                runner = MissionRunnerBattle(client, CONFIG["TEAM_ID"], m_id, s_id)
+                runner = MissionRunnerBattle(client, m_id, s_id)
             else:
                 print("[!] Unknown mission type for %d" % m_id)
                 stop_macro_flag = True

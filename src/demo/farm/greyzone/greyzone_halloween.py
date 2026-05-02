@@ -26,7 +26,13 @@ CONFIG = {
 # Mission Configurations
 # ==========================================
 MISSION_CONFIGS = {
-    # 02： move
+    580002: {
+        "type": "MOVE",
+        "start_spot": 78138,
+        "route": [78139, 78140, 78141, 78145, 78149, 78153, 78152, 78148, 
+                  78147, 78151, 78150, 78146, 78142, 78143, 78144],
+        "has_ally_move": True
+    },
     580003: {
         "type": "MOVE",
         "start_spot": 78154,
@@ -219,7 +225,7 @@ class MissionRunnerMove(MissionRunner):
             if check_step_error(self.client.send_request(API_MISSION_TEAM_MOVE, move_payload), "teamMove"):
                 return None, 0
             curr_spot = next_spot
-            time.sleep(0.3)
+            time.sleep(0.1)
 
         # Optional Ally Move
         if self.has_ally_move:

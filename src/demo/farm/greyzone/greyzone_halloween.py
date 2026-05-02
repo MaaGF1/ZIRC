@@ -6,12 +6,14 @@ import threading
 from gflzirc import (
     GFLClient, GFLProxy, set_windows_proxy,
     SERVERS, STATIC_KEY, DEFAULT_SIGN,
-    API_DAILY_RESET_MAP, API_MISSION_COMBINFO, API_MISSION_START,
+    API_DAILY_RESET_MAP, API_MISSION_START,
     API_MISSION_TEAM_MOVE, API_MISSION_ALLY_MYSIDE_MOVE,
     API_MISSION_END_TURN, API_MISSION_START_ENEMY_TURN,
     API_MISSION_END_ENEMY_TURN, API_MISSION_START_TURN,
-    API_MISSION_ABORT, API_GUN_RETIRE
+    API_MISSION_ABORT, API_GUN_RETIRE,API_MISSION_BATTLE_FINISH
 )
+
+API_MISSION_buildingSkillPerformOnDeath = "Mission/buildingSkillPerformOnDeath"
 
 CONFIG = {
     "USER_UID": "_InputYourID_",
@@ -19,7 +21,8 @@ CONFIG = {
     "BASE_URL": SERVERS["M4A1"],
     "PROXY_PORT": 8080,
     "TEAM_ID": 1,
-    "TICKET_TYPE": 1
+    "TICKET_TYPE": 1,
+    "USER_DEVICE": "705e6cc2f7bcc635accfcbac7df9bf86cd6f0e05"
 }
 
 # ==========================================
@@ -53,7 +56,16 @@ MISSION_CONFIGS = {
         "route": [78588, 78592, 78591, 78595, 78599, 78600, 78601,
                   78602, 78598, 78594, 78590, 78589, 78593, 78597, 78596],
         "has_ally_move": True
-    }
+    },
+    580006: {
+        "type": "BATTLE",
+        "start_spot": 78603,
+        "route": [78604, 78605, 78606, 78610, 78614, 78618, 78617, 
+                  78616, 78615, 78611, 78607, 78608, 78609, 78613, 78612],
+        "on_battle": [78605, 78614, 78616, 78607],
+        "building_missionskills_on_death_k": [0, 2, 3, 1],
+        "has_ally_move": True
+    },
 }
 
 # ==========================================
@@ -65,7 +77,6 @@ proxy_instance = None
 stop_macro_flag = False
 
 total_halloween_points = 0
-
 
 def check_step_error(resp: dict, step_name: str) -> bool:
     if not isinstance(resp, dict):
@@ -79,7 +90,6 @@ def check_step_error(resp: dict, step_name: str) -> bool:
         return True
     return False
 
-
 def on_traffic(event_type: str, url: str, data: dict):
     if event_type == "SYS_KEY_UPGRADE":
         CONFIG["USER_UID"] = data.get("uid")
@@ -89,7 +99,6 @@ def on_traffic(event_type: str, url: str, data: dict):
         print("    SIGN : %s" % CONFIG['SIGN_KEY'])
         print("\n[!] CRITICAL: Please wait for the game to fully load into the Commander Screen!")
         print("[!] Then type '-f' to auto-farm Halloween GreyZone.")
-
 
 # ==========================================
 # Class: MapParser
@@ -172,7 +181,6 @@ class MissionRunner:
             
         return dropped_guns, points
 
-
 class MissionRunnerMove(MissionRunner):
     def run(self):
         print("[>] Starting Mission %d on Map Spot %d..." % (self.mission_id, self.map_spot_id))
@@ -246,11 +254,154 @@ class MissionRunnerMove(MissionRunner):
         
         return self.process_win_result(win_resp)
 
-
 class MissionRunnerBattle(MissionRunner):
     def run(self):
-        print("[!] BATTLE MISSION IS NOT YET IMPLEMENTED. Mission ID: %d" % self.mission_id)
-        return None, 0
+        # Dictionary to keep track of random seeds for battle validation
+        current_spots_state = {}
+
+        def update_seeds(resp_data):
+            if isinstance(resp_data, dict) and "spot_act_info" in resp_data:
+                for s in resp_data["spot_act_info"]:
+                    current_spots_state[str(s.get("spot_id"))] = int(s.get("seed", 0))
+
+        print("[>] Starting BATTLE Mission %d on Map Spot %d..." % (self.mission_id, self.map_spot_id))
+        start_payload = {
+            "mission_id": self.mission_id,
+            "spots": [],
+            "squad_spots": [], 
+            "sangvis_spots": [], 
+            "vehicle_spots": [],
+            "ally_spots": [], 
+            "mission_ally_spots": [
+                {
+                    "spot_id": self.start_spot,
+                    "ally_team_id": 78001,
+                    "mission_myside_data": {
+                        "sangvis": [],
+                        "gun": {
+                            "1": {"position": 8},
+                            "2": {"position": 9},
+                            "3": {"position": 7},
+                            "4": {"position": 14},
+                            "5": {"position": 13}
+                        }
+                    }
+                }
+            ],
+            "ally_id": int(time.time()),
+            "daily_param": {
+                "spot_id": self.map_spot_id,
+                "ticket_type": CONFIG["TICKET_TYPE"]
+            },
+            "fight_environment_skill_info": {}
+        }
+
+        start_resp = self.client.send_request(API_MISSION_START, start_payload)
+        if check_step_error(start_resp, "startMission"):
+            return None, 0
+            
+        update_seeds(start_resp)
+
+        # Retrieve battle configs
+        cfg = MISSION_CONFIGS.get(self.mission_id, {})
+        on_battle_list = cfg.get("on_battle", [])
+        death_k_list = cfg.get("building_missionskills_on_death_k", [])
+
+        # Execute Moves and Battles
+        curr_spot = self.start_spot
+        for step, next_spot in enumerate(self.route, 1):
+            print("[>] Step %d: Moving %d -> %d..." % (step, curr_spot, next_spot))
+            move_payload = {
+                "person_type": 3, "person_id": self.team_id,
+                "from_spot_id": curr_spot, "to_spot_id": next_spot, "move_type": 1
+            }
+            move_resp = self.client.send_request(API_MISSION_TEAM_MOVE, move_payload)
+            if check_step_error(move_resp, "teamMove"):
+                return None, 0
+                
+            update_seeds(move_resp)
+            curr_spot = next_spot
+            time.sleep(0.1)
+
+            # --- Check if current spot is a BATTLE spot ---
+            if curr_spot in on_battle_list:
+                battle_idx = on_battle_list.index(curr_spot)
+                # Fail-safe to avoid index out of bounds
+                k_val = death_k_list[battle_idx] if battle_idx < len(death_k_list) else 0
+                seed = current_spots_state.get(str(curr_spot), 0)
+
+                print("    [!] Battle Triggered at spot %d | Seed: %d | k_val: %d" % (curr_spot, seed, k_val))
+                
+                # --- Step 1: send battleFinish ---
+                battle_payload = {
+                    "spot_id": curr_spot,
+                    "if_enemy_die": True,
+                    "current_time": int(time.time()),
+                    "boss_hp": 0,
+                    "mvp": 1084,
+                    "last_battle_info": "",
+                    "use_skill_squads": [],
+                    "use_skill_ally_spots": [],
+                    "use_skill_vehicle_spots": [],
+                    "guns": [ 
+                        { "id": 1084, "life": 565 }, 
+                        { "id": 1085, "life": 540 }, 
+                        { "id": 1086, "life": 565 }, 
+                        { "id": 1087, "life": 605 }, 
+                        { "id": 1088, "life": 1040 } 
+                    ],
+                    "user_rec": '{"seed":%d,"record":[]}' % seed,
+                    "1000": { "10": 32089, "11": 32089, "12": 32089, "13": 32089, "15": 531, "16": 0, "17": 43, "33": 10001, "40": 9, "18": 0, "19": 0, "20": 0, "21": 0, "22": 0, "23": 0, "24": 811, "25": 0, "26": 811, "27": 4, "34": 5, "35": 5, "41": 90, "42": 0, "43": 0, "44": 0 },
+                    "1001": {},
+                    "1002": { "1084": { "47": 0 }, "1085": { "47": 0 }, "1086": { "47": 0 }, "1087": { "47": 0 }, "1088": { "47": 0 } },
+                    "1003": {},
+                    "1005": {},
+                    "1007": {},
+                    "1008": {},
+                    "1009": {},
+                    "battle_damage": {},
+                    "micalog": {
+                        "user_device": CONFIG["USER_DEVICE"],
+                        "user_ip": ""
+                    }
+                }
+                
+                if check_step_error(self.client.send_request(API_MISSION_BATTLE_FINISH, battle_payload), "battleFinish"):
+                    return None, 0
+                time.sleep(0.1)
+
+                # --- Step 2: send buildingSkillPerformOnDeath ---
+                print("    [!] BuildingSkillPerformOnDeath for target %d" % self.start_spot)
+                building_payload = {
+                    "building_missionskills_on_death_k": {
+                        str(self.start_spot): [k_val]
+                    }
+                }
+                
+                if check_step_error(self.client.send_request(API_MISSION_buildingSkillPerformOnDeath, building_payload), "buildingSkillPerformOnDeath"):
+                    return None, 0
+                time.sleep(0.1)
+
+        # Optional Ally Move
+        if self.has_ally_move:
+            print("[>] Triggering Ally Move...")
+            if check_step_error(self.client.send_request(API_MISSION_ALLY_MYSIDE_MOVE, {}), "allyMove"):
+                return None, 0
+            time.sleep(0.3)
+
+        # End Sequence
+        print("[>] Ending Turn sequence...")
+        if check_step_error(self.client.send_request(API_MISSION_END_TURN, {}), "endTurn"): return None, 0
+        time.sleep(0.2)
+        if check_step_error(self.client.send_request(API_MISSION_START_ENEMY_TURN, {}), "startEnemyTurn"): return None, 0
+        time.sleep(0.2)
+        if check_step_error(self.client.send_request(API_MISSION_END_ENEMY_TURN, {}), "endEnemyTurn"): return None, 0
+        time.sleep(0.2)
+
+        win_resp = self.client.send_request(API_MISSION_START_TURN, {})
+        if check_step_error(win_resp, "startTurn"): return None, 0
+        
+        return self.process_win_result(win_resp)
 
 
 # ==========================================

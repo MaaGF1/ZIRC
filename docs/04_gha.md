@@ -110,17 +110,20 @@ Add the following 3 `secrets`:
             "SQUAD_ID": 111111,
             "TEAM_ID": 1,
             "EPA_TEAMS": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            "EPA_PER_RETIRE": 10
+            "EPA_PER_RETIRE": 10,
+            "TICKET_TYPE": 2
         }
         ```
     - **Parameter Explanations:**
         - `USER_UID`: Your in-game Commander UID.
+        - `SERVER_KEY`: Server designation (e.g., `"M4A1"` for CN Android Official).
         - `MACRO_LOOPS`: The master loop count (set extremely high, e.g., 9999, as we rely on time limits to auto-respawn).
         - `MISSIONS_PER_RETIRE`: How many runs before triggering auto-retirement for T-Dolls. Adjust based on your armory's available slots.
         - `SQUAD_ID`: The Heavy Ordnance Corps (HOC) ID used for F2P.
         - `TEAM_ID`: The standard Echelon ID used for PickCoin.
         - `EPA_TEAMS`: An array of Echelon IDs designated for EPA training. The agent will fetch their real-time state automatically.
-        - `SERVER_KEY`: Server designation (e.g., `"M4A1"` for CN Android Official).
+        - `EPA_PER_RETIRE`: Run how many times EPA training then retire once T-Dolls.
+        - `TICKET_TYPE`: Specific ticket of **Gray Zone Exploration**: `1` means exploration permits; `2` means resources.
 3. **Secret Name:** `GFL_SIGN_KEY`
     - **Value:** The latest `SIGN_KEY` captured via running the `-c` command in the local CLI tool.
 4. **Secret Name:** `GFL_USER_DEVICE`
@@ -141,13 +144,14 @@ For consistency, you can also wrap a single account in JSON arrays.
             "SQUAD_ID": 111111,
             "TEAM_ID": 1,
             "EPA_TEAMS": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            "EPA_PER_RETIRE": 10
+            "EPA_PER_RETIRE": 10,
+            "TICKET_TYPE": 2
         }
     ]
     ```
 2. Input as:
     ```json
-    [{"USER_UID":"12345678","SERVER_KEY":"M4A1","MACRO_LOOPS":9999,"MISSIONS_PER_RETIRE":50,"SQUAD_ID":111111,"TEAM_ID":1,"EPA_TEAMS":[1,2,3,4,5,6,7,8,9,10],"EPA_PER_RETIRE":10}]
+    [{"USER_UID":"12345678","SERVER_KEY":"M4A1","MACRO_LOOPS":9999,"MISSIONS_PER_RETIRE":50,"SQUAD_ID":111111,"TEAM_ID":1,"EPA_TEAMS":[1,2,3,4,5,6,7,8,9,10],"EPA_PER_RETIRE":10,"TICKET_TYPE":2}]
     ```
 
 ##### Multiple Accounts
@@ -165,7 +169,8 @@ You can farm multiple accounts simultaneously by passing arrays of configuration
             "SQUAD_ID": 111111,
             "TEAM_ID": 1,
             "EPA_TEAMS": [1, 2],
-            "EPA_PER_RETIRE": 10
+            "EPA_PER_RETIRE": 10,
+            "TICKET_TYPE": 2
         },
         {
             "USER_UID": "87654321",
@@ -175,13 +180,14 @@ You can farm multiple accounts simultaneously by passing arrays of configuration
             "SQUAD_ID": 222222,
             "TEAM_ID": 1,
             "EPA_TEAMS": [1, 2, 3],
-            "EPA_PER_RETIRE": 15
+            "EPA_PER_RETIRE": 15,
+            "TICKET_TYPE": 2
         }
     ]
     ```
 2. Input as:
     ```json
-    [{"USER_UID":"12345678","SERVER_KEY":"M4A1","MACRO_LOOPS":9999,"MISSIONS_PER_RETIRE":50,"SQUAD_ID":111111,"TEAM_ID":1,"EPA_TEAMS":[1,2],"EPA_PER_RETIRE":10},{"USER_UID":"87654321","SERVER_KEY":"RO635","MACRO_LOOPS":9999,"MISSIONS_PER_RETIRE":50,"SQUAD_ID":222222,"TEAM_ID":1,"EPA_TEAMS":[1,2,3],"EPA_PER_RETIRE":15}]
+    [{"USER_UID":"12345678","SERVER_KEY":"M4A1","MACRO_LOOPS":9999,"MISSIONS_PER_RETIRE":50,"SQUAD_ID":111111,"TEAM_ID":1,"EPA_TEAMS":[1,2],"EPA_PER_RETIRE":10,"TICKET_TYPE":2},{"USER_UID":"87654321","SERVER_KEY":"RO635","MACRO_LOOPS":9999,"MISSIONS_PER_RETIRE":50,"SQUAD_ID":222222,"TEAM_ID":1,"EPA_TEAMS":[1,2,3],"EPA_PER_RETIRE":15,"TICKET_TYPE":2}]
     ```
 
 ### 2.2 Let's run it

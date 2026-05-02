@@ -5,6 +5,7 @@ from .pick_coin import PickCoinMission
 from .pick_and_train import PickAndTrainMission
 from .f2p_pr import F2PPRMission
 from .epa import EPAFifoMission, EPARRMission
+from .greyzone_halloween import GreyZoneHalloweenMission
 
 # Route table for mission handlers
 MISSION_HANDLERS = {
@@ -13,5 +14,6 @@ MISSION_HANDLERS = {
     "pick_coin": PickCoinMission,
     "pick_and_train": PickAndTrainMission,
     "epa_fifo": EPAFifoMission,
-    "epa_rr": EPARRMission
+    "epa_rr": EPARRMission,
+    "greyzone_halloween": GreyZoneHalloweenMission
 }

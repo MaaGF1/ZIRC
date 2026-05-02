@@ -15,6 +15,7 @@ on:
           - pick_and_train
           - epa_fifo
           - epa_rr
+          - greyzone_halloween
 
 jobs:
   prepare:

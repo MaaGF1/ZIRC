@@ -28,6 +28,7 @@ API_MISSION_TEAM_MOVE = "Mission/teamMove"
 API_MISSION_ALLY_MYSIDE_MOVE = "Mission/allyMySideMove"
 API_MISSION_SUPPLY = "Mission/supplyTeam"
 API_MISSION_BATTLE_FINISH = "Mission/battleFinish"
+API_MISSION_BUILDING_SKILL_PERFORM_ON_DEATH = "Mission/buildingSkillPerformOnDeath"
 # Index
 API_INDEX_INDEX = "Index/index"
 API_INDEX_GUIDE = "Index/guide"

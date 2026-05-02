@@ -18,7 +18,8 @@ CONFIG = {
     "SIGN_KEY": DEFAULT_SIGN,
     "BASE_URL": SERVERS["M4A1"],
     "PROXY_PORT": 8080,
-    "TEAM_ID": 1
+    "TEAM_ID": 1,
+    "TICKET_TYPE": 1  # Used in daily_param -> ticket_type
 }
 
 # ==========================================
@@ -124,10 +125,11 @@ class MapParser:
 # Class Hierarchy: MissionRunner
 # ==========================================
 class MissionRunner:
-    def __init__(self, client: GFLClient, team_id: int, mission_id: int):
+    def __init__(self, client: GFLClient, team_id: int, mission_id: int, map_spot_id: int):
         self.client = client
         self.team_id = team_id
         self.mission_id = mission_id
+        self.map_spot_id = map_spot_id
         
         cfg = MISSION_CONFIGS.get(mission_id, {})
         self.start_spot = cfg.get("start_spot", 0)
@@ -164,11 +166,13 @@ class MissionRunnerMove(MissionRunner):
         if check_step_error(self.client.send_request(API_MISSION_COMBINFO, {"mission_id": self.mission_id}), "combInfo"): 
             return None, 0
 
-        print("[>] Starting Mission %d..." % self.mission_id)
+        print("[>] Starting Mission %d on Map Spot %d..." % (self.mission_id, self.map_spot_id))
         start_payload = {
             "mission_id": self.mission_id,
-            "spots": [{"spot_id": self.start_spot, "team_id": self.team_id}],
-            "squad_spots": [], "sangvis_spots": [], "vehicle_spots": [],
+            "spots": [],  # Empty as we deploy ally_spot only
+            "squad_spots": [], 
+            "sangvis_spots": [], 
+            "vehicle_spots": [],
             "ally_spots": [], 
             "mission_ally_spots": [
                 {
@@ -186,7 +190,12 @@ class MissionRunnerMove(MissionRunner):
                     }
                 }
             ],
-            "ally_id": int(time.time())
+            "ally_id": int(time.time()),
+            "daily_param": {
+                "spot_id": self.map_spot_id,
+                "ticket_type": CONFIG["TICKET_TYPE"]
+            },
+            "fight_environment_skill_info": {}
         }
         
         if check_step_error(self.client.send_request(API_MISSION_START, start_payload), "startMission"):
@@ -270,7 +279,7 @@ def halloween_farm_worker():
             
         targets = MapParser.parse(resp)
         if not targets:
-            print("    [-] No valid Halloween found. Retrying...")
+            print("    [-] No valid Halloween easter egg found. Retrying...")
             time.sleep(0.5)
             continue
             
@@ -287,9 +296,9 @@ def halloween_farm_worker():
                 
             m_type = MISSION_CONFIGS[m_id].get("type")
             if m_type == "MOVE":
-                runner = MissionRunnerMove(client, CONFIG["TEAM_ID"], m_id)
+                runner = MissionRunnerMove(client, CONFIG["TEAM_ID"], m_id, s_id)
             elif m_type == "BATTLE":
-                runner = MissionRunnerBattle(client, CONFIG["TEAM_ID"], m_id)
+                runner = MissionRunnerBattle(client, CONFIG["TEAM_ID"], m_id, s_id)
             else:
                 print("[!] Unknown mission type for %d" % m_id)
                 stop_macro_flag = True

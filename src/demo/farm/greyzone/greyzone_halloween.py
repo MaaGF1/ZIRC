@@ -19,13 +19,21 @@ CONFIG = {
     "BASE_URL": SERVERS["M4A1"],
     "PROXY_PORT": 8080,
     "TEAM_ID": 1,
-    "TICKET_TYPE": 1  # Used in daily_param -> ticket_type
+    "TICKET_TYPE": 1
 }
 
 # ==========================================
 # Mission Configurations
 # ==========================================
 MISSION_CONFIGS = {
+    # 02： move
+    580003: {
+        "type": "MOVE",
+        "start_spot": 78154,
+        "route": [78155, 78156, 78157, 78161, 78165, 78169, 78168, 78164, 
+                  78160, 78159, 78158, 78162, 78166, 78167, 78163, 78164, 78160],
+        "has_ally_move": True
+    },
     580004: {
         "type": "MOVE",
         "start_spot": 78170,
@@ -40,6 +48,7 @@ MISSION_CONFIGS = {
                   78596, 78597, 78598, 78599, 78600, 78601, 78602],
         "has_ally_move": True
     }
+
     # Note: Add 580002, 580003 here when routes are known
 }
 
@@ -162,14 +171,10 @@ class MissionRunner:
 
 class MissionRunnerMove(MissionRunner):
     def run(self):
-        print("[>] Requesting Combination Info...")
-        if check_step_error(self.client.send_request(API_MISSION_COMBINFO, {"mission_id": self.mission_id}), "combInfo"): 
-            return None, 0
-
         print("[>] Starting Mission %d on Map Spot %d..." % (self.mission_id, self.map_spot_id))
         start_payload = {
             "mission_id": self.mission_id,
-            "spots": [],  # Empty as we deploy ally_spot only
+            "spots": [],
             "squad_spots": [], 
             "sangvis_spots": [], 
             "vehicle_spots": [],
@@ -198,6 +203,8 @@ class MissionRunnerMove(MissionRunner):
             "fight_environment_skill_info": {}
         }
         
+        print(start_payload)
+
         if check_step_error(self.client.send_request(API_MISSION_START, start_payload), "startMission"):
             return None, 0
 
@@ -279,8 +286,8 @@ def halloween_farm_worker():
             
         targets = MapParser.parse(resp)
         if not targets:
-            print("    [-] No valid Halloween easter egg found. Retrying...")
-            time.sleep(0.5)
+            print("    [-] No valid Halloween found. Retrying...")
+            time.sleep(0.1)
             continue
             
         for target in targets:

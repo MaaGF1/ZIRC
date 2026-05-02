@@ -20,7 +20,6 @@ CONFIG = {
     "SIGN_KEY": DEFAULT_SIGN,
     "BASE_URL": SERVERS["M4A1"],
     "PROXY_PORT": 8080,
-    "TEAM_ID": 1,
     "TICKET_TYPE": 1,
     "USER_DEVICE": "705e6cc2f7bcc635accfcbac7df9bf86cd6f0e05"
 }
@@ -29,6 +28,15 @@ CONFIG = {
 # Mission Configurations
 # ==========================================
 MISSION_CONFIGS = {
+    580001: {
+        "type": "BATTLE",
+        "start_spot": 78122,
+        "route": [78126, 78130, 78134, 78135, 78136, 78137, 78133, 78129,
+                  78125, 78124, 78128, 78132, 78131, 78127, 78123],
+        "on_battle": [78134, 78137, 78125, 78128],
+        "building_missionskills_on_death_k": [2, 3, 0, 1],
+        "has_ally_move": True
+    },
     580002: {
         "type": "MOVE",
         "start_spot": 78138,
@@ -65,7 +73,7 @@ MISSION_CONFIGS = {
         "on_battle": [78605, 78614, 78616, 78607],
         "building_missionskills_on_death_k": [0, 2, 3, 1],
         "has_ally_move": True
-    },
+    }
 }
 
 # ==========================================

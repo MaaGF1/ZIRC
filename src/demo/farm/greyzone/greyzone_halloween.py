@@ -10,10 +10,8 @@ from gflzirc import (
     API_MISSION_TEAM_MOVE, API_MISSION_ALLY_MYSIDE_MOVE,
     API_MISSION_END_TURN, API_MISSION_START_ENEMY_TURN,
     API_MISSION_END_ENEMY_TURN, API_MISSION_START_TURN,
-    API_MISSION_ABORT, API_GUN_RETIRE,API_MISSION_BATTLE_FINISH
+    API_MISSION_ABORT, API_GUN_RETIRE,API_MISSION_BATTLE_FINISH,API_MISSION_BUILDING_SKILL_PERFORM_ON_DEATH
 )
-
-API_MISSION_buildingSkillPerformOnDeath = "Mission/buildingSkillPerformOnDeath"
 
 CONFIG = {
     "USER_UID": "_InputYourID_",
@@ -386,7 +384,7 @@ class MissionRunnerBattle(MissionRunner):
                     }
                 }
                 
-                if check_step_error(self.client.send_request(API_MISSION_buildingSkillPerformOnDeath, building_payload), "buildingSkillPerformOnDeath"):
+                if check_step_error(self.client.send_request(API_MISSION_BUILDING_SKILL_PERFORM_ON_DEATH, building_payload), "buildingSkillPerformOnDeath"):
                     return None, 0
                 time.sleep(0.1)
 

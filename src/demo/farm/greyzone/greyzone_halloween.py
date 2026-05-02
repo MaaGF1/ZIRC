@@ -54,8 +54,6 @@ MISSION_CONFIGS = {
                   78602, 78598, 78594, 78590, 78589, 78593, 78597, 78596],
         "has_ally_move": True
     }
-
-    # Note: Add 580002, 580003 here when routes are known
 }
 
 # ==========================================
